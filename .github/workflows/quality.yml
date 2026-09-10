@@ -1,27 +1,35 @@
-name: RADVORA Production Build
+name: RADVORA Quality Gate
 
 on:
+  pull_request:
   push:
     branches: [main]
-  pull_request:
 
 permissions:
   contents: read
 
 jobs:
-  build:
+  quality:
     runs-on: ubuntu-latest
     env:
       NEXT_PUBLIC_SUPABASE_URL: https://kugawqpvfikynithyefa.supabase.co
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_RwaaDUGHYP0D7za9Mo8xvg_A9sNhfim
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install
+          cache: npm
+          cache-dependency-path: package.json
+
+      - name: Install dependencies
         run: npm install --no-audit --no-fund
-      - name: Typecheck
+
+      - name: Type check
         run: npx tsc --noEmit
-      - name: Build
+
+      - name: Production build
         run: npm run build
