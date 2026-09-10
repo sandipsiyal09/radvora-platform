@@ -15,9 +15,10 @@ export default function LoginPage() {
 
     try {
       const supabase = createClient()
+      const callbackUrl = `${window.location.origin}/auth/callback?next=/account`
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: `${window.location.origin}/account` },
+        options: { emailRedirectTo: callbackUrl },
       })
 
       setMessage(error ? error.message : 'Check your email for the secure sign-in link.')
