@@ -42,15 +42,15 @@ export async function POST(request:Request){
     cancel_url:`${origin}/cart?payment=cancelled`
   })
 
-  await supabase.from('payment_attempts').insert({
+  const {error:attemptError}=await supabase.from('payment_attempts').insert({
     order_id:order.id,
-    user_id:user.id,
     provider:'stripe',
-    provider_reference:session.id,
+    provider_order_id:session.id,
     status:'created',
     amount:order.total,
     currency:order.currency||'INR'
   })
+  if(attemptError) return NextResponse.json({error:attemptError.message},{status:500})
 
   return NextResponse.json({url:session.url})
 }
