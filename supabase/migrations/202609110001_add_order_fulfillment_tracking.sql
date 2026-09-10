@@ -81,5 +81,6 @@ begin
 end;
 $$;
 
-revoke all on function public.transition_order_fulfillment(uuid,text,text,text,text) from public;
+revoke execute on function public.transition_order_fulfillment(uuid,text,text,text,text) from public;
+revoke execute on function public.transition_order_fulfillment(uuid,text,text,text,text) from anon;
 grant execute on function public.transition_order_fulfillment(uuid,text,text,text,text) to authenticated;
