@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '../../../lib/supabase/server'
+import ClaimActions from './claim-actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,7 +28,7 @@ export default async function LabsAdminPage(){
     <div className="admin-grid">
       <section className="panel"><span className="kicker">LAB REPORTS</span><h2>{reports?.length ?? 0} recent</h2>{reports?.length ? reports.map(r=><div className="admin-row" key={r.id}><div><b>{r.report_number}</b><span>{r.title}</span></div><em>{r.status}</em></div>) : <p className="empty-state">No lab reports entered yet.</p>}</section>
       <section className="panel"><span className="kicker">RF TESTS</span><h2>{tests?.length ?? 0} recent</h2>{tests?.length ? tests.map(t=><div className="admin-row" key={t.id}><div><b>{t.phone_manufacturer} {t.phone_model}</b><span>{t.network || 'Network pending'} · {t.frequency_band || 'Band pending'}</span></div><em>{t.status}</em></div>) : <p className="empty-state">No RF tests entered yet.</p>}</section>
-      <section className="panel"><span className="kicker">CLAIMS QUEUE</span><h2>{claims?.length ?? 0} recent</h2>{claims?.length ? claims.map(c=><div className="admin-row" key={c.id}><div><b>{c.category}</b><span>{c.claim_text}</span></div><em>{c.status}</em></div>) : <p className="empty-state">No claims awaiting review.</p>}</section>
+      <section className="panel"><span className="kicker">CLAIMS QUEUE</span><h2>{claims?.length ?? 0} recent</h2>{claims?.length ? claims.map(c=><div className="admin-row" key={c.id}><div style={{flex:1}}><b>{c.category}</b><span>{c.claim_text}</span><ClaimActions claimId={c.id} status={c.status}/></div><em>{c.status}</em></div>) : <p className="empty-state">No claims awaiting review.</p>}</section>
     </div>
   </div></main>
 }
