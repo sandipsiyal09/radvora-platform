@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '../../../../lib/supabase/server'
+import { createAdminClient } from '../../../../lib/supabase/admin'
 
 export const runtime='nodejs'
 
@@ -42,7 +43,8 @@ export async function POST(request:Request){
     cancel_url:`${origin}/cart?payment=cancelled`
   })
 
-  const {error:attemptError}=await supabase.from('payment_attempts').insert({
+  const admin=createAdminClient()
+  const {error:attemptError}=await admin.from('payment_attempts').insert({
     order_id:order.id,
     provider:'stripe',
     provider_order_id:session.id,
