@@ -39,6 +39,16 @@ export async function POST(request:Request){
     .eq('order_id',order.id)
   if(itemsError||!items?.length) return NextResponse.json({error:itemsError?.message||'Order has no items.'},{status:400})
 
+  const admin=createAdminClient()
+  const {data:attempt,error:attemptError}=await admin.from('payment_attempts').insert({
+    order_id:order.id,
+    provider:'stripe',
+    status:'created',
+    amount:order.total,
+    currency:order.currency||'INR'
+  }).select('id').single()
+  if(attemptError||!attempt) return NextResponse.json({error:'Unable to initialize payment tracking.'},{status:500})
+
   try{
     const stripe=new Stripe(secret)
     const origin=new URL(request.url).origin
@@ -46,7 +56,7 @@ export async function POST(request:Request){
       mode:'payment',
       customer_email:user.email||undefined,
       client_reference_id:order.id,
-      metadata:{order_id:order.id,order_number:order.order_number,user_id:user.id},
+      metadata:{order_id:order.id,order_number:order.order_number,user_id:user.id,payment_attempt_id:attempt.id},
       line_items:items.map((item:any)=>({
         quantity:item.quantity,
         price_data:{
@@ -59,19 +69,14 @@ export async function POST(request:Request){
       cancel_url:`${origin}/account/orders/${order.id}`
     })
 
-    const admin=createAdminClient()
-    const {error:attemptError}=await admin.from('payment_attempts').insert({
-      order_id:order.id,
-      provider:'stripe',
-      provider_order_id:session.id,
-      status:'created',
-      amount:order.total,
-      currency:order.currency||'INR'
-    })
-    if(attemptError) return NextResponse.json({error:'Checkout session was created but could not be recorded. Please contact support before retrying.'},{status:500})
+    const {error:linkError}=await admin.from('payment_attempts').update({provider_order_id:session.id,status:'pending',updated_at:new Date().toISOString()}).eq('id',attempt.id)
+    if(linkError){
+      return NextResponse.json({error:'Payment session could not be finalized safely. Please retry from the order page.',orderId:order.id,retryable:true},{status:500})
+    }
 
     return NextResponse.json({url:session.url,orderId:order.id})
   }catch(error){
+    await admin.from('payment_attempts').update({status:'failed',failure_code:'stripe_session_error',updated_at:new Date().toISOString()}).eq('id',attempt.id)
     const message=error instanceof Error?error.message:'Unable to start secure checkout.'
     return NextResponse.json({error:message,orderId:order.id,retryable:true},{status:502})
   }
