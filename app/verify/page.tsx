@@ -2,7 +2,6 @@
 
 import { FormEvent, useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '../../lib/supabase/client'
 
 type Result = {
   serial_number: string
@@ -19,6 +18,7 @@ export default function VerifyPage(){
   const [loading,setLoading]=useState(false)
   const [result,setResult]=useState<Result | null>(null)
   const [checked,setChecked]=useState(false)
+  const [message,setMessage]=useState('')
 
   async function verify(e: FormEvent){
     e.preventDefault()
@@ -27,15 +27,28 @@ export default function VerifyPage(){
     setLoading(true)
     setChecked(false)
     setResult(null)
-    const supabase = createClient()
-    const { data } = await supabase
-      .from('public_product_verification')
-      .select('serial_number,batch_code,manufactured_at,status,product_name,product_slug,sku')
-      .eq('serial_number', normalized)
-      .maybeSingle()
-    setResult((data as Result | null) ?? null)
-    setChecked(true)
-    setLoading(false)
+    setMessage('')
+
+    try {
+      const response = await fetch('/api/product-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ serial: normalized }),
+      })
+      const payload = await response.json() as { result?: Result | null; error?: string }
+
+      if (!response.ok) {
+        setMessage(payload.error || 'Verification is temporarily unavailable.')
+        return
+      }
+
+      setResult(payload.result ?? null)
+      setChecked(true)
+    } catch {
+      setMessage('Verification is temporarily unavailable. Please try again shortly.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const statusLabel = !checked ? 'AWAITING SERIAL' : result ? (result.status === 'revoked' ? 'SERIAL REVOKED' : 'SERIAL FOUND') : 'NOT FOUND'
@@ -53,11 +66,12 @@ export default function VerifyPage(){
         <form className="panel" onSubmit={verify}>
           <span className="kicker">SERIAL / QR</span>
           <h2>Enter product serial</h2>
-          <input className="field" value={serial} onChange={e=>{setSerial(e.target.value);setChecked(false);setResult(null)}} placeholder="Example: RV-SP-XXXX-XXXX" autoComplete="off" />
+          <input className="field" value={serial} onChange={e=>{setSerial(e.target.value);setChecked(false);setResult(null);setMessage('')}} placeholder="Example: RV-SP-XXXX-XXXX" autoComplete="off" maxLength={64} />
           <div className="actions"><button className="pill light" type="submit" disabled={!serial.trim() || loading}>{loading?'Checking…':'Check product →'}</button></div>
+          {message ? <p className="status-message" role="status">{message}</p> : null}
           <p style={{color:'#7f8ca1',lineHeight:1.7,fontSize:13}}>A valid result confirms that the serial exists in RADVORA’s production registry. It does not by itself establish any scientific or health claim.</p>
         </form>
-        <aside className="panel status-card">
+        <aside className="panel status-card" aria-live="polite">
           <span className="status-pill">{statusLabel}</span>
           <h2 style={{fontSize:34,margin:'18px 0 8px'}}>{statusTitle}</h2>
           {!checked && <p style={{color:'#8492a6',lineHeight:1.7}}>Enter a RADVORA serial to begin verification.</p>}
