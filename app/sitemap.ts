@@ -23,6 +23,10 @@ export default function sitemap():MetadataRoute.Sitemap{
     '/business',
     '/dealer',
     '/distributor',
+    '/privacy',
+    '/terms',
+    '/returns',
+    '/shipping',
     '/login'
   ]
   return routes.map(path=>({
