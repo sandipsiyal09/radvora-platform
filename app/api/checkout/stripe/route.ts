@@ -60,6 +60,8 @@ export async function POST(request:Request){
       customer_email:user.email||undefined,
       client_reference_id:order.id,
       metadata:{order_id:order.id,order_number:order.order_number,user_id:user.id,payment_attempt_id:attempt.id},
+      shipping_address_collection:{allowed_countries:['IN']},
+      phone_number_collection:{enabled:true},
       line_items:items.map((item:any)=>({
         quantity:item.quantity,
         price_data:{
