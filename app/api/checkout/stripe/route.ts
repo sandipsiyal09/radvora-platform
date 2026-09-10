@@ -39,13 +39,16 @@ export async function POST(request:Request){
     .eq('order_id',order.id)
   if(itemsError||!items?.length) return NextResponse.json({error:itemsError?.message||'Order has no items.'},{status:400})
 
+  const currency=String(order.currency||'INR').trim().toLowerCase()
+  if(!/^[a-z]{3}$/.test(currency)) return NextResponse.json({error:'Order currency is invalid.'},{status:400})
+
   const admin=createAdminClient()
   const {data:attempt,error:attemptError}=await admin.from('payment_attempts').insert({
     order_id:order.id,
     provider:'stripe',
     status:'created',
     amount:order.total,
-    currency:order.currency||'INR'
+    currency:currency.toUpperCase()
   }).select('id').single()
   if(attemptError||!attempt) return NextResponse.json({error:'Unable to initialize payment tracking.'},{status:500})
 
@@ -60,7 +63,7 @@ export async function POST(request:Request){
       line_items:items.map((item:any)=>({
         quantity:item.quantity,
         price_data:{
-          currency:'inr',
+          currency,
           unit_amount:Math.round(Number(item.unit_price)*100),
           product_data:{name:item.products?.name||'RADVORA Product'}
         }
