@@ -84,7 +84,23 @@ export async function POST(request:Request){
       }
 
       if(order.status==='pending'){
-        const {error:orderUpdateError}=await admin.from('orders').update({status:'paid',payment_provider:'stripe',payment_reference:paymentIntentId||session.id,updated_at:new Date().toISOString()}).eq('id',orderId).eq('status','pending')
+        const collected=(session as Stripe.Checkout.Session & {collected_information?:{shipping_details?:{name?:string|null,address?:{line1?:string|null;line2?:string|null;city?:string|null;state?:string|null;postal_code?:string|null;country?:string|null}}}}).collected_information
+        const shippingDetails=collected?.shipping_details
+        const address=shippingDetails?.address
+        const {error:orderUpdateError}=await admin.from('orders').update({
+          status:'paid',
+          payment_provider:'stripe',
+          payment_reference:paymentIntentId||session.id,
+          shipping_name:shippingDetails?.name||session.customer_details?.name||null,
+          shipping_phone:session.customer_details?.phone||null,
+          shipping_line1:address?.line1||null,
+          shipping_line2:address?.line2||null,
+          shipping_city:address?.city||null,
+          shipping_state:address?.state||null,
+          shipping_postal_code:address?.postal_code||null,
+          shipping_country:address?.country||null,
+          updated_at:new Date().toISOString()
+        }).eq('id',orderId).eq('status','pending')
         if(orderUpdateError){
           await markEvent(admin,event.id,'failed','order_reconciliation_failed')
           return NextResponse.json({error:'Order reconciliation failed.'},{status:500})
