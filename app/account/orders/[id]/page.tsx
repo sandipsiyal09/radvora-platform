@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '../../../../lib/supabase/server'
+import RetryPaymentButton from './retry-payment-button'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,13 +23,14 @@ export default async function OrderDetailPage({params}:PageProps){
   if(!order) notFound()
   const items=(itemRows||[]) as unknown as OrderItem[]
   const money=(value:number|string|null)=>new Intl.NumberFormat('en-IN',{style:'currency',currency:order.currency||'INR'}).format(Number(value||0))
+  const hasSuccessfulAttempt=payments?.some(payment=>payment.status==='authorized'||payment.status==='captured') ?? false
 
   return <main className="page-wrap"><div className="shell">
     <section className="page-head"><span className="kicker">ORDER {order.order_number}</span><h1>Order details.</h1><p>Placed {new Date(order.created_at).toLocaleString('en-IN')} · Current status: <strong>{order.status}</strong></p></section>
     <div className="admin-grid">
       <section className="panel"><span className="kicker">ITEMS</span><h2>{items.length} line item{items.length===1?'':'s'}</h2>{items.map(item=><div className="account-row" key={item.id}><div><b>{item.products?.name||'RADVORA product'}</b><span>Qty {item.quantity} · {money(item.unit_price)} each</span></div><em>{money(item.line_total)}</em></div>)}</section>
       <section className="panel"><span className="kicker">TOTAL</span><h2>{money(order.total)}</h2><div className="account-row"><div><b>Subtotal</b></div><em>{money(order.subtotal)}</em></div><div className="account-row"><div><b>Tax</b></div><em>{money(order.tax)}</em></div><div className="account-row"><div><b>Shipping</b></div><em>{money(order.shipping)}</em></div></section>
-      <section className="panel"><span className="kicker">PAYMENT</span><h2>{order.payment_provider||'Payment pending'}</h2>{payments?.length?payments.map(payment=><div className="account-row" key={payment.id}><div><b>{payment.provider}</b><span>{money(payment.amount)} · {new Date(payment.created_at).toLocaleString('en-IN')}{payment.failure_code?` · ${payment.failure_code}`:''}</span></div><em>{payment.status}</em></div>):<p className="empty-state">No payment attempt has been recorded yet.</p>}</section>
+      <section className="panel"><span className="kicker">PAYMENT</span><h2>{order.payment_provider||'Payment pending'}</h2>{payments?.length?payments.map(payment=><div className="account-row" key={payment.id}><div><b>{payment.provider}</b><span>{money(payment.amount)} · {new Date(payment.created_at).toLocaleString('en-IN')}{payment.failure_code?` · ${payment.failure_code}`:''}</span></div><em>{payment.status}</em></div>):<p className="empty-state">No payment attempt has been recorded yet.</p>}{order.status==='pending'&&!hasSuccessfulAttempt?<div style={{marginTop:16}}><RetryPaymentButton orderId={order.id}/></div>:null}</section>
     </div>
     <div className="actions"><Link className="pill ghost" href="/account">← Back to account</Link><Link className="pill ghost" href="/support">Need help?</Link></div>
   </div></main>
