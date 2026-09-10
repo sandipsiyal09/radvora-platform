@@ -1,0 +1,119 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  sku         String   @unique
+  description String
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  tests       RFTest[]
+  claims      Claim[]
+  serials     SerialNumber[]
+}
+
+model SerialNumber {
+  id               String   @id @default(cuid())
+  productId        String
+  serial           String   @unique
+  qrToken          String   @unique
+  batch            String?
+  manufacturedAt   DateTime?
+  activatedAt      DateTime?
+  warrantyUntil    DateTime?
+  status           SerialStatus @default(IN_STOCK)
+  product          Product  @relation(fields: [productId], references: [id])
+  createdAt        DateTime @default(now())
+}
+
+enum SerialStatus { IN_STOCK SOLD ACTIVATED REPLACED REVOKED }
+
+model RFTest {
+  id                 String   @id @default(cuid())
+  productId          String
+  phoneBrand         String
+  phoneModel         String
+  network            String?
+  frequencyBand      String?
+  methodology        String
+  baselineValue      Float?
+  productValue       Float?
+  percentageChange   Float?
+  laboratory         String?
+  reportNumber       String?
+  testDate           DateTime?
+  approved           Boolean  @default(false)
+  public             Boolean  @default(false)
+  product             Product  @relation(fields:[productId], references:[id])
+  claims              Claim[]
+}
+
+model Claim {
+  id          String   @id @default(cuid())
+  productId   String
+  text        String
+  status      ClaimStatus @default(DRAFT)
+  validFrom   DateTime?
+  validUntil  DateTime?
+  product     Product  @relation(fields:[productId], references:[id])
+  tests       RFTest[]
+  approvals   ClaimApproval[]
+}
+
+model ClaimApproval {
+  id         String   @id @default(cuid())
+  claimId    String
+  stage      ApprovalStage
+  reviewer   String
+  approved   Boolean
+  comment    String?
+  createdAt  DateTime @default(now())
+  claim      Claim    @relation(fields:[claimId], references:[id])
+}
+
+enum ClaimStatus { DRAFT SCIENTIFIC_REVIEW COMPLIANCE_REVIEW APPROVED REJECTED PUBLISHED }
+enum ApprovalStage { SCIENTIFIC COMPLIANCE LEGAL FOUNDER }
+
+model Agent {
+  id            String   @id @default(cuid())
+  name          String
+  department    String
+  role          String
+  objective     String
+  autonomyLevel Int      @default(2)
+  enabled       Boolean  @default(true)
+  budgetLimit   Float?
+  managerId     String?
+  createdAt     DateTime @default(now())
+  runs          AgentRun[]
+}
+
+model AgentRun {
+  id          String   @id @default(cuid())
+  agentId     String
+  status      RunStatus @default(PENDING)
+  objective   String
+  summary     String?
+  cost        Float?
+  startedAt   DateTime @default(now())
+  finishedAt  DateTime?
+  agent       Agent    @relation(fields:[agentId], references:[id])
+}
+
+enum RunStatus { PENDING RUNNING SUCCEEDED FAILED NEEDS_APPROVAL }
+
+model Approval {
+  id          String   @id @default(cuid())
+  category    String
+  title       String
+  description String
+  status      GeneralApprovalStatus @default(PENDING)
+  requestedBy String
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  createdAt   DateTime @default(now())
+}
+
+enum GeneralApprovalStatus { PENDING APPROVED REJECTED CHANGES_REQUESTED }
