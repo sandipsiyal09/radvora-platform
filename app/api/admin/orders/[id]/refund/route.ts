@@ -17,14 +17,13 @@ function boundary(request:Request){
   const rawLength=request.headers.get('content-length')
   if(rawLength&&Number(rawLength)>MAX_BODY_BYTES) return json({error:'Refund request is too large.'},413)
   const origin=request.headers.get('origin')
-  if(origin){
-    try{
-      const supplied=new URL(origin).origin
-      const requestOrigin=new URL(request.url).origin
-      const configured=process.env.NEXT_PUBLIC_APP_URL?new URL(process.env.NEXT_PUBLIC_APP_URL).origin:requestOrigin
-      if(supplied!==requestOrigin&&supplied!==configured) return json({error:'Invalid refund request origin.'},403)
-    }catch{return json({error:'Invalid refund request origin.'},403)}
-  }
+  if(!origin) return json({error:'Invalid refund request origin.'},403)
+  try{
+    const supplied=new URL(origin).origin
+    const requestOrigin=new URL(request.url).origin
+    const configured=process.env.NEXT_PUBLIC_APP_URL?new URL(process.env.NEXT_PUBLIC_APP_URL).origin:requestOrigin
+    if(supplied!==requestOrigin&&supplied!==configured) return json({error:'Invalid refund request origin.'},403)
+  }catch{return json({error:'Invalid refund request origin.'},403)}
   return null
 }
 
