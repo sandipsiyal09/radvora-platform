@@ -46,9 +46,18 @@ A catalog product is not sellable merely because it is visible or has a price. I
 1. Product status is `active`.
 2. Currency is `INR`.
 3. Approved `price_inr` is greater than zero.
-4. Founder/admin explicitly enables `commerce_enabled` from the internal catalog controls.
+4. An approved 4–8 digit HSN code is configured.
+5. The approved GST rate is configured explicitly.
+6. The catalog explicitly records whether `price_inr` includes or excludes GST.
+7. Founder/admin explicitly enables `commerce_enabled` after reviewing the price and statutory tax configuration.
 
-Existing products default to `commerce_enabled = false`. Do not invent production prices, GST rates, HSN codes, stock quantities, or statutory seller data in code.
+Saving or changing GST/HSN configuration automatically disables commerce so the product must be reviewed again before sales resume. Existing products default to `commerce_enabled = false`. Do not invent production prices, GST rates, HSN codes, stock quantities, seller GSTIN, place-of-supply treatment or other statutory data in code.
+
+At checkout the server snapshots HSN, GST rate, GST-inclusive/exclusive treatment, taxable value, tax amount and gross line total into `order_items`. Payment initialization refuses orders with missing or internally inconsistent tax snapshots. Historical order tax snapshots must not be recalculated from the live catalog after purchase.
+
+### Database release rule
+
+All committed Supabase migrations through the exact release head must be applied before enabling checkout. In particular, the India tax configuration migration and the line-level rounding/reconciliation migration must be present before Razorpay payment collection is enabled. Never enable customer payment collection against an application/schema version mismatch.
 
 ### Pre-release verification
 
@@ -57,10 +66,12 @@ Before merging a production commerce change:
 1. GitHub Quality Gate must install from the committed `package-lock.json` using `npm ci`.
 2. Production dependency audit must have no high or critical finding.
 3. TypeScript/typecheck and the production Next.js build must pass for the exact PR head.
-4. Supabase migrations must be applied and security advisors reviewed.
-5. Production data invariants must show no duplicate active carts/payments or unresolved payment/refund reconciliation anomalies.
-6. Vercel preview must successfully build the exact latest PR head when deployment capacity is available.
-7. Only after preview validation should the PR merge and the exact merge commit be verified in production.
+4. Migration filenames must have unique ordered versions and every required Supabase migration for the exact head must be applied.
+5. Supabase security advisors must be reviewed after DDL changes.
+6. Production data invariants must show no duplicate active carts/payments or unresolved payment/refund reconciliation anomalies.
+7. No commerce-enabled product may be missing positive INR pricing or explicit GST/HSN configuration.
+8. Vercel preview must successfully build the exact latest PR head when deployment capacity is available.
+9. Only after preview validation should the PR merge and the exact merge commit be verified in production.
 
 Vercel quota/rate limits are deployment blockers only; they must not be worked around by merging unverified code. While a deployment gate is blocked, continue non-deployment engineering and validation work rather than weakening the gate.
 
