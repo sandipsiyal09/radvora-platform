@@ -46,7 +46,13 @@ function buildContentSecurityPolicy() {
   return directives.join('; ')
 }
 
-function applySecurityHeaders(response: NextResponse, request: NextRequest) {
+function isPrivateOrApiPath(pathname: string) {
+  return ['/admin', '/account', '/cart', '/checkout', '/login', '/api'].some(
+    prefix => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  )
+}
+
+function applySecurityHeaders(response: NextResponse, request: NextRequest, requestId: string) {
   response.headers.set('Content-Security-Policy', buildContentSecurityPolicy())
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('X-Frame-Options', 'DENY')
@@ -60,6 +66,13 @@ function applySecurityHeaders(response: NextResponse, request: NextRequest) {
   response.headers.set('Origin-Agent-Cluster', '?1')
   response.headers.set('X-DNS-Prefetch-Control', 'off')
   response.headers.set('X-Permitted-Cross-Domain-Policies', 'none')
+  response.headers.set('X-Request-ID', requestId)
+
+  if (isPrivateOrApiPath(request.nextUrl.pathname)) {
+    response.headers.set('Cache-Control', 'private, no-store, max-age=0')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive')
+  }
 
   if (request.nextUrl.protocol === 'https:' && process.env.NODE_ENV === 'production') {
     response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
@@ -69,13 +82,17 @@ function applySecurityHeaders(response: NextResponse, request: NextRequest) {
 }
 
 export async function proxy(request: NextRequest) {
-  let response = NextResponse.next({ request })
+  const requestId = request.headers.get('x-request-id')?.trim().slice(0, 128) || crypto.randomUUID()
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-request-id', requestId)
+  const buildResponse = () => NextResponse.next({ request: { headers: requestHeaders } })
+  let response = buildResponse()
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 
   if (!url || !publishableKey) {
-    return applySecurityHeaders(response, request)
+    return applySecurityHeaders(response, request, requestId)
   }
 
   const supabase = createServerClient(url, publishableKey, {
@@ -85,7 +102,7 @@ export async function proxy(request: NextRequest) {
       },
       setAll(cookiesToSet: CookieToSet[]) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-        response = NextResponse.next({ request })
+        response = buildResponse()
         cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
       },
     },
@@ -94,7 +111,7 @@ export async function proxy(request: NextRequest) {
   // Refresh the auth session when needed. Do not trust cookie presence alone.
   await supabase.auth.getUser()
 
-  return applySecurityHeaders(response, request)
+  return applySecurityHeaders(response, request, requestId)
 }
 
 export const config = {
