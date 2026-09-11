@@ -4,7 +4,7 @@ import { createAdminClient } from '../../../lib/supabase/admin'
 
 export const dynamic='force-dynamic'
 
-const EXPECTED_RUNTIME_SCHEMA_VERSION='202609110047'
+const EXPECTED_RUNTIME_SCHEMA_VERSION='202609110048'
 type Check={label:string;ready:boolean;detail:string;href?:string}
 type AgentRow={id:string;name:string;enabled:boolean;autonomy_level:number;allowed_tools:unknown}
 type GuardrailRow={agent_id:string;max_single_spend:number|string|null;max_daily_spend:number|string|null;require_approval_for_external_publish:boolean;require_approval_for_money:boolean;require_approval_for_claims:boolean}
