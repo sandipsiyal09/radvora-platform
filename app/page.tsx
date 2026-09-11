@@ -4,10 +4,11 @@ import { useEffect, useRef, useState } from 'react'
 
 const products = [
   { name: 'ShieldTag Pro', meta: 'Flagship · Serialized', icon: '◉' },
-  { name: 'ShieldCase', meta: 'Device-specific protection', icon: '▣' },
-  { name: 'ShieldCard', meta: 'Portable RF accessory', icon: '◇' },
-  { name: 'HomeSphere', meta: 'Connected-space concept', icon: '●' },
+  { name: 'ShieldTag Core', meta: 'ShieldTag product family', icon: '◇' },
+  { name: 'ShieldTag Elite', meta: 'ShieldTag product family', icon: '◆' },
+  { name: 'RF Case', meta: 'RF-focused accessory', icon: '▣' },
   { name: 'SafeStand', meta: 'Distance-first design', icon: '⌁' },
+  { name: 'Family Pack', meta: 'Multi-product configuration', icon: '●' },
 ]
 
 const nav = [
@@ -100,7 +101,7 @@ export default function Home() {
         <div className="section-head"><div><span className="kicker">RADVORA ECOSYSTEM</span><h2>Products designed around transparent engineering.</h2></div><a href="/products">View all products →</a></div>
         <div className="product-showcase">
           <div className="product-tabs">{products.map((p,i)=><button key={p.name} onClick={()=>setActiveProduct(i)} className={i===activeProduct?'active':''}><span>{p.icon}</span><div><b>{p.name}</b><small>{p.meta}</small></div></button>)}</div>
-          <div className="product-preview glass"><span className="kicker">SELECTED CONCEPT</span><h3>{products[activeProduct].name}</h3><p>{products[activeProduct].meta}. Product-specific commercial availability, compatibility and evidence status are shown only on the corresponding live product record.</p><a className="pill ghost" href="/products">Open catalog →</a></div>
+          <div className="product-preview glass"><span className="kicker">CATALOG FAMILY</span><h3>{products[activeProduct].name}</h3><p>{products[activeProduct].meta}. Product-specific commercial availability, compatibility and evidence status are shown only on the corresponding live product record.</p><a className="pill ghost" href="/products">Open catalog →</a></div>
         </div>
       </section>
 
