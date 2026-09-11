@@ -12,7 +12,7 @@ type Body={action?:'review'|'publish';reviewType?:'scientific'|'compliance';deci
 function json(body:Record<string,unknown>,status=200){return NextResponse.json(body,{status,headers:{'Cache-Control':'no-store'}})}
 function invalidOrigin(request:Request){
   if(request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site') return true
-  const origin=request.headers.get('origin'); if(!origin) return false
+  const origin=request.headers.get('origin'); if(!origin) return true
   try{
     const supplied=new URL(origin).origin
     const requestOrigin=new URL(request.url).origin
