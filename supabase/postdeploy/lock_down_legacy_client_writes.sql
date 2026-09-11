@@ -35,9 +35,28 @@ begin
   end loop;
 end $$;
 
--- Customer support/warranty creation and staff transitions use controlled RPCs.
+-- Customer support/warranty creation stays on controlled customer RPCs, while staff transitions
+-- and fulfillment now pass through authenticated Next.js admin routes backed by service-role-only
+-- server_* RPCs. Remove obsolete direct table writes and legacy browser transition RPCs.
 revoke insert, update on table public.support_tickets from authenticated;
 revoke insert, update on table public.warranty_claims from authenticated;
+do $$
+declare r record;
+begin
+  for r in
+    select p.oid::regprocedure as signature
+    from pg_proc p
+    join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='public'
+      and p.proname in (
+        'transition_order_fulfillment',
+        'transition_support_ticket',
+        'transition_warranty_claim'
+      )
+  loop
+    execute format('revoke execute on function %s from authenticated',r.signature);
+  end loop;
+end $$;
 
 -- High-impact scientific and AI controls now go through authenticated Next.js server routes
 -- backed by service-role-only server_* RPCs. Remove their old direct browser RPC surface.
@@ -52,11 +71,11 @@ commit;
 -- 1. customer cart -> checkout -> expiring Razorpay Payment Link creation/reuse works;
 -- 2. payment_link.paid / payment_link.cancelled / payment_link.expired webhooks reconcile correctly;
 -- 3. product registration works with serial + private QR token;
--- 4. support and warranty submissions work;
+-- 4. support and warranty customer submissions work;
 -- 5. admin catalog, GST/HSN, commerce and governed inventory controls work only through server routes;
--- 6. customer-care transitions work;
+-- 6. fulfillment/support/warranty staff transitions work only through the authenticated admin Operations route;
 -- 7. scientific review/publish, approval decisions and AI configuration work only through server routes;
 -- 8. information_schema.role_table_grants shows no obsolete authenticated writes;
--- 9. routine authenticated users can no longer execute the revoked legacy catalog/scientific/AI RPCs;
--- 10. /api/health reports database, commerce_schema and payment_session_schema = ok;
+-- 9. routine authenticated users can no longer execute the revoked legacy catalog/operations/scientific/AI RPCs;
+-- 10. /api/health reports database, commerce_schema, payment_session_schema, seller_profile and runtime_schema_version = ok;
 -- 11. Supabase security/performance advisors are re-run and reviewed.
