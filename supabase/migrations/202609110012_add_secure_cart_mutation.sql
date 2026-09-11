@@ -1,7 +1,3 @@
-create unique index if not exists carts_one_active_per_user
-on public.carts(user_id)
-where status = 'active';
-
 create or replace function public.add_product_to_cart(p_product_id uuid, p_quantity integer default 1)
 returns table(cart_id uuid, item_id uuid, quantity integer)
 language plpgsql
