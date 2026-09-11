@@ -1,7 +1,15 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '../../lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata:Metadata={
+  title:'Products',
+  description:'Explore active RADVORA products with serialized authenticity, compatibility guidance and evidence-linked product information.',
+  alternates:{canonical:'/products'},
+  openGraph:{title:'RADVORA Products',description:'Explore active RADVORA technology products with evidence-gated claims.',url:'/products'}
+}
 
 export default async function ProductsPage(){
   const supabase = await createClient()

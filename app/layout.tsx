@@ -8,10 +8,8 @@ export const metadata: Metadata = {
   title:{default:'RADVORA Technologies — Technology you can measure',template:'%s | RADVORA Technologies'},
   description:'Premium RF-focused accessories and digital-wellness technology built around measurable engineering and transparent testing.',
   applicationName:'RADVORA Technologies',
-  alternates:{canonical:'/'},
   openGraph:{
     type:'website',
-    url:'/',
     siteName:'RADVORA Technologies',
     title:'RADVORA Technologies — Technology you can measure',
     description:'RF-focused accessories and digital-wellness technology built around measurable engineering and transparent testing.'
@@ -25,7 +23,7 @@ const organizationSchema={
   '@type':'Organization',
   name:'RADVORA Technologies',
   url:siteUrl,
-  slogan:'Smarter Technology. Smarter Exposure.',
+  slogan:'Technology you can measure.',
   description:'Consumer technology company developing RF-focused accessories and digital-wellness products with evidence-gated product claims.'
 }
 

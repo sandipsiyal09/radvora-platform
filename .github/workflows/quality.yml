@@ -12,24 +12,115 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     env:
-      NEXT_PUBLIC_SUPABASE_URL: https://kugawqpvfikynithyefa.supabase.co
-      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_RwaaDUGHYP0D7za9Mo8xvg_A9sNhfim
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Validate migration versions and runtime markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          versions=$(find supabase/migrations -maxdepth 1 -type f -name '*.sql' -printf '%f\n' \
+            | sed -E 's/^([0-9]+)_.*/\1/' \
+            | sort)
+          duplicates=$(printf '%s\n' "$versions" | uniq -d)
+          if [ -n "$duplicates" ]; then
+            echo "Duplicate Supabase migration versions detected:"
+            echo "$duplicates"
+            exit 1
+          fi
+          latest=$(printf '%s\n' "$versions" | tail -1)
+          node - "$latest" <<'NODE'
+          const fs = require('fs')
+          const latest = process.argv[2]
+          const files = ['app/api/health/route.ts', 'app/admin/readiness/page.tsx']
+          for (const file of files) {
+            const source = fs.readFileSync(file, 'utf8')
+            const match = source.match(/EXPECTED_RUNTIME_SCHEMA_VERSION='([0-9]+)'/)
+            if (!match) {
+              console.error(`${file} does not declare EXPECTED_RUNTIME_SCHEMA_VERSION.`)
+              process.exit(1)
+            }
+            if (match[1] !== latest) {
+              console.error(`${file} runtime schema marker ${match[1]} does not match latest migration ${latest}.`)
+              process.exit(1)
+            }
+          }
+          console.log(`Runtime schema markers match latest migration: ${latest}`)
+          NODE
+
+      - name: Enforce India-only payment runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          for forbidden in 'STRIPE_' '/api/checkout/stripe' '/api/webhooks/stripe'; do
+            if grep -RniF --exclude='*.map' --exclude-dir='.next' --exclude-dir='node_modules' \
+              "$forbidden" app lib package.json .env.example 2>/dev/null; then
+              echo "Forbidden Stripe runtime/configuration reference found: $forbidden"
+              exit 1
+            fi
+          done
+          node - <<'NODE'
+          const p = require('./package.json')
+          const deps = { ...(p.dependencies || {}), ...(p.devDependencies || {}) }
+          if (Object.prototype.hasOwnProperty.call(deps, 'stripe')) {
+            console.error('The stripe package must not be present in package.json.')
+            process.exit(1)
+          }
+          console.log('India-only payment runtime check passed.')
+          NODE
+
+      - name: Guard private response and release observability controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const proxy = fs.readFileSync('proxy.ts', 'utf8')
+          const health = fs.readFileSync('app/api/health/route.ts', 'utf8')
+          const requiredProxySnippets = [
+            "response.headers.set('X-Request-ID', requestId)",
+            "response.headers.set('Cache-Control', 'private, no-store, max-age=0')",
+            "response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive')",
+            "requestHeaders.set('x-request-id', requestId)",
+          ]
+          for (const snippet of requiredProxySnippets) {
+            if (!proxy.includes(snippet)) {
+              console.error(`Missing private-response/request-tracing control: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          const requiredHealthSnippets = [
+            'VERCEL_GIT_COMMIT_SHA',
+            'VERCEL_GIT_COMMIT_REF',
+            'VERCEL_ENV',
+            'releaseMetadata()',
+          ]
+          for (const snippet of requiredHealthSnippets) {
+            if (!health.includes(snippet)) {
+              console.error(`Missing deployment release metadata control: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          console.log('Private response and release observability controls are present.')
+          NODE
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: package.json
 
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Type check
-        run: npx tsc --noEmit
+        run: npm run typecheck
 
       - name: Production build
         run: npm run build

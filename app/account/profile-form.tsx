@@ -14,38 +14,46 @@ export default function ProfileForm({ profile, email }: { profile: Profile | nul
     setBusy(true)
     setMessage('')
 
-    const form = new FormData(event.currentTarget)
-    const fullName = String(form.get('full_name') || '').trim()
-    const phone = String(form.get('phone') || '').trim()
+    try {
+      const form = new FormData(event.currentTarget)
+      const fullName = String(form.get('full_name') || '').trim()
+      const phone = String(form.get('phone') || '').trim()
 
-    if (fullName.length > 120) {
-      setMessage('Name must be 120 characters or fewer.')
+      if (fullName.length > 120) {
+        setMessage('Name must be 120 characters or fewer.')
+        return
+      }
+      if (phone.length > 32) {
+        setMessage('Phone number must be 32 characters or fewer.')
+        return
+      }
+
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setMessage('Please sign in again.')
+        return
+      }
+
+      const { error } = await supabase.from('profiles').upsert({
+        id: user.id,
+        full_name: fullName || null,
+        phone: phone || null,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'id' })
+
+      if (error) {
+        console.error('profile_update_failed', error)
+        setMessage('Unable to save your profile. Please try again.')
+        return
+      }
+      setMessage('Profile saved.')
+    } catch (error) {
+      console.error('profile_update_failed', error)
+      setMessage('Unable to save your profile. Please try again.')
+    } finally {
       setBusy(false)
-      return
     }
-    if (phone.length > 32) {
-      setMessage('Phone number must be 32 characters or fewer.')
-      setBusy(false)
-      return
-    }
-
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      setMessage('Please sign in again.')
-      setBusy(false)
-      return
-    }
-
-    const { error } = await supabase.from('profiles').upsert({
-      id: user.id,
-      full_name: fullName || null,
-      phone: phone || null,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'id' })
-
-    setMessage(error ? error.message : 'Profile saved.')
-    setBusy(false)
   }
 
   return <form className="panel" onSubmit={saveProfile}>

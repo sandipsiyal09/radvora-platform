@@ -4,16 +4,50 @@ import { createAdminClient } from '../../../lib/supabase/admin'
 export const dynamic = 'force-dynamic'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const MAX_BODY_BYTES = 8 * 1024
+const ALLOWED_SOURCES = new Set(['business-page','dealer-page','distributor-page','contact-page','privacy-page','website'])
 
 function clean(value: unknown, maxLength: number) {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : ''
 }
 
-export async function POST(request: NextRequest) {
-  let body: Record<string, unknown>
-
+function invalidOrigin(request: NextRequest) {
+  if (request.headers.get('sec-fetch-site')?.toLowerCase() === 'cross-site') return true
+  const origin = request.headers.get('origin')
+  if (!origin) return false
   try {
-    body = await request.json()
+    const supplied = new URL(origin).origin
+    const requestOrigin = request.nextUrl.origin
+    const configured = process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL).origin : requestOrigin
+    return supplied !== requestOrigin && supplied !== configured
+  } catch {
+    return true
+  }
+}
+
+export async function POST(request: NextRequest) {
+  if (invalidOrigin(request)) {
+    return NextResponse.json({ error: 'Invalid enquiry origin.' }, { status: 403 })
+  }
+
+  const rawLength = request.headers.get('content-length')
+  if (rawLength && Number(rawLength) > MAX_BODY_BYTES) {
+    return NextResponse.json({ error: 'Enquiry is too large.' }, { status: 413 })
+  }
+
+  let rawBody: string
+  try {
+    rawBody = await request.text()
+  } catch {
+    return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
+  }
+  if (Buffer.byteLength(rawBody, 'utf8') > MAX_BODY_BYTES) {
+    return NextResponse.json({ error: 'Enquiry is too large.' }, { status: 413 })
+  }
+
+  let body: Record<string, unknown>
+  try {
+    body = JSON.parse(rawBody)
   } catch {
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
   }
@@ -27,7 +61,9 @@ export async function POST(request: NextRequest) {
   const email = clean(body.email, 320).toLowerCase()
   const phone = clean(body.phone, 40)
   const company = clean(body.company, 160)
-  const source = clean(body.source, 80) || 'website'
+  const requestedSource = clean(body.source, 80) || 'website'
+  const source = ALLOWED_SOURCES.has(requestedSource) ? requestedSource : 'website'
+  const segment = source === 'privacy-page' ? 'privacy' : 'business'
   const notes = clean(body.notes, 3000)
 
   if (fullName.length < 2 || !EMAIL_PATTERN.test(email)) {
@@ -54,7 +90,7 @@ export async function POST(request: NextRequest) {
       phone: phone || null,
       company: company || null,
       source,
-      segment: 'business',
+      segment,
       status: 'new',
       score: 0,
       notes: notes || null,
