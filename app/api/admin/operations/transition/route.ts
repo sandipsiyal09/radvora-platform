@@ -11,7 +11,7 @@ function json(body:Record<string,unknown>,status=200){return NextResponse.json(b
 function clean(value:unknown,max:number){return typeof value==='string'?value.trim().slice(0,max):''}
 function invalidOrigin(request:Request){
   if(request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site')return true
-  const origin=request.headers.get('origin');if(!origin)return false
+  const origin=request.headers.get('origin');if(!origin)return true
   try{const supplied=new URL(origin).origin;const requestOrigin=new URL(request.url).origin;const configured=process.env.NEXT_PUBLIC_APP_URL?new URL(process.env.NEXT_PUBLIC_APP_URL).origin:requestOrigin;return supplied!==requestOrigin&&supplied!==configured}catch{return true}
 }
 

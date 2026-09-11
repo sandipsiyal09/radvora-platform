@@ -12,7 +12,7 @@ type Body={enabled?:boolean;autonomyLevel?:number;allowedTools?:unknown;guardrai
 function json(body:Record<string,unknown>,status=200){return NextResponse.json(body,{status,headers:{'Cache-Control':'no-store'}})}
 function invalidOrigin(request:Request){
   if(request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site') return true
-  const origin=request.headers.get('origin'); if(!origin) return false
+  const origin=request.headers.get('origin'); if(!origin) return true
   try{
     const supplied=new URL(origin).origin
     const requestOrigin=new URL(request.url).origin
@@ -23,6 +23,7 @@ function invalidOrigin(request:Request){
 
 export async function POST(request:Request,{params}:Params){
   if(invalidOrigin(request)) return json({error:'Invalid agent control origin.'},403)
+  if(!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) return json({error:'Content-Type must be application/json.'},415)
   const {id}=await params
   if(!UUID.test(id)) return json({error:'Invalid agent identifier.'},400)
   const supabase=await createClient()

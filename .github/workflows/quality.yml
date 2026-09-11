@@ -199,6 +199,34 @@ jobs:
           console.log('Admin payment/refund routes require explicit trusted origins.')
           NODE
 
+      - name: Guard privileged admin request origins
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const routes = [
+            ['app/api/admin/catalog/products/[id]/route.ts', 'catalog/tax/inventory controls'],
+            ['app/api/admin/commerce/seller-profile/route.ts', 'seller identity updates'],
+            ['app/api/admin/operations/transition/route.ts', 'Operations transitions'],
+            ['app/api/admin/labs/claims/[id]/route.ts', 'scientific claim governance'],
+            ['app/api/admin/ai/approvals/[id]/route.ts', 'human approval decisions'],
+            ['app/api/admin/ai/agents/[id]/route.ts', 'AI agent configuration'],
+          ]
+          for (const [path, label] of routes) {
+            const source = fs.readFileSync(path, 'utf8')
+            if (!source.includes("sec-fetch-site") || !source.includes('NEXT_PUBLIC_APP_URL')) {
+              console.error(`Admin ${label} is missing cross-site or canonical-origin validation.`)
+              process.exit(1)
+            }
+            if (!source.includes('if(!origin)return true') && !source.includes('if(!origin) return true')) {
+              console.error(`Admin ${label} must reject requests with a missing Origin header.`)
+              process.exit(1)
+            }
+          }
+          console.log('All privileged admin mutation routes require explicit trusted origins.')
+          NODE
+
       - name: Guard post-deploy privilege lockdown
         shell: bash
         run: |
