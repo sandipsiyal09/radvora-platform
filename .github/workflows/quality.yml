@@ -107,6 +107,32 @@ jobs:
           console.log('Private response and release observability controls are present.')
           NODE
 
+      - name: Guard auth callback redirect safety
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const source = fs.readFileSync('app/auth/callback/route.ts', 'utf8')
+          const required = [
+            'NEXT_PUBLIC_APP_URL',
+            'destination.origin !== origin',
+            "return NextResponse.redirect(destination)",
+            "/[\\\\\\u0000-\\u001f\\u007f]/",
+          ]
+          for (const snippet of required) {
+            if (!source.includes(snippet)) {
+              console.error(`Auth callback redirect hardening is missing required control: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          if (source.includes("value.startsWith('/')") && !source.includes('destination.origin !== origin')) {
+            console.error('Auth callback must validate the resolved destination origin, not only the raw path prefix.')
+            process.exit(1)
+          }
+          console.log('Auth callback same-origin redirect controls are present.')
+          NODE
+
       - name: Guard post-deploy privilege lockdown
         shell: bash
         run: |
