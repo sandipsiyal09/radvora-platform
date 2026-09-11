@@ -3,7 +3,7 @@ import { createAdminClient } from '../../../lib/supabase/admin'
 
 export const dynamic='force-dynamic'
 
-const EXPECTED_RUNTIME_SCHEMA_VERSION='202609110047'
+const EXPECTED_RUNTIME_SCHEMA_VERSION='202609110048'
 const requiredRuntimeConfig=['NEXT_PUBLIC_SUPABASE_URL','NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY','SUPABASE_SERVICE_ROLE_KEY']
 function responseHeaders(){return {'Cache-Control':'no-store'}}
 
