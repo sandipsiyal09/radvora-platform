@@ -13,20 +13,21 @@ export async function GET(){
   const indiaPaymentsConfigured=Boolean(process.env.RAZORPAY_KEY_ID?.trim()&&process.env.RAZORPAY_KEY_SECRET?.trim()&&process.env.RAZORPAY_WEBHOOK_SECRET?.trim())
 
   if(!configurationReady){
-    return NextResponse.json({service:'radvora-platform',status:'degraded',checks:{configuration:'unavailable',database:'not_checked',commerce_schema:'not_checked',canonical_url:canonicalUrlReady?'configured':'not_configured',india_payments:indiaPaymentsConfigured?'configured':'not_configured'},timestamp},{status:503,headers:responseHeaders()})
+    return NextResponse.json({service:'radvora-platform',status:'degraded',checks:{configuration:'unavailable',database:'not_checked',commerce_schema:'not_checked',payment_session_schema:'not_checked',canonical_url:canonicalUrlReady?'configured':'not_configured',india_payments:indiaPaymentsConfigured?'configured':'not_configured'},timestamp},{status:503,headers:responseHeaders()})
   }
 
   try{
     const supabase=createAdminClient()
-    const [{error:productError},{error:itemError}]=await Promise.all([
+    const [{error:productError},{error:itemError},{error:paymentError}]=await Promise.all([
       supabase.from('products').select('id,commerce_enabled,hsn_code,gst_rate,price_inr_includes_gst,stock_on_hand,stock_reserved',{count:'exact',head:true}).limit(1),
-      supabase.from('order_items').select('id,line_subtotal,tax_amount,hsn_code,gst_rate,price_includes_gst,inventory_reserved_quantity',{count:'exact',head:true}).limit(1)
+      supabase.from('order_items').select('id,line_subtotal,tax_amount,hsn_code,gst_rate,price_includes_gst,inventory_reserved_quantity',{count:'exact',head:true}).limit(1),
+      supabase.from('payment_attempts').select('id,provider_session_id,provider_session_url,provider_session_expires_at',{count:'exact',head:true}).limit(1)
     ])
-    if(productError||itemError) throw productError||itemError
+    if(productError||itemError||paymentError) throw productError||itemError||paymentError
 
-    return NextResponse.json({service:'radvora-platform',status:'ok',checks:{configuration:'ok',database:'ok',commerce_schema:'ok',canonical_url:canonicalUrlReady?'configured':'not_configured',india_payments:indiaPaymentsConfigured?'configured':'not_configured'},timestamp},{status:200,headers:responseHeaders()})
+    return NextResponse.json({service:'radvora-platform',status:'ok',checks:{configuration:'ok',database:'ok',commerce_schema:'ok',payment_session_schema:'ok',canonical_url:canonicalUrlReady?'configured':'not_configured',india_payments:indiaPaymentsConfigured?'configured':'not_configured'},timestamp},{status:200,headers:responseHeaders()})
   }catch(error){
     console.error('health_check_failed',error)
-    return NextResponse.json({service:'radvora-platform',status:'degraded',checks:{configuration:'ok',database:'unavailable_or_schema_mismatch',commerce_schema:'unavailable_or_outdated',canonical_url:canonicalUrlReady?'configured':'not_configured',india_payments:indiaPaymentsConfigured?'configured':'not_configured'},timestamp},{status:503,headers:responseHeaders()})
+    return NextResponse.json({service:'radvora-platform',status:'degraded',checks:{configuration:'ok',database:'unavailable_or_schema_mismatch',commerce_schema:'unavailable_or_outdated',payment_session_schema:'unavailable_or_outdated',canonical_url:canonicalUrlReady?'configured':'not_configured',india_payments:indiaPaymentsConfigured?'configured':'not_configured'},timestamp},{status:503,headers:responseHeaders()})
   }
 }
