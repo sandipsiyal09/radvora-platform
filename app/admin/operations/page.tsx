@@ -6,6 +6,8 @@ import RefundOrderButton from './refund-order-button'
 
 export const dynamic='force-dynamic'
 
+type ReservedItem={order_id:string;inventory_reserved_quantity:number;orders:{order_number:string;status:string;created_at:string}|null;products:{name:string;sku:string}|null}
+
 export default async function AdminOperationsPage(){
   const supabase=await createClient()
   const {data:{user}}=await supabase.auth.getUser()
@@ -13,21 +15,27 @@ export default async function AdminOperationsPage(){
   const role=user.app_metadata?.role
   if(role!=='admin'&&role!=='founder'){return <main className="page-wrap"><div className="shell"><section className="panel"><span className="kicker">ACCESS CONTROL</span><h1>Founder/admin access required.</h1></section></div></main>}
 
-  const [{data:orders},{data:payments},{data:refunds},{data:support},{data:warranty}]=await Promise.all([
+  const [{data:orders},{data:payments},{data:refunds},{data:support},{data:warranty},{data:reservedRows}]=await Promise.all([
     supabase.from('orders').select('id,order_number,email,status,total,currency,created_at,shipping_name,shipping_phone,shipping_line1,shipping_line2,shipping_city,shipping_state,shipping_postal_code,shipping_country,fulfillment_carrier,tracking_number,tracking_url,shipped_at,delivered_at').order('created_at',{ascending:false}).limit(20),
     supabase.from('payment_attempts').select('id,order_id,provider,amount,currency,status,failure_code,created_at').order('created_at',{ascending:false}).limit(20),
     supabase.from('refund_attempts').select('id,order_id,amount,currency,status,reason,provider_refund_id,failure_code,created_at,processed_at').order('created_at',{ascending:false}).limit(20),
     supabase.from('support_tickets').select('id,subject,status,created_at,user_id').order('created_at',{ascending:false}).limit(20),
     supabase.from('warranty_claims').select('id,issue_type,status,resolution_note,created_at,user_id').order('created_at',{ascending:false}).limit(20),
+    supabase.from('order_items').select('order_id,inventory_reserved_quantity,orders(order_number,status,created_at),products(name,sku)').gt('inventory_reserved_quantity',0).limit(100)
   ])
 
   const money=(amount:number|string|null,currency='INR')=>new Intl.NumberFormat('en-IN',{style:'currency',currency:currency||'INR'}).format(Number(amount||0))
   const gatewayReady=Boolean(process.env.RAZORPAY_KEY_ID&&process.env.RAZORPAY_KEY_SECRET&&process.env.RAZORPAY_WEBHOOK_SECRET)
   const refundsByOrder=new Map((refunds||[]).map(refund=>[refund.order_id,refund]))
+  const activePaymentsByOrder=new Map((payments||[]).filter(p=>['created','pending','authorized','captured'].includes(p.status)).map(p=>[p.order_id,p]))
+  const now=Date.now()
+  const reserved=(reservedRows||[]) as unknown as ReservedItem[]
+  const staleReservations=reserved.filter(row=>row.orders?.status==='pending'&&now-Date.parse(row.orders.created_at)>60*60*1000)
 
   return <main className="page-wrap"><div className="shell">
-    <section className="page-head"><span className="kicker">RADVORA OPERATIONS</span><h1>Orders, payments and customer care.</h1><p>Payment and refund completion remain provider-verified. Fulfillment, refund, support and warranty decisions require explicit human action and controlled server/database transitions.</p><div className="actions"><Link className="pill ghost" href="/admin">← Admin dashboard</Link></div></section>
+    <section className="page-head"><span className="kicker">RADVORA OPERATIONS</span><h1>Orders, payments, inventory and customer care.</h1><p>Payment/refund completion remains provider-verified. Inventory reservations are never auto-released solely because of age: stale pending reservations require payment-state reconciliation first.</p><div className="actions"><Link className="pill ghost" href="/admin">← Admin dashboard</Link></div></section>
     <div className="admin-grid">
+      <section className="panel"><span className="kicker">STALE INVENTORY RESERVATIONS</span><h2>{staleReservations.length}</h2>{staleReservations.length?staleReservations.map((row,index)=>{const payment=activePaymentsByOrder.get(row.order_id);return <div className="admin-row" key={`${row.order_id}-${index}`}><div><b>{row.orders?.order_number||row.order_id}</b><span>{row.products?.name||row.products?.sku||'Product'} · {row.inventory_reserved_quantity} reserved · order pending since {row.orders?.created_at?new Date(row.orders.created_at).toLocaleString('en-IN'):'unknown'}</span><p className="empty-state">Payment state: {payment?`${payment.provider} ${payment.status}`:'no active attempt in recent operations view'}. Reconcile provider state before cancellation/release.</p></div><em>REVIEW</em></div>}):<p className="empty-state">No pending inventory reservation older than one hour was found in the loaded operations window.</p>}</section>
       <section className="panel"><span className="kicker">RECENT ORDERS</span><h2>{orders?.length??0}</h2>{orders?.length?orders.map(order=>{const refund=refundsByOrder.get(order.id);return <div className="admin-row" key={order.id}><div style={{flex:1}}><b>{order.order_number}</b><span>{order.email||'No email'} · {money(order.total,order.currency)} · {order.status}</span>{order.shipping_line1?<p className="empty-state">Ship to: {order.shipping_name||'Customer'} · {order.shipping_line1}{order.shipping_line2?`, ${order.shipping_line2}`:''}, {order.shipping_city||''} {order.shipping_postal_code||''}, {order.shipping_state||''} {order.shipping_country||''}{order.shipping_phone?` · ${order.shipping_phone}`:''}</p>:order.status!=='pending'?<p className="empty-state">Shipping address not yet captured.</p>:null}{order.fulfillment_carrier&&order.tracking_number?<p className="empty-state">{order.fulfillment_carrier} · {order.tracking_number}{order.tracking_url?<><br/><a href={order.tracking_url} target="_blank" rel="noreferrer">Open tracking →</a></>:null}</p>:null}{refund?<p className="empty-state">Refund: {refund.status} · {money(refund.amount,refund.currency)} · {refund.reason}</p>:null}<FulfillmentActions id={order.id} status={order.status} carrier={order.fulfillment_carrier} trackingNumber={order.tracking_number} trackingUrl={order.tracking_url}/>{['paid','processing'].includes(order.status)&&!refund?<RefundOrderButton orderId={order.id} gatewayReady={gatewayReady}/>:null}</div></div>}):<p className="empty-state">No orders yet.</p>}</section>
       <section className="panel"><span className="kicker">PAYMENT ATTEMPTS</span><h2>{payments?.length??0}</h2>{payments?.length?payments.map(payment=><div className="admin-row" key={payment.id}><div><b>{payment.provider}</b><span>{money(payment.amount,payment.currency)}{payment.failure_code?` · ${payment.failure_code}`:''}</span></div><em>{payment.status}</em></div>):<p className="empty-state">No payment attempts yet.</p>}</section>
       <section className="panel"><span className="kicker">REFUNDS</span><h2>{refunds?.length??0}</h2>{refunds?.length?refunds.map(refund=><div className="admin-row" key={refund.id}><div><b>{money(refund.amount,refund.currency)}</b><span>{refund.reason} · {new Date(refund.created_at).toLocaleString('en-IN')}{refund.provider_refund_id?` · ${refund.provider_refund_id}`:''}{refund.failure_code?` · ${refund.failure_code}`:''}</span></div><em>{refund.status}</em></div>):<p className="empty-state">No refunds yet.</p>}</section>
