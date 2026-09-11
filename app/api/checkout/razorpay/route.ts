@@ -8,9 +8,11 @@ const MAX_BODY_BYTES=8192
 const PIN_PATTERN=/^[1-9][0-9]{5}$/
 const PHONE_PATTERN=/^(?:\+91|91)?[6-9][0-9]{9}$/
 const STALE_INITIALIZATION_MS=2*60*1000
+const CHECKOUT_TERMS_VERSION='2026-09-11-india-v1'
 
 type CheckoutBody={
   orderId?:string
+  acceptedPolicies?:boolean
   name?:string
   phone?:string
   line1?:string
@@ -35,6 +37,8 @@ type CheckoutOrder={
   shipping_state?:string|null
   shipping_postal_code?:string|null
   shipping_country?:string|null
+  checkout_terms_accepted_at?:string|null
+  checkout_terms_version?:string|null
 }
 
 function json(body:Record<string,unknown>,status=200){return NextResponse.json(body,{status,headers:{'Cache-Control':'no-store'}})}
@@ -87,10 +91,11 @@ export async function POST(request:Request){
 
   if(body.orderId){
     const {data,error}=await supabase.from('orders')
-      .select('id,order_number,total,currency,status,shipping_name,shipping_phone,shipping_line1,shipping_line2,shipping_city,shipping_state,shipping_postal_code,shipping_country')
+      .select('id,order_number,total,currency,status,shipping_name,shipping_phone,shipping_line1,shipping_line2,shipping_city,shipping_state,shipping_postal_code,shipping_country,checkout_terms_accepted_at,checkout_terms_version')
       .eq('id',body.orderId).eq('user_id',user.id).maybeSingle()
     if(error||!data) return json({error:'Order not found.'},404)
     if(data.status!=='pending') return json({error:'Only pending orders can restart payment.'},409)
+    if(!data.checkout_terms_accepted_at||!data.checkout_terms_version) return json({error:'Checkout policy acceptance is required before payment.'},409)
     if(data.shipping_country!=='IN'||!data.shipping_name||!data.shipping_phone||!data.shipping_line1||!data.shipping_city||!data.shipping_state||!PIN_PATTERN.test(data.shipping_postal_code||'')){
       return json({error:'This order does not have a complete Indian delivery address.'},409)
     }
@@ -100,6 +105,7 @@ export async function POST(request:Request){
     phone=normalized
     order=data as CheckoutOrder
   }else{
+    if(body.acceptedPolicies!==true) return json({error:'Please accept the checkout policies before payment.'},400)
     name=clean(body.name,120)
     const normalized=normalizePhone(clean(body.phone,20))
     const line1=clean(body.line1,180)
@@ -121,14 +127,18 @@ export async function POST(request:Request){
     if(!created?.id) return json({error:'Unable to create order.'},400)
     order={...created,status:'pending'} as CheckoutOrder
 
+    const acceptedAt=new Date().toISOString()
     const {error:addressError}=await admin.from('orders').update({
       shipping_name:name,shipping_phone:phone,shipping_line1:line1,shipping_line2:line2||null,
-      shipping_city:city,shipping_state:state,shipping_postal_code:postalCode,shipping_country:'IN',updated_at:new Date().toISOString()
+      shipping_city:city,shipping_state:state,shipping_postal_code:postalCode,shipping_country:'IN',
+      checkout_terms_accepted_at:acceptedAt,checkout_terms_version:CHECKOUT_TERMS_VERSION,updated_at:acceptedAt
     }).eq('id',order.id).eq('user_id',user.id).eq('status','pending')
     if(addressError){
       console.error('india_checkout_address_save_failed',addressError)
-      return json({error:'Unable to save the delivery address.'},500)
+      return json({error:'Unable to save the delivery address and checkout acceptance.'},500)
     }
+    order.checkout_terms_accepted_at=acceptedAt
+    order.checkout_terms_version=CHECKOUT_TERMS_VERSION
   }
 
   if(String(order.currency||'INR').toUpperCase()!=='INR') return json({error:'RADVORA India checkout supports INR only.'},400)
