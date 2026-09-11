@@ -7,6 +7,7 @@ const MAX_BODY_BYTES=2048
 
 type Body={reason?:string}
 type Params={params:Promise<{id:string}>}
+type ProviderRefund={id?:string;payment_id?:string;amount?:number;currency?:string;status?:string;notes?:Record<string,unknown>}
 
 function json(body:Record<string,unknown>,status=200){return NextResponse.json(body,{status,headers:{'Cache-Control':'no-store'}})}
 
@@ -24,6 +25,18 @@ function boundary(request:Request){
     }catch{return json({error:'Invalid refund request origin.'},403)}
   }
   return null
+}
+
+function validateProviderRefund(refund:ProviderRefund,paymentId:string,amountPaise:number,attemptId:string){
+  const notes=refund.notes||{}
+  return Boolean(
+    refund.id&&
+    refund.payment_id===paymentId&&
+    refund.amount===amountPaise&&
+    String(refund.currency||'').toUpperCase()==='INR'&&
+    ['pending','processed'].includes(String(refund.status||''))&&
+    String(notes.refund_attempt_id||'')===attemptId
+  )
 }
 
 export async function POST(request:Request,{params}:Params){
@@ -60,8 +73,8 @@ export async function POST(request:Request,{params}:Params){
   if(Number(payment.amount)!==Number(order.total)||payment.currency!=='INR') return json({error:'Payment and order totals do not reconcile.'},409)
 
   const {data:existing,error:existingError}=await admin.from('refund_attempts')
-    .select('id,status,provider_refund_id,amount,currency,reason')
-    .eq('order_id',orderId).in('status',['requested','pending']).order('created_at',{ascending:false}).limit(1).maybeSingle()
+    .select('id,status,provider_refund_id,amount,currency,reason,submission_started_at')
+    .eq('order_id',orderId).in('status',['requested','submitting','pending']).order('created_at',{ascending:false}).limit(1).maybeSingle()
   if(existingError) return json({error:'Unable to verify refund state safely.'},500)
   if(existing?.status==='pending') return json({ok:true,orderId,refundAttemptId:existing.id,status:'pending',alreadyRequested:true})
 
@@ -69,7 +82,7 @@ export async function POST(request:Request,{params}:Params){
   if(!refundAttempt){
     const {data,error}=await admin.from('refund_attempts').insert({
       order_id:orderId,payment_attempt_id:payment.id,provider:'razorpay',amount:order.total,currency:'INR',status:'requested',reason,requested_by:user.id
-    }).select('id,status,provider_refund_id,amount,currency,reason').single()
+    }).select('id,status,provider_refund_id,amount,currency,reason,submission_started_at').single()
     if(error||!data){
       if(error?.code==='23505') return json({error:'A refund is already being processed for this order.'},409)
       console.error('refund_attempt_create_failed',error)
@@ -83,13 +96,48 @@ export async function POST(request:Request,{params}:Params){
   const auth=Buffer.from(`${keyId}:${keySecret}`).toString('base64')
 
   try{
+    // Recover safely from an earlier request whose provider response was lost.
+    // Razorpay's refund API does not document a refund idempotency header, so retries
+    // first reconcile provider state using our refund_attempt_id note before any new POST.
+    const listResponse=await fetch(`https://api.razorpay.com/v1/payments/${encodeURIComponent(payment.provider_payment_id)}/refunds?count=100`,{
+      headers:{Authorization:`Basic ${auth}`},cache:'no-store'
+    })
+    if(listResponse.ok){
+      const listBody=await listResponse.json() as {items?:ProviderRefund[]}
+      const matched=(listBody.items||[]).find(item=>String(item.notes?.refund_attempt_id||'')===refundAttempt.id)
+      if(matched){
+        if(!validateProviderRefund(matched,payment.provider_payment_id,amountPaise,refundAttempt.id)){
+          console.error('razorpay_existing_refund_mismatch',{orderId,refundAttemptId:refundAttempt.id,providerRefundId:matched.id})
+          return json({error:'Existing provider refund could not be reconciled safely. Review the provider dashboard before taking action.'},409)
+        }
+        const providerStatus=String(matched.status)
+        const {error:reconcileError}=await admin.rpc('finalize_razorpay_refund',{
+          p_refund_attempt_id:refundAttempt.id,p_provider_refund_id:matched.id||'',p_status:providerStatus,p_failure_code:null
+        })
+        if(reconcileError){
+          console.error('razorpay_existing_refund_reconcile_failed',reconcileError)
+          return json({error:'An existing provider refund was found but local reconciliation is pending. Do not issue another refund.'},502)
+        }
+        return json({ok:true,orderId,refundAttemptId:refundAttempt.id,status:providerStatus,reconciled:true})
+      }
+    }else if(refundAttempt.status==='submitting'){
+      return json({error:'Unable to verify an in-flight provider refund safely. Try again later; no second refund was submitted.'},503)
+    }
+
+    const {data:claimed,error:claimError}=await admin.rpc('claim_razorpay_refund_submission',{p_refund_attempt_id:refundAttempt.id})
+    if(claimError){
+      console.error('razorpay_refund_claim_failed',claimError)
+      return json({error:'Unable to claim the refund request safely.'},500)
+    }
+    if(claimed!==true) return json({error:'This refund is already being submitted or processed. No second refund was sent.'},409)
+
     const providerResponse=await fetch(`https://api.razorpay.com/v1/payments/${encodeURIComponent(payment.provider_payment_id)}/refund`,{
       method:'POST',
-      headers:{Authorization:`Basic ${auth}`,'Content-Type':'application/json','X-Refund-Idempotency':refundAttempt.id},
-      body:JSON.stringify({amount:amountPaise,receipt:refundAttempt.id,notes:{radvora_order_id:orderId,refund_attempt_id:refundAttempt.id,reason:refundAttempt.reason}}),
+      headers:{Authorization:`Basic ${auth}`,'Content-Type':'application/json'},
+      body:JSON.stringify({amount:amountPaise,notes:{radvora_order_id:orderId,refund_attempt_id:refundAttempt.id,reason:refundAttempt.reason}}),
       cache:'no-store'
     })
-    const providerBody=await providerResponse.json() as {id?:string;payment_id?:string;amount?:number;currency?:string;status?:string;error?:unknown}
+    const providerBody=await providerResponse.json() as ProviderRefund
 
     if(!providerResponse.ok){
       console.error('razorpay_refund_request_rejected',{status:providerResponse.status,orderId,refundAttemptId:refundAttempt.id})
@@ -99,28 +147,26 @@ export async function POST(request:Request,{params}:Params){
       return json({error:'Razorpay did not accept the refund request. Review the payment/refund state before retrying.',retryable:providerResponse.status>=500},providerResponse.status>=500?502:409)
     }
 
-    const providerRefundId=providerBody.id||''
-    const providerStatus=String(providerBody.status||'')
-    const currency=String(providerBody.currency||'INR').toUpperCase()
-    if(!providerRefundId||providerBody.payment_id!==payment.provider_payment_id||providerBody.amount!==amountPaise||currency!=='INR'||!['pending','processed'].includes(providerStatus)){
-      console.error('razorpay_refund_response_mismatch',{orderId,refundAttemptId:refundAttempt.id,providerStatus})
-      return json({error:'Refund response could not be reconciled safely. Do not submit a second refund; review the provider dashboard.',retryable:true},502)
+    if(!validateProviderRefund(providerBody,payment.provider_payment_id,amountPaise,refundAttempt.id)){
+      console.error('razorpay_refund_response_mismatch',{orderId,refundAttemptId:refundAttempt.id,providerStatus:providerBody.status})
+      return json({error:'Refund response could not be reconciled safely. Do not submit a second refund; review the provider dashboard.'},502)
     }
 
+    const providerStatus=String(providerBody.status)
     const {error:finalizeError}=await admin.rpc('finalize_razorpay_refund',{
       p_refund_attempt_id:refundAttempt.id,
-      p_provider_refund_id:providerRefundId,
+      p_provider_refund_id:providerBody.id||'',
       p_status:providerStatus,
       p_failure_code:null
     })
     if(finalizeError){
       console.error('razorpay_refund_record_failed',finalizeError)
-      return json({error:'Refund was accepted by the provider but local reconciliation is pending. Do not issue another refund.',retryable:true},502)
+      return json({error:'Refund was accepted by the provider but local reconciliation is pending. Do not issue another refund.'},502)
     }
 
     return json({ok:true,orderId,refundAttemptId:refundAttempt.id,status:providerStatus})
   }catch(error){
     console.error('razorpay_refund_request_failed',error)
-    return json({error:'Refund status is uncertain because the provider could not be reached. Retry the same order only; idempotency protection will reuse the request.',retryable:true},502)
+    return json({error:'Refund status is uncertain because the provider could not be reached. Retry this same order later; the server will reconcile provider state before sending another request.'},502)
   }
 }
