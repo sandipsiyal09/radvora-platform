@@ -7,6 +7,7 @@ export const dynamic='force-dynamic'
 type Check={label:string;ready:boolean;detail:string;href?:string}
 type AgentRow={id:string;name:string;enabled:boolean;autonomy_level:number;allowed_tools:unknown}
 type GuardrailRow={agent_id:string;max_single_spend:number|string|null;max_daily_spend:number|string|null;require_approval_for_external_publish:boolean;require_approval_for_money:boolean;require_approval_for_claims:boolean}
+type ReservationRow={inventory_reserved_quantity:number;orders:{status:string;created_at:string}|null}
 
 export default async function ReadinessPage(){
   const supabase=await createClient()
@@ -16,14 +17,15 @@ export default async function ReadinessPage(){
   if(role!=='admin'&&role!=='founder')return <main className="page-wrap"><div className="shell"><section className="panel"><span className="kicker">ACCESS CONTROL</span><h1>Founder/admin access required.</h1></section></div></main>
 
   const admin=createAdminClient()
-  const [{data:products},{count:pendingApprovals},{count:failedWebhooks},{count:openRefunds},{count:failedRefunds},{data:agents},{data:guardrails}]=await Promise.all([
+  const [{data:products},{count:pendingApprovals},{count:failedWebhooks},{count:openRefunds},{count:failedRefunds},{data:agents},{data:guardrails},{data:reservationRows}]=await Promise.all([
     supabase.from('products').select('id,name,status,price_inr,currency,commerce_enabled,hsn_code,gst_rate,price_inr_includes_gst,stock_on_hand,stock_reserved').order('name'),
     supabase.from('approvals').select('*',{count:'exact',head:true}).eq('status','pending'),
     admin.from('payment_webhook_events').select('*',{count:'exact',head:true}).eq('processing_status','failed'),
     admin.from('refund_attempts').select('*',{count:'exact',head:true}).in('status',['requested','submitting','pending']),
     admin.from('refund_attempts').select('*',{count:'exact',head:true}).eq('status','failed'),
     supabase.from('ai_agents').select('id,name,enabled,autonomy_level,allowed_tools'),
-    supabase.from('agent_guardrails').select('agent_id,max_single_spend,max_daily_spend,require_approval_for_external_publish,require_approval_for_money,require_approval_for_claims')
+    supabase.from('agent_guardrails').select('agent_id,max_single_spend,max_daily_spend,require_approval_for_external_publish,require_approval_for_money,require_approval_for_claims'),
+    admin.from('order_items').select('inventory_reserved_quantity,orders(status,created_at)').gt('inventory_reserved_quantity',0).limit(500)
   ])
 
   const catalog=products||[]
@@ -35,6 +37,7 @@ export default async function ReadinessPage(){
   const activeMissingTax=catalog.filter(p=>p.status==='active'&&!hasTaxConfig(p))
   const activeMissingInventory=catalog.filter(p=>p.status==='active'&&!hasInventory(p))
   const commerceMisconfigured=catalog.filter(p=>p.commerce_enabled===true&&(p.status!=='active'||p.currency!=='INR'||p.price_inr===null||Number(p.price_inr)<=0||!hasTaxConfig(p)||!hasInventory(p)))
+  const staleReservations=((reservationRows||[]) as unknown as ReservationRow[]).filter(row=>row.orders?.status==='pending'&&Date.now()-Date.parse(row.orders.created_at)>60*60*1000)
   const gatewayReady=Boolean(process.env.RAZORPAY_KEY_ID&&process.env.RAZORPAY_KEY_SECRET&&process.env.RAZORPAY_WEBHOOK_SECRET)
   const appUrl=process.env.NEXT_PUBLIC_APP_URL?.trim()||''
   const canonicalReady=appUrl.startsWith('https://')
@@ -55,6 +58,7 @@ export default async function ReadinessPage(){
     {label:'Catalog pricing completeness',ready:activeMissingPrice.length===0,detail:activeMissingPrice.length?`${activeMissingPrice.length} active product${activeMissingPrice.length===1?' is':'s are'} still unpriced.`:'All active products have positive prices.',href:'/admin/catalog'},
     {label:'India GST/HSN completeness',ready:activeMissingTax.length===0,detail:activeMissingTax.length?`${activeMissingTax.length} active product${activeMissingTax.length===1?' is':'s are'} missing explicit HSN, GST rate or GST-inclusive/exclusive price treatment.`:'All active products have complete India tax configuration.',href:'/admin/catalog'},
     {label:'Governed inventory availability',ready:activeMissingInventory.length===0,detail:activeMissingInventory.length?`${activeMissingInventory.length} active product${activeMissingInventory.length===1?' has':'s have'} undefined or exhausted available stock.`:'All active products have governed available stock.',href:'/admin/catalog'},
+    {label:'Stale inventory reservations',ready:staleReservations.length===0,detail:staleReservations.length?`${staleReservations.length} reserved order line${staleReservations.length===1?'':'s'} belong to pending orders older than one hour and require provider/payment reconciliation before release.`:'No stale pending inventory reservations detected in the loaded reservation set.',href:'/admin/operations'},
     {label:'Commerce gate consistency',ready:commerceMisconfigured.length===0,detail:commerceMisconfigured.length?'One or more commerce-enabled products fail the active/INR/price/GST/HSN/inventory rules.':'No inconsistent commerce-enabled product records detected.',href:'/admin/catalog'},
     {label:'Payment operations ledger',ready:paymentOpsHealthy,detail:paymentOpsHealthy?'No failed webhook events or unresolved refund attempts are recorded.':`${failedWebhooks??0} failed webhook event${failedWebhooks===1?'':'s'}, ${openRefunds??0} open refund${openRefunds===1?'':'s'}, ${failedRefunds??0} failed refund${failedRefunds===1?'':'s'} require review.`,href:'/admin/operations'},
     {label:'AI autonomy safety',ready:unsafeAgents.length===0,detail:unsafeAgents.length===0?(enabledAgents.length===0?'All autonomous agents are disabled. Money, publishing and claims approval gates remain intact.':`${enabledAgents.length} enabled agent${enabledAgents.length===1?' is':'s are'} within launch guardrails.`):`${unsafeAgents.length} enabled agent${unsafeAgents.length===1?'':'s'} violates launch autonomy/approval guardrails.`,href:'/admin/ai'},
