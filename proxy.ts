@@ -47,7 +47,7 @@ function buildContentSecurityPolicy() {
 }
 
 function isPrivateOrApiPath(pathname: string) {
-  return ['/admin', '/account', '/cart', '/checkout', '/login', '/api'].some(
+  return ['/admin', '/account', '/cart', '/checkout', '/login', '/auth/callback', '/api'].some(
     prefix => pathname === prefix || pathname.startsWith(`${prefix}/`),
   )
 }
