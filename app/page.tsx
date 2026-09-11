@@ -10,7 +10,13 @@ const products = [
   { name: 'SafeStand', meta: 'Distance-first design', icon: '⌁' },
 ]
 
-const nav = ['Products', 'Science', 'Labs', 'Business']
+const nav = [
+  { label: 'Products', href: '/products' },
+  { label: 'Science', href: '/research' },
+  { label: 'Labs', href: '/labs' },
+  { label: 'Business', href: '/business' },
+  { label: 'About', href: '/about' },
+]
 
 function ShieldTag3D() {
   const ref = useRef<HTMLDivElement>(null)
@@ -70,9 +76,9 @@ export default function Home() {
   return <>
     <div className="cursor-glow" />
     <header className="nav"><div className="shell nav-inner">
-      <a className="brand" href="#top"><span>RADVORA</span><small>TECHNOLOGIES</small></a>
-      <nav className={`links ${menu ? 'open' : ''}`}>{nav.map(item => <a key={item} onClick={() => setMenu(false)} href={`#${item.toLowerCase()}`}>{item}</a>)}<a href="#about">About</a></nav>
-      <div className="nav-actions"><button className="icon-btn" aria-label="Search">⌕</button><a className="pill light" href="#products">Shop concepts</a><button className="menu-btn" onClick={() => setMenu(!menu)} aria-label="Menu">☰</button></div>
+      <a className="brand" href="/"><span>RADVORA</span><small>TECHNOLOGIES</small></a>
+      <nav className={`links ${menu ? 'open' : ''}`}>{nav.map(item => <a key={item.label} onClick={() => setMenu(false)} href={item.href}>{item.label}</a>)}</nav>
+      <div className="nav-actions"><a className="icon-btn" aria-label="Verify a product" href="/verify">✓</a><a className="pill light" href="/products">Shop products</a><button className="menu-btn" onClick={() => setMenu(!menu)} aria-label="Menu">☰</button></div>
     </div></header>
 
     <main id="top">
@@ -82,11 +88,11 @@ export default function Home() {
             <div className="kicker">ENGINEERED · TESTED · TRANSPARENT</div>
             <h1>Technology<br/><span>you can measure.</span></h1>
             <p>RF-focused smartphone accessories and digital-wellness technology designed around measurable engineering, transparent testing and premium everyday experience.</p>
-            <div className="actions"><a className="pill light" href="#products">Explore ShieldTag Pro <span>→</span></a><a className="pill ghost" href="#science">See our approach <span>↗</span></a></div>
+            <div className="actions"><a className="pill light" href="/products">Explore products <span>→</span></a><a className="pill ghost" href="/research">See our approach <span>↗</span></a></div>
             <div className="trust-row"><div><b>01</b><span>Measured first</span></div><div><b>02</b><span>Claims reviewed</span></div><div><b>03</b><span>Built for daily life</span></div></div>
           </div>
           <div className="hero-product"><ShieldTag3D /></div>
-          <aside className="hero-side glass"><span className="badge">NEW CONCEPT</span><h2>ShieldTag Pro</h2><p>Premium material design, serialized authentication and test-linked product claims.</p><div className="divider"/><div className="metric-row"><span>Evidence status</span><b>Pre-test</b></div><div className="metric-row"><span>Product phase</span><b>Prototype</b></div><MiniWave/><a href="#labs">View Radvora Labs →</a></aside>
+          <aside className="hero-side glass"><span className="badge">NEW CONCEPT</span><h2>ShieldTag Pro</h2><p>Premium material design, serialized authentication and test-linked product claims.</p><div className="divider"/><div className="metric-row"><span>Evidence status</span><b>Pre-test</b></div><div className="metric-row"><span>Product phase</span><b>Prototype</b></div><MiniWave/><a href="/labs">View Radvora Labs →</a></aside>
         </div>
       </section>
 
@@ -97,10 +103,10 @@ export default function Home() {
 
       <section id="science" className="section shell">
         <div className="bento">
-          <article className="bento-card science-card glass"><span className="kicker">THE SCIENCE</span><h2>Evidence before marketing.</h2><p>Every public performance statement is designed to connect to a specific device, test method, network condition and approved report.</p><MiniWave/><a href="#labs" className="text-link">Explore methodology →</a></article>
+          <article className="bento-card science-card glass"><span className="kicker">THE SCIENCE</span><h2>Evidence before marketing.</h2><p>Every public performance statement is designed to connect to a specific device, test method, network condition and approved report.</p><MiniWave/><a href="/research" className="text-link">Explore methodology →</a></article>
           <article className="bento-card compatibility glass"><span className="kicker">COMPATIBILITY</span><h3>Made for your device world.</h3><div className="phone-stack"><div/><div/><div/></div><div className="logo-row"><span>APPLE</span><span>SAMSUNG</span><span>GOOGLE</span><span>+</span></div></article>
-          <article id="labs" className="bento-card report-card glass"><span className="kicker">RADVORA LABS</span><h3>Lab reports.<br/>Without the hype.</h3><div className="report-sheet"><span>RADVORA</span><b>TEST REPORT</b><i>Device · Network · Method</i><div className="report-lines"/></div><p>Verified data will appear here only after approved testing.</p></article>
-          <article id="business" className="bento-card business-card glass"><span className="kicker">BUSINESS</span><h3>Retail. Corporate.<br/>Distribution.</h3><p>Dealer onboarding, authenticated inventory, corporate wellness packs and channel analytics.</p><a className="pill ghost" href="#contact">Partner with us →</a></article>
+          <article id="labs" className="bento-card report-card glass"><span className="kicker">RADVORA LABS</span><h3>Lab reports.<br/>Without the hype.</h3><div className="report-sheet"><span>RADVORA</span><b>TEST REPORT</b><i>Device · Network · Method</i><div className="report-lines"/></div><p>Verified data will appear here only after approved testing.</p><a href="/labs" className="text-link">Browse approved reports →</a></article>
+          <article id="business" className="bento-card business-card glass"><span className="kicker">BUSINESS</span><h3>Retail. Corporate.<br/>Distribution.</h3><p>Dealer onboarding, authenticated inventory, corporate wellness packs and channel analytics.</p><a className="pill ghost" href="/business">Partner with us →</a></article>
         </div>
       </section>
 
@@ -112,11 +118,11 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="about" className="manifesto"><div className="shell"><span className="kicker">RADVORA PRINCIPLE 001</span><h2>No fear marketing.<br/><span>No mystery technology.</span></h2><p>Build beautiful hardware. Test it properly. Publish what is actually measured.</p></div></section>
+      <section id="about" className="manifesto"><div className="shell"><span className="kicker">RADVORA PRINCIPLE 001</span><h2>No fear marketing.<br/><span>No mystery technology.</span></h2><p>Build beautiful hardware. Test it properly. Publish what is actually measured.</p><a className="text-link" href="/about">About RADVORA →</a></div></section>
 
-      <section id="contact" className="section shell final-cta glass"><div><span className="kicker">BUILDING RADVORA</span><h2>The next-generation consumer-tech platform starts here.</h2></div><a className="pill light" href="mailto:hello@radvora.example">Business enquiries →</a></section>
+      <section id="contact" className="section shell final-cta glass"><div><span className="kicker">BUILDING RADVORA</span><h2>The next-generation consumer-tech platform starts here.</h2></div><a className="pill light" href="/contact">Business enquiries →</a></section>
     </main>
 
-    <footer><div className="shell footer-inner"><a className="brand" href="#top"><span>RADVORA</span><small>TECHNOLOGIES</small></a><p>Technology should serve humanity.</p><span>© 2026 RADVORA Concept</span></div></footer>
+    <footer><div className="shell footer-inner"><a className="brand" href="/"><span>RADVORA</span><small>TECHNOLOGIES</small></a><p>Technology should serve humanity.</p><nav aria-label="Legal and support"><a href="/support">Support</a> · <a href="/warranty">Warranty</a> · <a href="/shipping">Shipping</a> · <a href="/returns">Returns</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></nav><span>© 2026 RADVORA Technologies</span></div></footer>
   </>
 }
