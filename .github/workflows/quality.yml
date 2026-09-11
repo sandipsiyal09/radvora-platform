@@ -18,19 +18,35 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate migration versions
+      - name: Validate migration versions and runtime marker
         shell: bash
         run: |
           set -euo pipefail
-          duplicates=$(find supabase/migrations -maxdepth 1 -type f -name '*.sql' -printf '%f\n' \
+          versions=$(find supabase/migrations -maxdepth 1 -type f -name '*.sql' -printf '%f\n' \
             | sed -E 's/^([0-9]+)_.*/\1/' \
-            | sort \
-            | uniq -d)
+            | sort)
+          duplicates=$(printf '%s\n' "$versions" | uniq -d)
           if [ -n "$duplicates" ]; then
             echo "Duplicate Supabase migration versions detected:"
             echo "$duplicates"
             exit 1
           fi
+          latest=$(printf '%s\n' "$versions" | tail -1)
+          node - "$latest" <<'NODE'
+          const fs = require('fs')
+          const latest = process.argv[2]
+          const source = fs.readFileSync('app/api/health/route.ts', 'utf8')
+          const match = source.match(/EXPECTED_RUNTIME_SCHEMA_VERSION='([0-9]+)'/)
+          if (!match) {
+            console.error('Health route does not declare EXPECTED_RUNTIME_SCHEMA_VERSION.')
+            process.exit(1)
+          }
+          if (match[1] !== latest) {
+            console.error(`Runtime schema marker ${match[1]} does not match latest migration ${latest}.`)
+            process.exit(1)
+          }
+          console.log(`Runtime schema marker matches latest migration: ${latest}`)
+          NODE
 
       - name: Enforce India-only payment runtime
         shell: bash
