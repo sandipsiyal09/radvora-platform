@@ -18,7 +18,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate migration versions and runtime marker
+      - name: Validate migration versions and runtime markers
         shell: bash
         run: |
           set -euo pipefail
@@ -35,17 +35,20 @@ jobs:
           node - "$latest" <<'NODE'
           const fs = require('fs')
           const latest = process.argv[2]
-          const source = fs.readFileSync('app/api/health/route.ts', 'utf8')
-          const match = source.match(/EXPECTED_RUNTIME_SCHEMA_VERSION='([0-9]+)'/)
-          if (!match) {
-            console.error('Health route does not declare EXPECTED_RUNTIME_SCHEMA_VERSION.')
-            process.exit(1)
+          const files = ['app/api/health/route.ts', 'app/admin/readiness/page.tsx']
+          for (const file of files) {
+            const source = fs.readFileSync(file, 'utf8')
+            const match = source.match(/EXPECTED_RUNTIME_SCHEMA_VERSION='([0-9]+)'/)
+            if (!match) {
+              console.error(`${file} does not declare EXPECTED_RUNTIME_SCHEMA_VERSION.`)
+              process.exit(1)
+            }
+            if (match[1] !== latest) {
+              console.error(`${file} runtime schema marker ${match[1]} does not match latest migration ${latest}.`)
+              process.exit(1)
+            }
           }
-          if (match[1] !== latest) {
-            console.error(`Runtime schema marker ${match[1]} does not match latest migration ${latest}.`)
-            process.exit(1)
-          }
-          console.log(`Runtime schema marker matches latest migration: ${latest}`)
+          console.log(`Runtime schema markers match latest migration: ${latest}`)
           NODE
 
       - name: Enforce India-only payment runtime
