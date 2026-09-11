@@ -7,7 +7,47 @@ type CookieToSet = {
   options: CookieOptions
 }
 
+function buildContentSecurityPolicy() {
+  const connectSources = ["'self'"]
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+
+  if (supabaseUrl) {
+    try {
+      const parsed = new URL(supabaseUrl)
+      connectSources.push(parsed.origin)
+      if (parsed.protocol === 'https:') {
+        connectSources.push(`wss://${parsed.host}`)
+      }
+    } catch {
+      // Ignore an invalid optional runtime URL here; application health/readiness reports config errors.
+    }
+  }
+
+  const scriptSources = ["'self'", "'unsafe-inline'"]
+  if (process.env.NODE_ENV !== 'production') scriptSources.push("'unsafe-eval'")
+
+  const directives = [
+    "default-src 'self'",
+    `script-src ${scriptSources.join(' ')}`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    `connect-src ${connectSources.join(' ')}`,
+    "media-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "manifest-src 'self'",
+    "worker-src 'self' blob:",
+  ]
+
+  if (process.env.NODE_ENV === 'production') directives.push('upgrade-insecure-requests')
+  return directives.join('; ')
+}
+
 function applySecurityHeaders(response: NextResponse, request: NextRequest) {
+  response.headers.set('Content-Security-Policy', buildContentSecurityPolicy())
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('X-Frame-Options', 'DENY')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
