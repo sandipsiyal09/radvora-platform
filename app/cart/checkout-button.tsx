@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { FormEvent, useState } from 'react'
 
 declare global {
@@ -43,6 +44,7 @@ function loadRazorpay(){
 export default function CheckoutButton({disabled=false,gatewayReady=false}:{disabled?:boolean;gatewayReady?:boolean}){
   const [loading,setLoading]=useState(false)
   const [message,setMessage]=useState('')
+  const [acceptedPolicies,setAcceptedPolicies]=useState(false)
   const [form,setForm]=useState({name:'',phone:'',line1:'',line2:'',city:'',state:'',postalCode:''})
 
   function setField(key:keyof typeof form,value:string){setForm(current=>({...current,[key]:value}))}
@@ -50,11 +52,12 @@ export default function CheckoutButton({disabled=false,gatewayReady=false}:{disa
   async function checkout(event:FormEvent){
     event.preventDefault()
     if(disabled||!gatewayReady||loading) return
+    if(!acceptedPolicies){setMessage('Please accept the checkout policies before payment.');return}
     setLoading(true);setMessage('')
     try{
       const sdkReady=await loadRazorpay()
       if(!sdkReady||!window.Razorpay){setMessage('Secure India checkout could not load. Please try again.');return}
-      const startResponse=await fetch('/api/checkout/razorpay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(form)})
+      const startResponse=await fetch('/api/checkout/razorpay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...form,acceptedPolicies:true})})
       const start=await startResponse.json() as StartPayload
       if(!startResponse.ok||!start.providerOrderId){setMessage(start.error||'India checkout is not available yet.');return}
       const razorpay=new window.Razorpay({
@@ -83,7 +86,8 @@ export default function CheckoutButton({disabled=false,gatewayReady=false}:{disa
     <input className="field" maxLength={180} placeholder="Address line 2 (optional)" value={form.line2} onChange={e=>setField('line2',e.target.value)} disabled={!gatewayReady}/>
     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}><input className="field" required maxLength={100} placeholder="City" value={form.city} onChange={e=>setField('city',e.target.value)} disabled={!gatewayReady}/><input className="field" required maxLength={100} placeholder="State / UT" value={form.state} onChange={e=>setField('state',e.target.value)} disabled={!gatewayReady}/></div>
     <input className="field" required inputMode="numeric" pattern="[1-9][0-9]{5}" maxLength={6} placeholder="6-digit PIN code" value={form.postalCode} onChange={e=>setField('postalCode',e.target.value.replace(/\D/g,'').slice(0,6))} disabled={!gatewayReady}/>
-    <button className="pill light" type="submit" disabled={locked||loading}>{!gatewayReady?'India payments activation pending':loading?'Preparing secure checkout…':'Pay securely in INR →'}</button>
+    <label className="checkout-consent"><input type="checkbox" checked={acceptedPolicies} onChange={e=>setAcceptedPolicies(e.target.checked)} disabled={!gatewayReady}/><span>I agree to the <Link href="/terms" target="_blank">Terms</Link>, <Link href="/returns" target="_blank">Returns &amp; Refunds</Link>, <Link href="/shipping" target="_blank">Shipping Policy</Link> and <Link href="/privacy" target="_blank">Privacy Policy</Link>.</span></label>
+    <button className="pill light" type="submit" disabled={locked||loading||!acceptedPolicies}>{!gatewayReady?'India payments activation pending':loading?'Preparing secure checkout…':'Pay securely in INR →'}</button>
     <p className="status-message">{gatewayReady?'UPI, Indian cards, netbanking and supported wallets are handled by the configured Indian payment gateway. RADVORA marks an order paid only after server verification.':'Online payment collection stays disabled until the production Indian merchant keys and webhook secret are configured.'}</p>
     {message?<p className="status-message" role="status">{message}</p>:null}
   </form>
