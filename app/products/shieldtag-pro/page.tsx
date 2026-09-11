@@ -13,6 +13,7 @@ export default async function ShieldTagProPage() {
     .eq('slug', 'shieldtag-pro')
     .eq('status', 'active')
     .maybeSingle()
+  const indiaPurchasable=Boolean(product?.price_inr)&&product?.currency==='INR'
 
   return (
     <main className="page-wrap">
@@ -26,7 +27,7 @@ export default async function ShieldTagProPage() {
               <strong>RADVORA</strong>
               <small>SHIELDTAG PRO</small>
             </div>
-            <span className="visual-note">3D product system · interactive model coming next</span>
+            <span className="visual-note">Interactive 3D product presentation</span>
           </div>
 
           <div className="product-copy">
@@ -41,7 +42,8 @@ export default async function ShieldTagProPage() {
               <div className="glass"><span>Claims model</span><b>Evidence-linked</b></div>
             </div>
 
-            {product?.price_inr ? <><p className="product-price">{new Intl.NumberFormat('en-IN', { style: 'currency', currency: product.currency || 'INR' }).format(Number(product.price_inr))}</p><AddToCartButton productId={product.id}/></> : <p className="empty-state">Commercial pricing is not active yet.</p>}
+            {product?.price_inr ? <p className="product-price">{new Intl.NumberFormat('en-IN', { style: 'currency', currency: product.currency || 'INR' }).format(Number(product.price_inr))}</p> : null}
+            {product&&indiaPurchasable?<AddToCartButton productId={product.id}/>:<p className="empty-state">India consumer purchasing will be enabled only after approved INR pricing is active.</p>}
 
             <div className="actions">
               <Link className="pill ghost" href="/verify">Verify a product →</Link>
