@@ -23,6 +23,7 @@ function invalidOrigin(request:Request){
 
 export async function POST(request:Request,{params}:Params){
   if(invalidOrigin(request)) return json({error:'Invalid agent control origin.'},403)
+  if(!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) return json({error:'Content-Type must be application/json.'},415)
   const {id}=await params
   if(!UUID.test(id)) return json({error:'Invalid agent identifier.'},400)
   const supabase=await createClient()
