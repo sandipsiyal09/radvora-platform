@@ -2,9 +2,17 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '../../../lib/supabase/client'
 
 type Props={product:{id:string;name:string;short_description:string|null;description:string|null;price_inr:number|null;status:string;currency:string;commerce_enabled:boolean;hsn_code:string|null;gst_rate:number|null;price_inr_includes_gst:boolean|null}}
+
+type ApiResponse={error?:string}
+
+async function postCatalogAction(productId:string,body:Record<string,unknown>){
+  const response=await fetch(`/api/admin/catalog/products/${productId}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+  let payload:ApiResponse={}
+  try{payload=await response.json() as ApiResponse}catch{}
+  if(!response.ok) throw new Error(payload.error||'Catalog action failed.')
+}
 
 export default function ProductEditor({product}:Props){
   const router=useRouter()
@@ -29,19 +37,10 @@ export default function ProductEditor({product}:Props){
     }
     setBusy(true);setMessage('')
     try{
-      const supabase=createClient()
-      const {error}=await supabase.rpc('update_product_catalog',{
-        p_product_id:product.id,
-        p_name:name,
-        p_short_description:shortDescription,
-        p_description:description,
-        p_price_inr:parsedPrice,
-        p_status:status
-      })
-      if(error){console.error('catalog_update_failed',error);setMessage('Unable to save the catalog record.');return}
+      await postCatalogAction(product.id,{action:'catalog',name,shortDescription,description,priceInr:parsedPrice,status})
       setMessage('Catalog record saved.')
       router.refresh()
-    }catch(error){console.error('catalog_update_failed',error);setMessage('Unable to save the catalog record.')}
+    }catch(error){console.error('catalog_update_failed',error);setMessage(error instanceof Error?error.message:'Unable to save the catalog record.')}
     finally{setBusy(false)}
   }
 
@@ -55,29 +54,20 @@ export default function ProductEditor({product}:Props){
     }
     setTaxBusy(true);setMessage('')
     try{
-      const supabase=createClient()
-      const {error}=await supabase.rpc('set_product_india_tax_config',{
-        p_product_id:product.id,
-        p_hsn_code:normalizedHsn,
-        p_gst_rate:parsedGst,
-        p_price_includes_gst:includesGst
-      })
-      if(error){console.error('product_tax_config_failed',error);setMessage('Unable to save the India tax configuration.');return}
+      await postCatalogAction(product.id,{action:'tax',hsnCode:normalizedHsn,gstRate:parsedGst,priceIncludesGst:includesGst})
       setMessage('India GST/HSN configuration saved. Commerce was disabled so the updated tax treatment can be reviewed before re-enabling sales.')
       router.refresh()
-    }catch(error){console.error('product_tax_config_failed',error);setMessage('Unable to save the India tax configuration.')}
+    }catch(error){console.error('product_tax_config_failed',error);setMessage(error instanceof Error?error.message:'Unable to save the India tax configuration.')}
     finally{setTaxBusy(false)}
   }
 
   async function toggleCommerce(){
     setCommerceBusy(true);setMessage('')
     try{
-      const supabase=createClient()
-      const {error}=await supabase.rpc('set_product_commerce_enabled',{p_product_id:product.id,p_enabled:!product.commerce_enabled})
-      if(error){console.error('commerce_toggle_failed',error);setMessage(product.commerce_enabled?'Unable to disable commerce.':'Commerce can be enabled only for an active product with a positive INR price and complete GST/HSN configuration.');return}
+      await postCatalogAction(product.id,{action:'commerce',enabled:!product.commerce_enabled})
       setMessage(product.commerce_enabled?'India commerce disabled.':'India commerce enabled.')
       router.refresh()
-    }catch(error){console.error('commerce_toggle_failed',error);setMessage('Unable to update commerce availability.')}
+    }catch(error){console.error('commerce_toggle_failed',error);setMessage(error instanceof Error?error.message:'Unable to update commerce availability.')}
     finally{setCommerceBusy(false)}
   }
 
