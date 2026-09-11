@@ -5,6 +5,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 export const runtime='nodejs'
 
 const STALE_AFTER_MS=5*60*1000
+const MAX_BODY_BYTES=256*1024
 
 type RazorpayPayment={id?:string;order_id?:string;amount?:number;currency?:string;status?:string}
 type RazorpayEvent={event?:string;payload?:{payment?:{entity?:RazorpayPayment}}}
@@ -54,12 +55,17 @@ export async function POST(request:Request){
   const eventId=request.headers.get('x-razorpay-event-id')?.trim()||''
   if(!signature||!eventId||eventId.length>200) return json({error:'Invalid webhook request.'},400)
 
-  const rawBody=await request.text()
-  const expected=createHmac('sha256',secret).update(rawBody).digest('hex')
+  const rawLength=request.headers.get('content-length')
+  if(rawLength&&Number(rawLength)>MAX_BODY_BYTES) return json({error:'Webhook payload is too large.'},413)
+
+  const rawBytes=await request.arrayBuffer()
+  if(rawBytes.byteLength>MAX_BODY_BYTES) return json({error:'Webhook payload is too large.'},413)
+  const rawBuffer=Buffer.from(rawBytes)
+  const expected=createHmac('sha256',secret).update(rawBuffer).digest('hex')
   if(!safeEqualHex(expected,signature)) return json({error:'Invalid webhook signature.'},400)
 
   let event:RazorpayEvent
-  try{event=JSON.parse(rawBody)}catch{return json({error:'Invalid webhook payload.'},400)}
+  try{event=JSON.parse(rawBuffer.toString('utf8'))}catch{return json({error:'Invalid webhook payload.'},400)}
   const eventType=String(event.event||'unknown').slice(0,120)
   const admin=createAdminClient()
   const claim=await claimEvent(admin,eventId,eventType)
