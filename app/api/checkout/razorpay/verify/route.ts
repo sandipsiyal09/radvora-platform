@@ -24,10 +24,25 @@ function safeEqualHex(expected:string,received:string){
   }catch{return false}
 }
 
-export async function POST(request:Request){
+function requestBoundaryError(request:Request){
   if(request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site') return json({error:'Cross-site payment verification is not allowed.'},403)
   const rawLength=request.headers.get('content-length')
   if(rawLength&&Number(rawLength)>MAX_BODY_BYTES) return json({error:'Verification request is too large.'},413)
+  const origin=request.headers.get('origin')
+  if(origin){
+    try{
+      const supplied=new URL(origin).origin
+      const requestOrigin=new URL(request.url).origin
+      const configured=process.env.NEXT_PUBLIC_APP_URL?new URL(process.env.NEXT_PUBLIC_APP_URL).origin:requestOrigin
+      if(supplied!==requestOrigin&&supplied!==configured) return json({error:'Invalid payment verification origin.'},403)
+    }catch{return json({error:'Invalid payment verification origin.'},403)}
+  }
+  return null
+}
+
+export async function POST(request:Request){
+  const boundary=requestBoundaryError(request)
+  if(boundary) return boundary
 
   const keyId=process.env.RAZORPAY_KEY_ID?.trim()
   const keySecret=process.env.RAZORPAY_KEY_SECRET?.trim()
@@ -37,8 +52,12 @@ export async function POST(request:Request){
   const {data:{user}}=await supabase.auth.getUser()
   if(!user) return json({error:'Authentication required.'},401)
 
+  let rawBody:string
+  try{rawBody=await request.text()}catch{return json({error:'Invalid verification request.'},400)}
+  if(Buffer.byteLength(rawBody,'utf8')>MAX_BODY_BYTES) return json({error:'Verification request is too large.'},413)
+
   let body:VerifyBody
-  try{body=await request.json()}catch{return json({error:'Invalid verification request.'},400)}
+  try{body=JSON.parse(rawBody)}catch{return json({error:'Invalid verification request.'},400)}
   const orderId=typeof body.orderId==='string'?body.orderId.trim():''
   const returnedOrderId=typeof body.razorpayOrderId==='string'?body.razorpayOrderId.trim():''
   const paymentId=typeof body.razorpayPaymentId==='string'?body.razorpayPaymentId.trim():''
