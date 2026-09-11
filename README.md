@@ -54,9 +54,18 @@ Existing products default to `commerce_enabled = false`. Do not invent productio
 
 Before merging a production commerce change:
 
-1. GitHub Quality Gate must pass TypeScript/typecheck and the production Next.js build for the exact PR head.
-2. Supabase migrations must be applied and security advisors reviewed.
-3. Vercel preview must successfully build the exact latest PR head when deployment capacity is available.
-4. Only after preview validation should the PR merge and the exact merge commit be verified in production.
+1. GitHub Quality Gate must install from the committed `package-lock.json` using `npm ci`.
+2. Production dependency audit must have no high or critical finding.
+3. TypeScript/typecheck and the production Next.js build must pass for the exact PR head.
+4. Supabase migrations must be applied and security advisors reviewed.
+5. Production data invariants must show no duplicate active carts/payments or unresolved payment/refund reconciliation anomalies.
+6. Vercel preview must successfully build the exact latest PR head when deployment capacity is available.
+7. Only after preview validation should the PR merge and the exact merge commit be verified in production.
 
-Vercel quota/rate limits are deployment blockers only; they must not be worked around by merging unverified code.
+Vercel quota/rate limits are deployment blockers only; they must not be worked around by merging unverified code. While a deployment gate is blocked, continue non-deployment engineering and validation work rather than weakening the gate.
+
+### Post-deploy privilege lockdown
+
+After the exact merged application commit is verified live, apply `supabase/postdeploy/lock_down_legacy_client_writes.sql` and re-test checkout, product registration, support/warranty submission, admin catalog updates, and customer-care transitions. This revokes obsolete direct authenticated writes only after the replacement RPC workflows are live.
+
+Do not move this post-deploy SQL into the automatic migration chain: the currently deployed legacy application still needs some of those grants until the new Razorpay application version is running in production.
