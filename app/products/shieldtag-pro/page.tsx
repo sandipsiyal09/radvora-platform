@@ -25,9 +25,9 @@ export default async function ShieldTagProPage() {
 
   if(!product) notFound()
 
-  const [{count:publishedClaims},{count:approvedTests}]=await Promise.all([
+  const [{count:publishedClaims},{count:publishedTests}]=await Promise.all([
     supabase.from('claims').select('*',{count:'exact',head:true}).eq('product_id',product.id).eq('status','published').neq('category','health'),
-    supabase.from('rf_tests').select('*',{count:'exact',head:true}).eq('product_id',product.id).in('status',['approved','published'])
+    supabase.from('rf_tests').select('*',{count:'exact',head:true}).eq('product_id',product.id).eq('status','published')
   ])
   const indiaPurchasable=product.commerce_enabled===true&&Boolean(product.price_inr)&&product.currency==='INR'
 
@@ -52,7 +52,7 @@ export default async function ShieldTagProPage() {
             <p className="product-lead">{product.short_description || 'RADVORA RF-focused smartphone accessory with serialized authenticity and evidence-controlled product information.'}</p>
 
             <div className="product-status-grid">
-              <div className="glass"><span>Approved RF tests</span><b>{approvedTests ?? 0}</b></div>
+              <div className="glass"><span>Published RF tests</span><b>{publishedTests ?? 0}</b></div>
               <div className="glass"><span>Published non-health claims</span><b>{publishedClaims ?? 0}</b></div>
               <div className="glass"><span>Authentication</span><b>Serialized</b></div>
               <div className="glass"><span>Claims model</span><b>Evidence-gated</b></div>
