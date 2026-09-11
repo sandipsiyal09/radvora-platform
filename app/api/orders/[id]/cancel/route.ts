@@ -33,7 +33,7 @@ export async function POST(request:Request,{params}:Params){
   if(error){
     const message=String(error.message||'')
     if(message.includes('not found')) return json({error:'Order not found.'},404)
-    if(message.includes('not pending')||message.includes('completed payment state')) return json({error:'This order can no longer be cancelled because its payment or order state has changed.'},409)
+    if(message.includes('not pending')||message.includes('active or completed payment state')) return json({error:'This order cannot be cancelled while a payment session is active or after payment state has progressed.'},409)
     console.error('pending_order_cancel_failed',error)
     return json({error:'Unable to cancel the order safely.'},500)
   }
