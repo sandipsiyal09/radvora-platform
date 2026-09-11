@@ -4,6 +4,7 @@ import { createAdminClient } from '../../../../../../lib/supabase/admin'
 
 export const runtime='nodejs'
 const MAX_BODY_BYTES=2048
+const UUID_PATTERN=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 type Body={reason?:string}
 type Params={params:Promise<{id:string}>}
@@ -54,8 +55,12 @@ export async function POST(request:Request,{params}:Params){
   if(role!=='admin'&&role!=='founder') return json({error:'Admin access required.'},403)
 
   const {id:orderId}=await params
+  if(!UUID_PATTERN.test(orderId)) return json({error:'Order not found.'},404)
+
+  const rawBytes=await request.arrayBuffer()
+  if(rawBytes.byteLength>MAX_BODY_BYTES) return json({error:'Refund request is too large.'},413)
   let body:Body
-  try{body=await request.json()}catch{return json({error:'Invalid refund request.'},400)}
+  try{body=JSON.parse(Buffer.from(rawBytes).toString('utf8')) as Body}catch{return json({error:'Invalid refund request.'},400)}
   const reason=typeof body.reason==='string'?body.reason.trim().slice(0,500):''
   if(reason.length<5) return json({error:'Enter a refund reason of at least 5 characters.'},400)
 
@@ -96,9 +101,6 @@ export async function POST(request:Request,{params}:Params){
   const auth=Buffer.from(`${keyId}:${keySecret}`).toString('base64')
 
   try{
-    // Recover safely from an earlier request whose provider response was lost.
-    // Razorpay's refund API does not document a refund idempotency header, so retries
-    // first reconcile provider state using our refund_attempt_id note before any new POST.
     const listResponse=await fetch(`https://api.razorpay.com/v1/payments/${encodeURIComponent(payment.provider_payment_id)}/refunds?count=100`,{
       headers:{Authorization:`Basic ${auth}`},cache:'no-store'
     })
