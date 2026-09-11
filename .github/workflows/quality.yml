@@ -154,6 +154,7 @@ jobs:
           const login = fs.readFileSync('app/login/page.tsx', 'utf8')
           const requiredRoute = [
             "request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site'",
+            'if(!origin)return true',
             'MAX_BODY_BYTES=2048',
             "startsWith('application/json')",
             'NEXT_PUBLIC_APP_URL',

@@ -21,7 +21,7 @@ function canonicalOrigin(request:Request){
 function invalidOrigin(request:Request,canonical:string){
   if(request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site')return true
   const origin=request.headers.get('origin')
-  if(!origin)return false
+  if(!origin)return true
   try{
     const supplied=new URL(origin).origin
     const requestOrigin=new URL(request.url).origin
