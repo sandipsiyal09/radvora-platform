@@ -17,6 +17,53 @@ async function markEvent(admin:ReturnType<typeof createAdminClient>,eventId:stri
   }).eq('event_id',eventId)
 }
 
+async function claimEvent(admin:ReturnType<typeof createAdminClient>,event:Stripe.Event){
+  const {error:claimError}=await admin.from('stripe_webhook_events').insert({event_id:event.id,event_type:event.type})
+  if(!claimError) return {claimed:true as const}
+
+  if(claimError.code!=='23505') return {claimed:false as const,status:500,error:'Unable to claim webhook event.'}
+
+  const {data:existing,error:existingError}=await admin
+    .from('stripe_webhook_events')
+    .select('processing_status')
+    .eq('event_id',event.id)
+    .single()
+
+  if(existingError||!existing) return {claimed:false as const,status:500,error:'Unable to inspect webhook event state.'}
+
+  if(existing.processing_status==='processed'||existing.processing_status==='ignored'){
+    return {claimed:false as const,status:200,duplicate:true as const}
+  }
+
+  if(existing.processing_status==='received'){
+    // Do not acknowledge a duplicate while another delivery is still in-flight.
+    // A non-2xx response keeps Stripe retrying if the original worker crashes.
+    return {claimed:false as const,status:503,error:'Webhook event is already being processed.'}
+  }
+
+  if(existing.processing_status==='failed'){
+    const {data:reclaimed,error:reclaimError}=await admin
+      .from('stripe_webhook_events')
+      .update({
+        processing_status:'received',
+        processed_at:null,
+        error_message:null,
+        received_at:new Date().toISOString()
+      })
+      .eq('event_id',event.id)
+      .eq('processing_status','failed')
+      .select('event_id')
+      .maybeSingle()
+
+    if(reclaimError) return {claimed:false as const,status:500,error:'Unable to reclaim webhook event.'}
+    if(!reclaimed) return {claimed:false as const,status:503,error:'Webhook event is already being retried.'}
+
+    return {claimed:true as const}
+  }
+
+  return {claimed:false as const,status:500,error:'Webhook event is in an unknown state.'}
+}
+
 export async function POST(request:Request){
   const secret=process.env.STRIPE_SECRET_KEY
   const webhookSecret=process.env.STRIPE_WEBHOOK_SECRET
@@ -35,10 +82,10 @@ export async function POST(request:Request){
   }
 
   const admin=createAdminClient()
-  const {error:claimError}=await admin.from('stripe_webhook_events').insert({event_id:event.id,event_type:event.type})
-  if(claimError){
-    if(claimError.code==='23505') return NextResponse.json({received:true,duplicate:true})
-    return NextResponse.json({error:'Unable to claim webhook event.'},{status:500})
+  const claim=await claimEvent(admin,event)
+  if(!claim.claimed){
+    if('duplicate' in claim&&claim.duplicate) return NextResponse.json({received:true,duplicate:true})
+    return NextResponse.json({error:claim.error},{status:claim.status})
   }
 
   try{
