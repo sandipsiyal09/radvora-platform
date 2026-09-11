@@ -4,6 +4,8 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 
 export const runtime='nodejs'
 
+const WEBHOOK_STALE_AFTER_MS=5*60*1000
+
 function asId(value:string|Stripe.PaymentIntent|null):string|null{
   if(!value) return null
   return typeof value==='string'?value:value.id
@@ -25,7 +27,7 @@ async function claimEvent(admin:ReturnType<typeof createAdminClient>,event:Strip
 
   const {data:existing,error:existingError}=await admin
     .from('stripe_webhook_events')
-    .select('processing_status')
+    .select('processing_status,received_at')
     .eq('event_id',event.id)
     .single()
 
@@ -36,9 +38,34 @@ async function claimEvent(admin:ReturnType<typeof createAdminClient>,event:Strip
   }
 
   if(existing.processing_status==='received'){
-    // Do not acknowledge a duplicate while another delivery is still in-flight.
-    // A non-2xx response keeps Stripe retrying if the original worker crashes.
-    return {claimed:false as const,status:503,error:'Webhook event is already being processed.'}
+    const receivedAt=existing.received_at?Date.parse(existing.received_at):Number.NaN
+    const isStale=Number.isFinite(receivedAt)&&Date.now()-receivedAt>=WEBHOOK_STALE_AFTER_MS
+
+    if(!isStale){
+      // Do not acknowledge a duplicate while another delivery is still in-flight.
+      // A non-2xx response keeps Stripe retrying if the original worker crashes.
+      return {claimed:false as const,status:503,error:'Webhook event is already being processed.'}
+    }
+
+    const staleBefore=new Date(Date.now()-WEBHOOK_STALE_AFTER_MS).toISOString()
+    const {data:reclaimed,error:reclaimError}=await admin
+      .from('stripe_webhook_events')
+      .update({
+        processing_status:'received',
+        processed_at:null,
+        error_message:null,
+        received_at:new Date().toISOString()
+      })
+      .eq('event_id',event.id)
+      .eq('processing_status','received')
+      .lt('received_at',staleBefore)
+      .select('event_id')
+      .maybeSingle()
+
+    if(reclaimError) return {claimed:false as const,status:500,error:'Unable to reclaim stale webhook event.'}
+    if(!reclaimed) return {claimed:false as const,status:503,error:'Webhook event is already being retried.'}
+
+    return {claimed:true as const}
   }
 
   if(existing.processing_status==='failed'){
