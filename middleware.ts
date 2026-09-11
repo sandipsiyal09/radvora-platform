@@ -7,6 +7,24 @@ type CookieToSet = {
   options: CookieOptions
 }
 
+function applySecurityHeaders(response: NextResponse, request: NextRequest) {
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), browsing-topics=()',
+  )
+  response.headers.set('Cross-Origin-Opener-Policy', 'same-origin')
+  response.headers.set('X-DNS-Prefetch-Control', 'off')
+
+  if (request.nextUrl.protocol === 'https:' && process.env.NODE_ENV === 'production') {
+    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+  }
+
+  return response
+}
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request })
 
@@ -14,7 +32,7 @@ export async function middleware(request: NextRequest) {
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 
   if (!url || !publishableKey) {
-    return response
+    return applySecurityHeaders(response, request)
   }
 
   const supabase = createServerClient(url, publishableKey, {
@@ -33,7 +51,7 @@ export async function middleware(request: NextRequest) {
   // Refresh the auth session when needed. Do not trust cookie presence alone.
   await supabase.auth.getUser()
 
-  return response
+  return applySecurityHeaders(response, request)
 }
 
 export const config = {
