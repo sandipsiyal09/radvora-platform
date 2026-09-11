@@ -5,7 +5,6 @@ import { createAdminClient } from '../../../lib/supabase/admin'
 export const dynamic='force-dynamic'
 
 type Check={label:string;ready:boolean;detail:string;href?:string}
-
 type AgentRow={id:string;name:string;enabled:boolean;autonomy_level:number;allowed_tools:unknown}
 type GuardrailRow={agent_id:string;max_single_spend:number|string|null;max_daily_spend:number|string|null;require_approval_for_external_publish:boolean;require_approval_for_money:boolean;require_approval_for_claims:boolean}
 
@@ -18,7 +17,7 @@ export default async function ReadinessPage(){
 
   const admin=createAdminClient()
   const [{data:products},{count:pendingApprovals},{count:failedWebhooks},{count:openRefunds},{count:failedRefunds},{data:agents},{data:guardrails}]=await Promise.all([
-    supabase.from('products').select('id,name,status,price_inr,currency,commerce_enabled,hsn_code,gst_rate,price_inr_includes_gst').order('name'),
+    supabase.from('products').select('id,name,status,price_inr,currency,commerce_enabled,hsn_code,gst_rate,price_inr_includes_gst,stock_on_hand,stock_reserved').order('name'),
     supabase.from('approvals').select('*',{count:'exact',head:true}).eq('status','pending'),
     admin.from('payment_webhook_events').select('*',{count:'exact',head:true}).eq('processing_status','failed'),
     admin.from('refund_attempts').select('*',{count:'exact',head:true}).in('status',['requested','submitting','pending']),
@@ -29,10 +28,13 @@ export default async function ReadinessPage(){
 
   const catalog=products||[]
   const hasTaxConfig=(p:(typeof catalog)[number])=>Boolean(p.hsn_code&&/^\d{4,8}$/.test(String(p.hsn_code))&&p.gst_rate!==null&&Number(p.gst_rate)>=0&&Number(p.gst_rate)<=100&&p.price_inr_includes_gst!==null)
-  const sellable=catalog.filter(p=>p.status==='active'&&p.commerce_enabled===true&&p.currency==='INR'&&Number(p.price_inr)>0&&hasTaxConfig(p))
+  const availableStock=(p:(typeof catalog)[number])=>p.stock_on_hand===null?null:Number(p.stock_on_hand)-Number(p.stock_reserved||0)
+  const hasInventory=(p:(typeof catalog)[number])=>availableStock(p)!==null&&Number(availableStock(p))>0
+  const sellable=catalog.filter(p=>p.status==='active'&&p.commerce_enabled===true&&p.currency==='INR'&&Number(p.price_inr)>0&&hasTaxConfig(p)&&hasInventory(p))
   const activeMissingPrice=catalog.filter(p=>p.status==='active'&&(p.price_inr===null||Number(p.price_inr)<=0))
   const activeMissingTax=catalog.filter(p=>p.status==='active'&&!hasTaxConfig(p))
-  const commerceMisconfigured=catalog.filter(p=>p.commerce_enabled===true&&(p.status!=='active'||p.currency!=='INR'||p.price_inr===null||Number(p.price_inr)<=0||!hasTaxConfig(p)))
+  const activeMissingInventory=catalog.filter(p=>p.status==='active'&&!hasInventory(p))
+  const commerceMisconfigured=catalog.filter(p=>p.commerce_enabled===true&&(p.status!=='active'||p.currency!=='INR'||p.price_inr===null||Number(p.price_inr)<=0||!hasTaxConfig(p)||!hasInventory(p)))
   const gatewayReady=Boolean(process.env.RAZORPAY_KEY_ID&&process.env.RAZORPAY_KEY_SECRET&&process.env.RAZORPAY_WEBHOOK_SECRET)
   const appUrl=process.env.NEXT_PUBLIC_APP_URL?.trim()||''
   const canonicalReady=appUrl.startsWith('https://')
@@ -49,10 +51,11 @@ export default async function ReadinessPage(){
 
   const checks:Check[]=[
     {label:'Indian payment gateway',ready:gatewayReady,detail:gatewayReady?'Razorpay server keys and webhook secret are configured.':'Production Razorpay key ID, key secret and webhook secret are still required.',href:'/api/health'},
-    {label:'Sellable India catalog',ready:sellable.length>0,detail:sellable.length?`${sellable.length} product${sellable.length===1?'':'s'} explicitly enabled with positive INR pricing and complete GST/HSN configuration.`:'No product is currently fully ready and enabled for India commerce.',href:'/admin/catalog'},
+    {label:'Sellable India catalog',ready:sellable.length>0,detail:sellable.length?`${sellable.length} product${sellable.length===1?'':'s'} enabled with approved INR pricing, GST/HSN and available stock.`:'No product is currently fully ready and enabled for India commerce.',href:'/admin/catalog'},
     {label:'Catalog pricing completeness',ready:activeMissingPrice.length===0,detail:activeMissingPrice.length?`${activeMissingPrice.length} active product${activeMissingPrice.length===1?' is':'s are'} still unpriced.`:'All active products have positive prices.',href:'/admin/catalog'},
     {label:'India GST/HSN completeness',ready:activeMissingTax.length===0,detail:activeMissingTax.length?`${activeMissingTax.length} active product${activeMissingTax.length===1?' is':'s are'} missing explicit HSN, GST rate or GST-inclusive/exclusive price treatment.`:'All active products have complete India tax configuration.',href:'/admin/catalog'},
-    {label:'Commerce gate consistency',ready:commerceMisconfigured.length===0,detail:commerceMisconfigured.length?'One or more commerce-enabled products fail the active/INR/price/GST/HSN rules.':'No inconsistent commerce-enabled product records detected.',href:'/admin/catalog'},
+    {label:'Governed inventory availability',ready:activeMissingInventory.length===0,detail:activeMissingInventory.length?`${activeMissingInventory.length} active product${activeMissingInventory.length===1?' has':'s have'} undefined or exhausted available stock.`:'All active products have governed available stock.',href:'/admin/catalog'},
+    {label:'Commerce gate consistency',ready:commerceMisconfigured.length===0,detail:commerceMisconfigured.length?'One or more commerce-enabled products fail the active/INR/price/GST/HSN/inventory rules.':'No inconsistent commerce-enabled product records detected.',href:'/admin/catalog'},
     {label:'Payment operations ledger',ready:paymentOpsHealthy,detail:paymentOpsHealthy?'No failed webhook events or unresolved refund attempts are recorded.':`${failedWebhooks??0} failed webhook event${failedWebhooks===1?'':'s'}, ${openRefunds??0} open refund${openRefunds===1?'':'s'}, ${failedRefunds??0} failed refund${failedRefunds===1?'':'s'} require review.`,href:'/admin/operations'},
     {label:'AI autonomy safety',ready:unsafeAgents.length===0,detail:unsafeAgents.length===0?(enabledAgents.length===0?'All autonomous agents are disabled. Money, publishing and claims approval gates remain intact.':`${enabledAgents.length} enabled agent${enabledAgents.length===1?' is':'s are'} within launch guardrails.`):`${unsafeAgents.length} enabled agent${unsafeAgents.length===1?'':'s'} violates launch autonomy/approval guardrails.`,href:'/admin/ai'},
     {label:'Canonical application URL',ready:canonicalReady,detail:canonicalReady?`HTTPS application URL configured: ${appUrl}`:'NEXT_PUBLIC_APP_URL must be configured to the final HTTPS production domain before launch.'},
@@ -61,7 +64,7 @@ export default async function ReadinessPage(){
   const blockers=checks.filter(check=>!check.ready)
 
   return <main className="page-wrap"><div className="shell">
-    <section className="page-head"><span className="kicker">RADVORA INDIA LAUNCH</span><h1>Launch readiness.</h1><p>This view reports configuration, statutory catalog, payment-operation and AI-safety blockers without exposing credentials. It does not bypass scientific, compliance, payment, tax or human approval controls.</p></section>
+    <section className="page-head"><span className="kicker">RADVORA INDIA LAUNCH</span><h1>Launch readiness.</h1><p>This view reports configuration, statutory catalog, inventory, payment-operation and AI-safety blockers without exposing credentials. It does not bypass scientific, compliance, payment, tax, stock or human approval controls.</p></section>
     <section className="panel"><span className="kicker">CURRENT STATE</span><h2>{blockers.length===0?'Core launch checks are green.':`${blockers.length} launch blocker${blockers.length===1?'':'s'} remain.`}</h2><p>{blockers.length===0?'Proceed only after deployment/runtime verification on the final production domain.':'Resolve the items below before enabling customer payment collection.'}</p></section>
     <div className="admin-grid">{checks.map(check=><article className="panel" key={check.label}><span className="kicker">{check.ready?'READY':'BLOCKED'}</span><h2>{check.label}</h2><p>{check.detail}</p>{check.href?<Link className="pill ghost" href={check.href}>Review →</Link>:null}</article>)}</div>
     <div className="actions"><Link className="pill ghost" href="/admin">← Admin dashboard</Link><Link className="pill ghost" href="/admin/catalog">Catalog</Link><Link className="pill ghost" href="/admin/operations">Operations</Link></div>
