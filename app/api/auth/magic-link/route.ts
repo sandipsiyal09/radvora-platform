@@ -18,11 +18,15 @@ function canonicalOrigin(request:Request){
   try{return new URL(request.url).origin}catch{return null}
 }
 
-function invalidOrigin(request:Request,expected:string){
+function invalidOrigin(request:Request,canonical:string){
   if(request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site')return true
   const origin=request.headers.get('origin')
   if(!origin)return false
-  try{return new URL(origin).origin!==expected}catch{return true}
+  try{
+    const supplied=new URL(origin).origin
+    const requestOrigin=new URL(request.url).origin
+    return supplied!==requestOrigin&&supplied!==canonical
+  }catch{return true}
 }
 
 export async function POST(request:Request){
