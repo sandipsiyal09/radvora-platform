@@ -9,11 +9,11 @@ export default async function ShieldTagProPage() {
   const supabase = await createClient()
   const { data: product } = await supabase
     .from('products')
-    .select('id,name,slug,sku,short_description,description,status,price_inr,currency')
+    .select('id,name,slug,sku,short_description,description,status,price_inr,currency,commerce_enabled')
     .eq('slug', 'shieldtag-pro')
     .eq('status', 'active')
     .maybeSingle()
-  const indiaPurchasable=Boolean(product?.price_inr)&&product?.currency==='INR'
+  const indiaPurchasable=product?.commerce_enabled===true&&Boolean(product?.price_inr)&&product?.currency==='INR'
 
   return (
     <main className="page-wrap">
@@ -43,7 +43,7 @@ export default async function ShieldTagProPage() {
             </div>
 
             {product?.price_inr ? <p className="product-price">{new Intl.NumberFormat('en-IN', { style: 'currency', currency: product.currency || 'INR' }).format(Number(product.price_inr))}</p> : null}
-            {product&&indiaPurchasable?<AddToCartButton productId={product.id}/>:<p className="empty-state">India consumer purchasing will be enabled only after approved INR pricing is active.</p>}
+            {product&&indiaPurchasable?<AddToCartButton productId={product.id}/>:<p className="empty-state">India consumer purchasing is not enabled for this product yet.</p>}
 
             <div className="actions">
               <Link className="pill ghost" href="/verify">Verify a product →</Link>
