@@ -16,7 +16,10 @@ function applySecurityHeaders(response: NextResponse, request: NextRequest) {
     'camera=(), microphone=(), geolocation=(), browsing-topics=()',
   )
   response.headers.set('Cross-Origin-Opener-Policy', 'same-origin')
+  response.headers.set('Cross-Origin-Resource-Policy', 'same-origin')
+  response.headers.set('Origin-Agent-Cluster', '?1')
   response.headers.set('X-DNS-Prefetch-Control', 'off')
+  response.headers.set('X-Permitted-Cross-Domain-Policies', 'none')
 
   if (request.nextUrl.protocol === 'https:' && process.env.NODE_ENV === 'production') {
     response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
