@@ -1,6 +1,7 @@
 import './product.css'
 import Link from 'next/link'
 import { createClient } from '../../../lib/supabase/server'
+import AddToCartButton from '../add-to-cart-button'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,10 +41,10 @@ export default async function ShieldTagProPage() {
               <div className="glass"><span>Claims model</span><b>Evidence-linked</b></div>
             </div>
 
-            {product?.price_inr ? <p className="product-price">{new Intl.NumberFormat('en-IN', { style: 'currency', currency: product.currency || 'INR' }).format(Number(product.price_inr))}</p> : null}
+            {product?.price_inr ? <><p className="product-price">{new Intl.NumberFormat('en-IN', { style: 'currency', currency: product.currency || 'INR' }).format(Number(product.price_inr))}</p><AddToCartButton productId={product.id}/></> : <p className="empty-state">Commercial pricing is not active yet.</p>}
 
             <div className="actions">
-              <Link className="pill light" href="/verify">Verify a product →</Link>
+              <Link className="pill ghost" href="/verify">Verify a product →</Link>
               <Link className="pill ghost" href="/labs">View RADVORA Labs ↗</Link>
             </div>
 
