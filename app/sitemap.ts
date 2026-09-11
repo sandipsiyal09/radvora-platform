@@ -26,8 +26,7 @@ export default function sitemap():MetadataRoute.Sitemap{
     '/shipping',
     '/business',
     '/dealer',
-    '/distributor',
-    '/login'
+    '/distributor'
   ]
   return routes.map(path=>({
     url:`${base}${path}`,
