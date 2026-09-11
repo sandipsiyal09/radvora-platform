@@ -19,6 +19,13 @@ revoke insert, update on table public.products from authenticated;
 revoke insert, update on table public.support_tickets from authenticated;
 revoke insert, update on table public.warranty_claims from authenticated;
 
+-- High-impact scientific and AI controls now go through authenticated Next.js server routes
+-- backed by service-role-only server_* RPCs. Remove their old direct browser RPC surface.
+revoke execute on function public.review_claim(uuid,text,text,text) from authenticated;
+revoke execute on function public.publish_claim(uuid) from authenticated;
+revoke execute on function public.decide_approval(uuid,text,text) from authenticated;
+revoke execute on function public.set_agent_configuration(uuid,boolean,smallint,jsonb,jsonb) from authenticated;
+
 commit;
 
 -- After applying, verify:
@@ -26,4 +33,6 @@ commit;
 -- 2. product registration works with serial + private QR token;
 -- 3. support and warranty submissions work;
 -- 4. admin catalog edits and customer-care transitions work;
--- 5. information_schema.role_table_grants shows no obsolete authenticated writes.
+-- 5. scientific review/publish, approval decisions and AI configuration work only through server routes;
+-- 6. information_schema.role_table_grants shows no obsolete authenticated writes;
+-- 7. Supabase security advisor no longer reports the four revoked high-impact RPCs as authenticated-executable.
