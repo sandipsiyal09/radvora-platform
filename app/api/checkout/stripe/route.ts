@@ -6,6 +6,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 export const runtime='nodejs'
 
 type CheckoutBody={orderId?:string}
+type ActiveAttempt={id:string;provider_order_id:string|null;status:string;updated_at:string}
 
 function json(body:Record<string,unknown>,status=200){
   return NextResponse.json(body,{status,headers:{'Cache-Control':'no-store'}})
@@ -64,6 +65,69 @@ export async function POST(request:Request){
   if(!/^[a-z]{3}$/.test(currency)) return json({error:'Order currency is invalid.'},400)
 
   const admin=createAdminClient()
+  const stripe=new Stripe(secret)
+
+  const {data:existing,error:existingError}=await admin
+    .from('payment_attempts')
+    .select('id,provider_order_id,status,updated_at')
+    .eq('order_id',order.id)
+    .eq('provider','stripe')
+    .in('status',['created','pending'])
+    .order('created_at',{ascending:false})
+    .limit(1)
+    .maybeSingle<ActiveAttempt>()
+
+  if(existingError){
+    console.error('Unable to inspect existing Stripe checkout attempt',existingError)
+    return json({error:'Unable to verify checkout state safely.'},500)
+  }
+
+  if(existing){
+    if(existing.provider_order_id){
+      try{
+        const session=await stripe.checkout.sessions.retrieve(existing.provider_order_id)
+        if(session.status==='open'&&session.url){
+          return json({url:session.url,orderId:order.id,reused:true})
+        }
+        if(session.status==='complete'||session.payment_status==='paid'){
+          return json({error:'Payment confirmation is already being processed for this order.',orderId:order.id,retryable:false},409)
+        }
+
+        const {error:closeError}=await admin
+          .from('payment_attempts')
+          .update({status:'failed',failure_code:`stripe_session_${session.status||'closed'}`,updated_at:new Date().toISOString()})
+          .eq('id',existing.id)
+          .eq('order_id',order.id)
+          .eq('provider','stripe')
+          .in('status',['created','pending'])
+        if(closeError){
+          console.error('Unable to close inactive Stripe checkout attempt',closeError)
+          return json({error:'Unable to refresh checkout state safely.'},500)
+        }
+      }catch(error){
+        console.error('Unable to retrieve existing Stripe checkout session',error)
+        return json({error:'Unable to verify the existing secure checkout session. Please retry shortly.',orderId:order.id,retryable:true},502)
+      }
+    }else{
+      const ageMs=Date.now()-new Date(existing.updated_at).getTime()
+      if(Number.isFinite(ageMs)&&ageMs<120000){
+        return json({error:'Checkout is already being initialized. Please retry shortly.',orderId:order.id,retryable:true},409)
+      }
+
+      const {error:staleError}=await admin
+        .from('payment_attempts')
+        .update({status:'failed',failure_code:'stale_checkout_initialization',updated_at:new Date().toISOString()})
+        .eq('id',existing.id)
+        .eq('order_id',order.id)
+        .eq('provider','stripe')
+        .eq('status','created')
+      if(staleError){
+        console.error('Unable to close stale Stripe checkout attempt',staleError)
+        return json({error:'Unable to refresh checkout state safely.'},500)
+      }
+    }
+  }
+
   const {data:attempt,error:attemptError}=await admin.from('payment_attempts').insert({
     order_id:order.id,
     provider:'stripe',
@@ -72,12 +136,14 @@ export async function POST(request:Request){
     currency:currency.toUpperCase()
   }).select('id').single()
   if(attemptError||!attempt){
+    if(attemptError?.code==='23505'){
+      return json({error:'Checkout is already being initialized for this order. Please retry shortly.',orderId:order.id,retryable:true},409)
+    }
     if(attemptError) console.error('Unable to initialize payment attempt',attemptError)
     return json({error:'Unable to initialize payment tracking.'},500)
   }
 
   try{
-    const stripe=new Stripe(secret)
     const origin=getAppOrigin(request)
     const session=await stripe.checkout.sessions.create({
       mode:'payment',
@@ -96,9 +162,9 @@ export async function POST(request:Request){
       })),
       success_url:`${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url:`${origin}/account/orders/${order.id}`
-    })
+    },{idempotencyKey:`radvora-checkout-${attempt.id}`})
 
-    const {error:linkError}=await admin.from('payment_attempts').update({provider_order_id:session.id,status:'pending',updated_at:new Date().toISOString()}).eq('id',attempt.id)
+    const {error:linkError}=await admin.from('payment_attempts').update({provider_order_id:session.id,status:'pending',updated_at:new Date().toISOString()}).eq('id',attempt.id).eq('order_id',order.id).eq('provider','stripe').eq('status','created')
     if(linkError){
       console.error('Unable to link Stripe session to payment attempt',linkError)
       return json({error:'Payment session could not be finalized safely. Please retry from the order page.',orderId:order.id,retryable:true},500)
@@ -106,7 +172,7 @@ export async function POST(request:Request){
 
     return json({url:session.url,orderId:order.id})
   }catch(error){
-    await admin.from('payment_attempts').update({status:'failed',failure_code:'stripe_session_error',updated_at:new Date().toISOString()}).eq('id',attempt.id)
+    await admin.from('payment_attempts').update({status:'failed',failure_code:'stripe_session_error',updated_at:new Date().toISOString()}).eq('id',attempt.id).eq('order_id',order.id).eq('provider','stripe')
     console.error('Stripe checkout session creation failed',error)
     return json({error:'Unable to start secure checkout. Please retry.',orderId:order.id,retryable:true},502)
   }
