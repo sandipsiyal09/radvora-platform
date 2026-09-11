@@ -32,6 +32,23 @@ jobs:
             exit 1
           fi
 
+      - name: Enforce India-only payment runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RniE --exclude='*.map' --exclude-dir='.next' --exclude-dir='node_modules' \
+            'STRIPE_|from ["'"']stripe["'"']|require\(["'"']stripe["'"']\)|/api/(checkout|webhooks)/stripe' \
+            app lib package.json .env.example 2>/dev/null; then
+            echo "Stripe runtime/configuration references are not allowed in the India-only RADVORA application."
+            exit 1
+          fi
+          if node -e "const p=require('./package.json');const d={...(p.dependencies||{}),...(p.devDependencies||{})};process.exit(Object.prototype.hasOwnProperty.call(d,'stripe')?1:0)"; then
+            echo "India-only payment runtime check passed."
+          else
+            echo "The stripe package must not be present in package.json."
+            exit 1
+          fi
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
