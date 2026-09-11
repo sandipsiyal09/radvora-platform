@@ -107,6 +107,51 @@ jobs:
           console.log('Private response and release observability controls are present.')
           NODE
 
+      - name: Guard post-deploy privilege lockdown
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const path = 'supabase/postdeploy/lock_down_legacy_client_writes.sql'
+          if (!fs.existsSync(path)) {
+            console.error(`Missing required post-deploy privilege lockdown: ${path}`)
+            process.exit(1)
+          }
+          const sql = fs.readFileSync(path, 'utf8')
+          const requiredSnippets = [
+            'revoke execute on function public.checkout_active_cart() from authenticated;',
+            'revoke insert on table public.orders from authenticated;',
+            'revoke insert on table public.order_items from authenticated;',
+            'revoke insert on table public.product_registrations from authenticated;',
+            'revoke insert, update on table public.products from authenticated;',
+            "'update_product_catalog'",
+            "'set_product_commerce_enabled'",
+            "'set_product_india_tax_config'",
+            "'set_product_inventory'",
+            'revoke insert, update on table public.support_tickets from authenticated;',
+            'revoke insert, update on table public.warranty_claims from authenticated;',
+            "'transition_order_fulfillment'",
+            "'transition_support_ticket'",
+            "'transition_warranty_claim'",
+            'revoke execute on function public.review_claim(uuid,text,text,text) from authenticated;',
+            'revoke execute on function public.publish_claim(uuid) from authenticated;',
+            'revoke execute on function public.decide_approval(uuid,text,text) from authenticated;',
+            'revoke execute on function public.set_agent_configuration(uuid,boolean,smallint,jsonb,jsonb) from authenticated;',
+          ]
+          for (const snippet of requiredSnippets) {
+            if (!sql.includes(snippet)) {
+              console.error(`Post-deploy privilege lockdown is missing required control: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          if (sql.includes('revoke execute on function public.checkout_active_cart_india')) {
+            console.error('Customer-scoped India checkout RPC must not be revoked by the compatibility lockdown.')
+            process.exit(1)
+          }
+          console.log('Post-deploy privilege lockdown controls are present and customer checkout remains preserved.')
+          NODE
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
