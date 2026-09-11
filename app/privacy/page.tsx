@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import BusinessLeadForm from '../business/lead-form'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
@@ -15,9 +16,9 @@ const sections = [
   ['Security', 'We use administrative and technical controls designed to protect personal information. No internet service can guarantee absolute security, so users should also protect their account credentials and report suspected misuse promptly.'],
   ['Children', 'RADVORA services are not directed to children for independent commercial transactions. Where applicable, a parent, guardian, or authorized adult should manage purchases and account activity.'],
   ['International processing', 'Our providers may process information in locations other than your own. Where applicable, we rely on appropriate contractual, legal, or technical safeguards for such processing.'],
-  ['Contact', 'Privacy questions or requests can be submitted through the RADVORA Contact or Support page. We may need to verify identity before acting on certain requests.'],
+  ['Contact', 'Privacy questions or requests can be submitted using the privacy-request form below. We may need to verify identity before acting on access, correction, deletion, restriction, or similar requests.'],
 ]
 
 export default function PrivacyPage(){
-  return <main className="page-shell"><div className="content-card prose-card"><p className="eyebrow">RADVORA TECHNOLOGIES</p><h1>Privacy Policy</h1><p>Last updated: 11 September 2026</p><p>This policy explains how RADVORA Technologies handles personal information when you use our website, create an account, place an order, request support or warranty service, or contact us for business purposes.</p>{sections.map(([title, body])=><section key={title}><h2>{title}</h2><p>{body}</p></section>)}</div></main>
+  return <main className="page-shell"><div className="content-card prose-card"><p className="eyebrow">RADVORA TECHNOLOGIES</p><h1>Privacy Policy</h1><p>Last updated: 11 September 2026</p><p>This policy explains how RADVORA Technologies handles personal information when you use our website, create an account, place an order, request support or warranty service, or contact us for business purposes.</p>{sections.map(([title, body])=><section key={title}><h2>{title}</h2><p>{body}</p></section>)}<section><h2>Submit a privacy request</h2><p>Use this form for privacy questions or requests relating to access, correction, deletion, restriction, or other applicable privacy rights. Do not include passwords, payment-card data, private QR authentication tokens, or other secrets.</p><BusinessLeadForm source="privacy-page" title="Privacy request"/></section></div></main>
 }
