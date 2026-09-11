@@ -81,8 +81,12 @@ export async function POST(request:Request){
   const {data:{user}}=await supabase.auth.getUser()
   if(!user) return json({error:'Authentication required.'},401)
 
+  let rawBody:string
+  try{rawBody=await request.text()}catch{return json({error:'Invalid checkout request.'},400)}
+  if(Buffer.byteLength(rawBody,'utf8')>MAX_BODY_BYTES) return json({error:'Checkout request is too large.'},413)
+
   let body:CheckoutBody
-  try{body=await request.json()}catch{return json({error:'Invalid checkout request.'},400)}
+  try{body=JSON.parse(rawBody)}catch{return json({error:'Invalid checkout request.'},400)}
 
   const admin=createAdminClient()
   let order:CheckoutOrder
@@ -118,27 +122,39 @@ export async function POST(request:Request){
     }
     phone=normalized
 
-    const {data:orderData,error:orderError}=await supabase.rpc('checkout_active_cart')
+    const {data:orderData,error:orderError}=await supabase.rpc('checkout_active_cart_india',{
+      p_name:name,
+      p_phone:phone,
+      p_line1:line1,
+      p_line2:line2,
+      p_city:city,
+      p_state:state,
+      p_postal_code:postalCode,
+      p_terms_version:CHECKOUT_TERMS_VERSION
+    })
     if(orderError){
-      console.error('checkout_active_cart failed',orderError)
-      return json({error:'Unable to create order from the current cart.'},400)
+      console.error('checkout_active_cart_india failed',orderError)
+      return json({error:'Unable to create the India order from the current cart.'},400)
     }
     const created=Array.isArray(orderData)?orderData[0]:orderData
-    if(!created?.id) return json({error:'Unable to create order.'},400)
-    order={...created,status:'pending'} as CheckoutOrder
-
-    const acceptedAt=new Date().toISOString()
-    const {error:addressError}=await admin.from('orders').update({
-      shipping_name:name,shipping_phone:phone,shipping_line1:line1,shipping_line2:line2||null,
-      shipping_city:city,shipping_state:state,shipping_postal_code:postalCode,shipping_country:'IN',
-      checkout_terms_accepted_at:acceptedAt,checkout_terms_version:CHECKOUT_TERMS_VERSION,updated_at:acceptedAt
-    }).eq('id',order.id).eq('user_id',user.id).eq('status','pending')
-    if(addressError){
-      console.error('india_checkout_address_save_failed',addressError)
-      return json({error:'Unable to save the delivery address and checkout acceptance.'},500)
+    if(!created?.order_id) return json({error:'Unable to create order.'},400)
+    order={
+      id:created.order_id,
+      order_number:created.order_number,
+      total:created.total,
+      currency:created.currency,
+      status:'pending',
+      shipping_name:name,
+      shipping_phone:phone,
+      shipping_line1:line1,
+      shipping_line2:line2||null,
+      shipping_city:city,
+      shipping_state:state,
+      shipping_postal_code:postalCode,
+      shipping_country:'IN',
+      checkout_terms_accepted_at:created.checkout_terms_accepted_at,
+      checkout_terms_version:CHECKOUT_TERMS_VERSION
     }
-    order.checkout_terms_accepted_at=acceptedAt
-    order.checkout_terms_version=CHECKOUT_TERMS_VERSION
   }
 
   if(String(order.currency||'INR').toUpperCase()!=='INR') return json({error:'RADVORA India checkout supports INR only.'},400)
