@@ -78,17 +78,17 @@ export default function CheckoutButton({disabled=false,gatewayReady=false}:{disa
   }
 
   const locked=disabled||!gatewayReady
-  return <form onSubmit={checkout} style={{display:'grid',gap:10,marginTop:16}}>
+  return <form onSubmit={checkout} style={{display:'grid',gap:10,marginTop:16}} aria-label="India delivery and payment">
     <span className="kicker">DELIVERY IN INDIA</span>
-    <input className="field" required maxLength={120} placeholder="Full name" value={form.name} onChange={e=>setField('name',e.target.value)} disabled={!gatewayReady}/>
-    <input className="field" required inputMode="tel" maxLength={20} placeholder="Indian mobile number" value={form.phone} onChange={e=>setField('phone',e.target.value)} disabled={!gatewayReady}/>
-    <input className="field" required maxLength={180} placeholder="Address line 1" value={form.line1} onChange={e=>setField('line1',e.target.value)} disabled={!gatewayReady}/>
-    <input className="field" maxLength={180} placeholder="Address line 2 (optional)" value={form.line2} onChange={e=>setField('line2',e.target.value)} disabled={!gatewayReady}/>
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}><input className="field" required maxLength={100} placeholder="City" value={form.city} onChange={e=>setField('city',e.target.value)} disabled={!gatewayReady}/><input className="field" required maxLength={100} placeholder="State / UT" value={form.state} onChange={e=>setField('state',e.target.value)} disabled={!gatewayReady}/></div>
-    <input className="field" required inputMode="numeric" pattern="[1-9][0-9]{5}" maxLength={6} placeholder="6-digit PIN code" value={form.postalCode} onChange={e=>setField('postalCode',e.target.value.replace(/\D/g,'').slice(0,6))} disabled={!gatewayReady}/>
+    <input className="field" required maxLength={120} aria-label="Full name" autoComplete="name" placeholder="Full name" value={form.name} onChange={e=>setField('name',e.target.value)} disabled={!gatewayReady}/>
+    <input className="field" required inputMode="tel" maxLength={20} aria-label="Indian mobile number" autoComplete="tel" placeholder="Indian mobile number" value={form.phone} onChange={e=>setField('phone',e.target.value)} disabled={!gatewayReady}/>
+    <input className="field" required maxLength={180} aria-label="Address line 1" autoComplete="address-line1" placeholder="Address line 1" value={form.line1} onChange={e=>setField('line1',e.target.value)} disabled={!gatewayReady}/>
+    <input className="field" maxLength={180} aria-label="Address line 2" autoComplete="address-line2" placeholder="Address line 2 (optional)" value={form.line2} onChange={e=>setField('line2',e.target.value)} disabled={!gatewayReady}/>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}><input className="field" required maxLength={100} aria-label="City" autoComplete="address-level2" placeholder="City" value={form.city} onChange={e=>setField('city',e.target.value)} disabled={!gatewayReady}/><input className="field" required maxLength={100} aria-label="State or Union Territory" autoComplete="address-level1" placeholder="State / UT" value={form.state} onChange={e=>setField('state',e.target.value)} disabled={!gatewayReady}/></div>
+    <input className="field" required inputMode="numeric" pattern="[1-9][0-9]{5}" maxLength={6} aria-label="6-digit PIN code" autoComplete="postal-code" placeholder="6-digit PIN code" value={form.postalCode} onChange={e=>setField('postalCode',e.target.value.replace(/\D/g,'').slice(0,6))} disabled={!gatewayReady}/>
     <label className="checkout-consent"><input type="checkbox" checked={acceptedPolicies} onChange={e=>setAcceptedPolicies(e.target.checked)} disabled={!gatewayReady}/><span>I agree to the <Link href="/terms" target="_blank">Terms</Link>, <Link href="/returns" target="_blank">Returns &amp; Refunds</Link>, <Link href="/shipping" target="_blank">Shipping Policy</Link> and <Link href="/privacy" target="_blank">Privacy Policy</Link>.</span></label>
     <button className="pill light" type="submit" disabled={locked||loading||!acceptedPolicies}>{!gatewayReady?'India payments activation pending':loading?'Preparing secure checkout…':'Pay securely in INR →'}</button>
     <p className="status-message">{gatewayReady?'UPI, Indian cards, netbanking and supported wallets are handled by the configured Indian payment gateway. RADVORA marks an order paid only after server verification.':'Online payment collection stays disabled until the production Indian merchant keys and webhook secret are configured.'}</p>
-    {message?<p className="status-message" role="status">{message}</p>:null}
+    {message?<p className="status-message" role="status" aria-live="polite">{message}</p>:null}
   </form>
 }
