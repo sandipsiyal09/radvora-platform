@@ -82,10 +82,15 @@ function applySecurityHeaders(response: NextResponse, request: NextRequest, requ
 }
 
 export async function proxy(request: NextRequest) {
-  const requestId = request.headers.get('x-request-id')?.trim().slice(0, 128) || crypto.randomUUID()
-  const requestHeaders = new Headers(request.headers)
-  requestHeaders.set('x-request-id', requestId)
-  const buildResponse = () => NextResponse.next({ request: { headers: requestHeaders } })
+  const suppliedRequestId = request.headers.get('x-request-id')?.trim() || ''
+  const requestId = /^[A-Za-z0-9._:-]{1,128}$/.test(suppliedRequestId)
+    ? suppliedRequestId
+    : crypto.randomUUID()
+  const buildResponse = () => {
+    const requestHeaders = new Headers(request.headers)
+    requestHeaders.set('x-request-id', requestId)
+    return NextResponse.next({ request: { headers: requestHeaders } })
+  }
   let response = buildResponse()
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
