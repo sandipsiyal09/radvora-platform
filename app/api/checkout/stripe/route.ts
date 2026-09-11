@@ -5,6 +5,8 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 
 export const runtime='nodejs'
 
+const MAX_CHECKOUT_BODY_BYTES=4096
+
 type CheckoutBody={orderId?:string}
 type ActiveAttempt={id:string;provider_order_id:string|null;status:string;updated_at:string}
 
@@ -23,7 +25,39 @@ function getAppOrigin(request:Request){
   return new URL(request.url).origin
 }
 
+function requestBoundaryError(request:Request){
+  const fetchSite=request.headers.get('sec-fetch-site')?.toLowerCase()
+  if(fetchSite==='cross-site') return json({error:'Cross-site checkout requests are not allowed.'},403)
+
+  const rawLength=request.headers.get('content-length')
+  if(rawLength){
+    const contentLength=Number(rawLength)
+    if(Number.isFinite(contentLength)&&contentLength>MAX_CHECKOUT_BODY_BYTES){
+      return json({error:'Checkout request is too large.'},413)
+    }
+  }
+
+  const origin=request.headers.get('origin')
+  if(origin){
+    try{
+      const requestOrigin=new URL(request.url).origin
+      const configuredOrigin=getAppOrigin(request)
+      const suppliedOrigin=new URL(origin).origin
+      if(suppliedOrigin!==requestOrigin&&suppliedOrigin!==configuredOrigin){
+        return json({error:'Invalid checkout request origin.'},403)
+      }
+    }catch{
+      return json({error:'Invalid checkout request origin.'},403)
+    }
+  }
+
+  return null
+}
+
 export async function POST(request:Request){
+  const boundaryError=requestBoundaryError(request)
+  if(boundaryError) return boundaryError
+
   const secret=process.env.STRIPE_SECRET_KEY
   if(!secret) return json({error:'Secure checkout is temporarily unavailable.'},503)
 
