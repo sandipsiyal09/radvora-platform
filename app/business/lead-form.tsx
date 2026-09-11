@@ -5,6 +5,7 @@ import { FormEvent, useState } from 'react'
 export default function BusinessLeadForm({source='business-page',title='Corporate, retail, distributor & OEM'}:{source?:string;title?:string}){
   const [busy,setBusy]=useState(false)
   const [message,setMessage]=useState('')
+  const isPrivacy=source==='privacy-page'
 
   async function submit(e:FormEvent<HTMLFormElement>){
     e.preventDefault();setBusy(true);setMessage('')
@@ -25,29 +26,29 @@ export default function BusinessLeadForm({source='business-page',title='Corporat
         })
       })
       const payload=await response.json().catch(()=>({})) as {error?:string}
-      if(!response.ok){setMessage(payload.error||'We could not submit your enquiry. Please try again shortly.');return}
-      setMessage('Thank you. Your business enquiry has been received.')
+      if(!response.ok){setMessage(payload.error||'We could not submit your request. Please try again shortly.');return}
+      setMessage(isPrivacy?'Your privacy request has been received. We may contact you to verify identity before acting on it.':'Thank you. Your business enquiry has been received.')
       e.currentTarget.reset()
     } catch {
-      setMessage('We could not submit your enquiry. Please try again shortly.')
+      setMessage('We could not submit your request. Please try again shortly.')
     } finally {
       setBusy(false)
     }
   }
 
   return <form className="panel" onSubmit={submit} style={{display:'grid',gap:12}}>
-    <span className="kicker">BUSINESS ENQUIRY</span>
+    <span className="kicker">{isPrivacy?'PRIVACY REQUEST':'BUSINESS ENQUIRY'}</span>
     <h2>{title}</h2>
     <div aria-hidden="true" style={{position:'absolute',left:'-10000px',width:1,height:1,overflow:'hidden'}}>
-      <label htmlFor="business-website">Website</label>
-      <input id="business-website" name="website" tabIndex={-1} autoComplete="off" />
+      <label htmlFor={`website-${source}`}>Website</label>
+      <input id={`website-${source}`} name="website" tabIndex={-1} autoComplete="off" />
     </div>
     <input className="field" name="name" required minLength={2} maxLength={120} placeholder="Full name"/>
-    <input className="field" name="company" maxLength={160} placeholder="Company"/>
-    <input className="field" name="email" type="email" required maxLength={320} placeholder="Work email"/>
-    <input className="field" name="phone" maxLength={40} placeholder="Phone"/>
-    <textarea className="field" name="notes" rows={5} maxLength={3000} placeholder="Tell us about quantities, channels, use case or partnership interest"/>
-    <button className="pill light" disabled={busy}>{busy?'Submitting…':'Submit enquiry →'}</button>
+    {!isPrivacy?<input className="field" name="company" maxLength={160} placeholder="Company"/>:null}
+    <input className="field" name="email" type="email" required maxLength={320} placeholder={isPrivacy?'Email address':'Work email'}/>
+    <input className="field" name="phone" maxLength={40} placeholder="Phone (optional)"/>
+    <textarea className="field" name="notes" rows={5} maxLength={3000} required={isPrivacy} placeholder={isPrivacy?'Describe your privacy question or request. Do not include passwords, card data or authentication secrets.':'Tell us about quantities, channels, use case or partnership interest'}/>
+    <button className="pill light" disabled={busy}>{busy?'Submitting…':isPrivacy?'Submit privacy request →':'Submit enquiry →'}</button>
     {message?<p className="status-message" aria-live="polite">{message}</p>:null}
   </form>
 }
