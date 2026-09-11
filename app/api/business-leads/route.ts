@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX_BODY_BYTES = 8 * 1024
-const ALLOWED_SOURCES = new Set(['business-page','dealer-page','distributor-page','contact-page','website'])
+const ALLOWED_SOURCES = new Set(['business-page','dealer-page','distributor-page','contact-page','privacy-page','website'])
 
 function clean(value: unknown, maxLength: number) {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : ''
@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
   const company = clean(body.company, 160)
   const requestedSource = clean(body.source, 80) || 'website'
   const source = ALLOWED_SOURCES.has(requestedSource) ? requestedSource : 'website'
+  const segment = source === 'privacy-page' ? 'privacy' : 'business'
   const notes = clean(body.notes, 3000)
 
   if (fullName.length < 2 || !EMAIL_PATTERN.test(email)) {
@@ -89,7 +90,7 @@ export async function POST(request: NextRequest) {
       phone: phone || null,
       company: company || null,
       source,
-      segment: 'business',
+      segment,
       status: 'new',
       score: 0,
       notes: notes || null,
