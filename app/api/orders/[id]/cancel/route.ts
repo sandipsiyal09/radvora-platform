@@ -3,6 +3,7 @@ import { createClient } from '../../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 
 export const runtime='nodejs'
+const UUID_PATTERN=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 type Params={params:Promise<{id:string}>}
 
@@ -28,6 +29,8 @@ export async function POST(request:Request,{params}:Params){
   if(!user) return json({error:'Authentication required.'},401)
 
   const {id:orderId}=await params
+  if(!UUID_PATTERN.test(orderId)) return json({error:'Order not found.'},404)
+
   const admin=createAdminClient()
   const {data,error}=await admin.rpc('cancel_pending_order',{p_order_id:orderId,p_user_id:user.id})
   if(error){
