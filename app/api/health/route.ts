@@ -6,8 +6,6 @@ export const dynamic = 'force-dynamic'
 const requiredRuntimeConfig = [
   'NEXT_PUBLIC_SUPABASE_URL',
   'SUPABASE_SERVICE_ROLE_KEY',
-  'STRIPE_SECRET_KEY',
-  'STRIPE_WEBHOOK_SECRET',
 ]
 
 function responseHeaders() {
@@ -17,6 +15,11 @@ function responseHeaders() {
 export async function GET() {
   const timestamp = new Date().toISOString()
   const configurationReady = requiredRuntimeConfig.every((key) => Boolean(process.env[key]))
+  const indiaPaymentsConfigured = Boolean(
+    process.env.RAZORPAY_KEY_ID &&
+    process.env.RAZORPAY_KEY_SECRET &&
+    process.env.RAZORPAY_WEBHOOK_SECRET,
+  )
 
   if (!configurationReady) {
     return NextResponse.json(
@@ -26,6 +29,7 @@ export async function GET() {
         checks: {
           configuration: 'unavailable',
           database: 'not_checked',
+          india_payments: indiaPaymentsConfigured ? 'configured' : 'not_configured',
         },
         timestamp,
       },
@@ -49,6 +53,7 @@ export async function GET() {
         checks: {
           configuration: 'ok',
           database: 'ok',
+          india_payments: indiaPaymentsConfigured ? 'configured' : 'not_configured',
         },
         timestamp,
       },
@@ -63,6 +68,7 @@ export async function GET() {
         checks: {
           configuration: 'ok',
           database: 'unavailable',
+          india_payments: indiaPaymentsConfigured ? 'configured' : 'not_configured',
         },
         timestamp,
       },
