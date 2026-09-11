@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '../../../lib/supabase/server'
@@ -6,6 +7,20 @@ import AddToCartButton from '../add-to-cart-button'
 type PageProps = { params: Promise<{ slug: string }> }
 
 export const dynamic = 'force-dynamic'
+
+export async function generateMetadata({params}:PageProps):Promise<Metadata>{
+  const {slug}=await params
+  const supabase=await createClient()
+  const {data:product}=await supabase.from('products').select('name,slug,short_description,status').eq('slug',slug).eq('status','active').maybeSingle()
+  if(!product) return {title:'Product not found',robots:{index:false,follow:false}}
+  const description=product.short_description||`${product.name} from RADVORA Technologies with evidence-linked product information and authenticity support.`
+  return {
+    title:product.name,
+    description,
+    alternates:{canonical:`/products/${product.slug}`},
+    openGraph:{title:`${product.name} | RADVORA Technologies`,description,url:`/products/${product.slug}`,type:'website'}
+  }
+}
 
 export default async function ProductDetailPage({ params }: PageProps){
   const { slug } = await params
