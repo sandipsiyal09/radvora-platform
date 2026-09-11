@@ -9,16 +9,16 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.6.1",
-    "@supabase/supabase-js": "^2.57.4",
+    "@supabase/ssr": "0.6.1",
+    "@supabase/supabase-js": "2.57.4",
     "next": "15.5.10",
     "react": "19.1.1",
     "react-dom": "19.1.1"
   },
   "devDependencies": {
-    "typescript": "^5.8.3",
-    "@types/node": "^22.15.0",
-    "@types/react": "^19.1.2",
-    "@types/react-dom": "^19.1.2"
+    "typescript": "5.8.3",
+    "@types/node": "22.15.0",
+    "@types/react": "19.1.2",
+    "@types/react-dom": "19.1.2"
   }
 }
