@@ -49,15 +49,20 @@ A catalog product is not sellable merely because it is visible or has a price. I
 4. An approved 4–8 digit HSN code is configured.
 5. The approved GST rate is configured explicitly.
 6. The catalog explicitly records whether `price_inr` includes or excludes GST.
-7. Founder/admin explicitly enables `commerce_enabled` after reviewing the price and statutory tax configuration.
+7. Governed `stock_on_hand` is configured and available stock (`stock_on_hand - stock_reserved`) is greater than zero.
+8. Founder/admin explicitly enables `commerce_enabled` after reviewing price, statutory tax configuration and inventory.
 
-Saving or changing GST/HSN configuration automatically disables commerce so the product must be reviewed again before sales resume. Existing products default to `commerce_enabled = false`. Do not invent production prices, GST rates, HSN codes, stock quantities, seller GSTIN, place-of-supply treatment or other statutory data in code.
+Saving catalog data, GST/HSN configuration or governed inventory automatically disables commerce so the product must be reviewed again before sales resume. Existing products default to `commerce_enabled = false`. Do not invent production prices, GST rates, HSN codes, stock quantities, seller GSTIN, place-of-supply treatment or other statutory data in code.
+
+### Tax and inventory snapshots
 
 At checkout the server snapshots HSN, GST rate, GST-inclusive/exclusive treatment, taxable value, tax amount and gross line total into `order_items`. Payment initialization refuses orders with missing or internally inconsistent tax snapshots. Historical order tax snapshots must not be recalculated from the live catalog after purchase.
 
+Checkout also locks the governed product rows and atomically reserves the ordered quantity. Unpaid customer cancellation releases that reservation. A full refund before shipment releases reserved stock. When an order is marked shipped, reserved quantity is consumed from physical stock. Cart mutation checks available stock for early feedback, but checkout remains the final concurrency-safe reservation authority.
+
 ### Database release rule
 
-All committed Supabase migrations through the exact release head must be applied before enabling checkout. In particular, the India tax configuration migration and the line-level rounding/reconciliation migration must be present before Razorpay payment collection is enabled. Never enable customer payment collection against an application/schema version mismatch.
+All committed Supabase migrations through the exact release head must be applied before enabling checkout. In particular, India tax configuration, line-level rounding/reconciliation, atomic inventory reservation and server-only catalog/inventory control migrations must all be present before Razorpay payment collection is enabled. Never enable customer payment collection against an application/schema version mismatch.
 
 ### Pre-release verification
 
@@ -68,8 +73,8 @@ Before merging a production commerce change:
 3. TypeScript/typecheck and the production Next.js build must pass for the exact PR head.
 4. Migration filenames must have unique ordered versions and every required Supabase migration for the exact head must be applied.
 5. Supabase security advisors must be reviewed after DDL changes.
-6. Production data invariants must show no duplicate active carts/payments or unresolved payment/refund reconciliation anomalies.
-7. No commerce-enabled product may be missing positive INR pricing or explicit GST/HSN configuration.
+6. Production data invariants must show no duplicate active carts/payments, impossible inventory reservations, or unresolved payment/refund reconciliation anomalies.
+7. No commerce-enabled product may be missing positive INR pricing, explicit GST/HSN configuration, or available governed inventory.
 8. Vercel preview must successfully build the exact latest PR head when deployment capacity is available.
 9. Only after preview validation should the PR merge and the exact merge commit be verified in production.
 
@@ -77,6 +82,6 @@ Vercel quota/rate limits are deployment blockers only; they must not be worked a
 
 ### Post-deploy privilege lockdown
 
-After the exact merged application commit is verified live, apply `supabase/postdeploy/lock_down_legacy_client_writes.sql` and re-test checkout, product registration, support/warranty submission, admin catalog updates, and customer-care transitions. This revokes obsolete direct authenticated writes only after the replacement RPC workflows are live.
+After the exact merged application commit is verified live, apply `supabase/postdeploy/lock_down_legacy_client_writes.sql` and re-test checkout, product registration, support/warranty submission, admin catalog/inventory updates, and customer-care transitions. This revokes obsolete direct authenticated writes only after the replacement RPC workflows are live.
 
 Do not move this post-deploy SQL into the automatic migration chain: the currently deployed legacy application still needs some of those grants until the new Razorpay application version is running in production.
