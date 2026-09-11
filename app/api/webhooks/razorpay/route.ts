@@ -74,8 +74,12 @@ export async function POST(request:Request){
   }
 
   const payment=event.payload?.payment?.entity
-  const paymentId=payment?.id||''
-  const providerOrderId=payment?.order_id||''
+  if(!payment){
+    await markEvent(admin,eventId,'failed','Missing captured payment payload')
+    return json({error:'Invalid payment payload.'},400)
+  }
+  const paymentId=payment.id||''
+  const providerOrderId=payment.order_id||''
   if(!paymentId||!providerOrderId||payment.status!=='captured'||String(payment.currency).toUpperCase()!=='INR'||!Number.isSafeInteger(payment.amount)||Number(payment.amount)<=0){
     await markEvent(admin,eventId,'failed','Invalid captured payment payload')
     return json({error:'Invalid payment payload.'},400)
