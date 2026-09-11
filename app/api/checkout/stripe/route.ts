@@ -7,13 +7,28 @@ export const runtime='nodejs'
 
 type CheckoutBody={orderId?:string}
 
+function json(body:Record<string,unknown>,status=200){
+  return NextResponse.json(body,{status,headers:{'Cache-Control':'no-store'}})
+}
+
+function getAppOrigin(request:Request){
+  const configured=process.env.NEXT_PUBLIC_APP_URL?.trim()
+  if(configured){
+    try{
+      const url=new URL(configured)
+      if(url.protocol==='https:'||(process.env.NODE_ENV!=='production'&&url.protocol==='http:')) return url.origin
+    }catch{/* fall back to request origin */}
+  }
+  return new URL(request.url).origin
+}
+
 export async function POST(request:Request){
   const secret=process.env.STRIPE_SECRET_KEY
-  if(!secret) return NextResponse.json({error:'Stripe is not configured.'},{status:503})
+  if(!secret) return json({error:'Secure checkout is temporarily unavailable.'},503)
 
   const supabase=await createClient()
   const {data:{user}}=await supabase.auth.getUser()
-  if(!user) return NextResponse.json({error:'Authentication required.'},{status:401})
+  if(!user) return json({error:'Authentication required.'},401)
 
   let body:CheckoutBody={}
   try{body=await request.json()}catch{/* cart checkout has no body */}
@@ -21,26 +36,32 @@ export async function POST(request:Request){
   let order:any
   if(body.orderId){
     const {data,error}=await supabase.from('orders').select('id,order_number,total,currency,status').eq('id',body.orderId).eq('user_id',user.id).maybeSingle()
-    if(error||!data) return NextResponse.json({error:'Order not found.'},{status:404})
-    if(data.status!=='pending') return NextResponse.json({error:'Only pending orders can be retried.'},{status:409})
+    if(error||!data) return json({error:'Order not found.'},404)
+    if(data.status!=='pending') return json({error:'Only pending orders can be retried.'},409)
     const {data:paidAttempt}=await supabase.from('payment_attempts').select('id').eq('order_id',data.id).in('status',['authorized','captured']).limit(1).maybeSingle()
-    if(paidAttempt) return NextResponse.json({error:'A successful payment already exists for this order.'},{status:409})
+    if(paidAttempt) return json({error:'A successful payment already exists for this order.'},409)
     order=data
   }else{
     const {data:orderData,error:orderError}=await supabase.rpc('checkout_active_cart')
-    if(orderError) return NextResponse.json({error:orderError.message},{status:400})
+    if(orderError){
+      console.error('checkout_active_cart failed',orderError)
+      return json({error:'Unable to create order.'},400)
+    }
     order=Array.isArray(orderData)?orderData[0]:orderData
-    if(!order?.id) return NextResponse.json({error:'Unable to create order.'},{status:400})
+    if(!order?.id) return json({error:'Unable to create order.'},400)
   }
 
   const {data:items,error:itemsError}=await supabase
     .from('order_items')
     .select('quantity,unit_price,line_total,product_id,products(name)')
     .eq('order_id',order.id)
-  if(itemsError||!items?.length) return NextResponse.json({error:itemsError?.message||'Order has no items.'},{status:400})
+  if(itemsError||!items?.length){
+    if(itemsError) console.error('Unable to load checkout order items',itemsError)
+    return json({error:'Order items could not be loaded.'},400)
+  }
 
   const currency=String(order.currency||'INR').trim().toLowerCase()
-  if(!/^[a-z]{3}$/.test(currency)) return NextResponse.json({error:'Order currency is invalid.'},{status:400})
+  if(!/^[a-z]{3}$/.test(currency)) return json({error:'Order currency is invalid.'},400)
 
   const admin=createAdminClient()
   const {data:attempt,error:attemptError}=await admin.from('payment_attempts').insert({
@@ -50,11 +71,14 @@ export async function POST(request:Request){
     amount:order.total,
     currency:currency.toUpperCase()
   }).select('id').single()
-  if(attemptError||!attempt) return NextResponse.json({error:'Unable to initialize payment tracking.'},{status:500})
+  if(attemptError||!attempt){
+    if(attemptError) console.error('Unable to initialize payment attempt',attemptError)
+    return json({error:'Unable to initialize payment tracking.'},500)
+  }
 
   try{
     const stripe=new Stripe(secret)
-    const origin=new URL(request.url).origin
+    const origin=getAppOrigin(request)
     const session=await stripe.checkout.sessions.create({
       mode:'payment',
       customer_email:user.email||undefined,
@@ -76,13 +100,14 @@ export async function POST(request:Request){
 
     const {error:linkError}=await admin.from('payment_attempts').update({provider_order_id:session.id,status:'pending',updated_at:new Date().toISOString()}).eq('id',attempt.id)
     if(linkError){
-      return NextResponse.json({error:'Payment session could not be finalized safely. Please retry from the order page.',orderId:order.id,retryable:true},{status:500})
+      console.error('Unable to link Stripe session to payment attempt',linkError)
+      return json({error:'Payment session could not be finalized safely. Please retry from the order page.',orderId:order.id,retryable:true},500)
     }
 
-    return NextResponse.json({url:session.url,orderId:order.id})
+    return json({url:session.url,orderId:order.id})
   }catch(error){
     await admin.from('payment_attempts').update({status:'failed',failure_code:'stripe_session_error',updated_at:new Date().toISOString()}).eq('id',attempt.id)
-    const message=error instanceof Error?error.message:'Unable to start secure checkout.'
-    return NextResponse.json({error:message,orderId:order.id,retryable:true},{status:502})
+    console.error('Stripe checkout session creation failed',error)
+    return json({error:'Unable to start secure checkout. Please retry.',orderId:order.id,retryable:true},502)
   }
 }
