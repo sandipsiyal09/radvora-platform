@@ -85,6 +85,7 @@ jobs:
             "response.headers.set('Cache-Control', 'private, no-store, max-age=0')",
             "response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive')",
             "requestHeaders.set('x-request-id', requestId)",
+            "'/auth/callback'",
           ]
           for (const snippet of requiredProxySnippets) {
             if (!proxy.includes(snippet)) {
@@ -131,6 +132,40 @@ jobs:
             process.exit(1)
           }
           console.log('Auth callback same-origin redirect controls are present.')
+          NODE
+
+      - name: Guard passwordless login request boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const routePath = 'app/api/auth/magic-link/route.ts'
+          if (!fs.existsSync(routePath)) {
+            console.error(`Missing passwordless login server route: ${routePath}`)
+            process.exit(1)
+          }
+          const route = fs.readFileSync(routePath, 'utf8')
+          const login = fs.readFileSync('app/login/page.tsx', 'utf8')
+          const requiredRoute = [
+            "request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site'",
+            'MAX_BODY_BYTES=2048',
+            "startsWith('application/json')",
+            'NEXT_PUBLIC_APP_URL',
+            'signInWithOtp',
+            'emailRedirectTo:callbackUrl',
+          ]
+          for (const snippet of requiredRoute) {
+            if (!route.includes(snippet)) {
+              console.error(`Passwordless login boundary is missing required control: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          if (!login.includes("fetch('/api/auth/magic-link'") || login.includes('signInWithOtp')) {
+            console.error('Login UI must request magic links through the bounded server route, not call Supabase Auth directly.')
+            process.exit(1)
+          }
+          console.log('Passwordless login server-boundary controls are present.')
           NODE
 
       - name: Guard post-deploy privilege lockdown
