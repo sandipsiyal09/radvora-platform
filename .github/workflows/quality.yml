@@ -12,8 +12,8 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     env:
-      NEXT_PUBLIC_SUPABASE_URL: https://kugawqpvfikynithyefa.supabase.co
-      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_RwaaDUGHYP0D7za9Mo8xvg_A9sNhfim
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -70,6 +70,41 @@ jobs:
             process.exit(1)
           }
           console.log('India-only payment runtime check passed.')
+          NODE
+
+      - name: Guard private response and release observability controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const proxy = fs.readFileSync('proxy.ts', 'utf8')
+          const health = fs.readFileSync('app/api/health/route.ts', 'utf8')
+          const requiredProxySnippets = [
+            "response.headers.set('X-Request-ID', requestId)",
+            "response.headers.set('Cache-Control', 'private, no-store, max-age=0')",
+            "response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive')",
+            "requestHeaders.set('x-request-id', requestId)",
+          ]
+          for (const snippet of requiredProxySnippets) {
+            if (!proxy.includes(snippet)) {
+              console.error(`Missing private-response/request-tracing control: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          const requiredHealthSnippets = [
+            'VERCEL_GIT_COMMIT_SHA',
+            'VERCEL_GIT_COMMIT_REF',
+            'VERCEL_ENV',
+            'releaseMetadata()',
+          ]
+          for (const snippet of requiredHealthSnippets) {
+            if (!health.includes(snippet)) {
+              console.error(`Missing deployment release metadata control: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          console.log('Private response and release observability controls are present.')
           NODE
 
       - name: Setup Node
