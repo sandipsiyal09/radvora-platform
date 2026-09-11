@@ -85,6 +85,7 @@ jobs:
             "response.headers.set('Cache-Control', 'private, no-store, max-age=0')",
             "response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive')",
             "requestHeaders.set('x-request-id', requestId)",
+            'const requestId = crypto.randomUUID()',
             "'/auth/callback'",
           ]
           for (const snippet of requiredProxySnippets) {
@@ -92,6 +93,10 @@ jobs:
               console.error(`Missing private-response/request-tracing control: ${snippet}`)
               process.exit(1)
             }
+          }
+          if (proxy.includes("request.headers.get('x-request-id')")) {
+            console.error('Proxy must generate correlation IDs server-side and must not trust caller-supplied X-Request-ID values.')
+            process.exit(1)
           }
           const requiredHealthSnippets = [
             'VERCEL_GIT_COMMIT_SHA',
@@ -105,7 +110,7 @@ jobs:
               process.exit(1)
             }
           }
-          console.log('Private response and release observability controls are present.')
+          console.log('Private response, trusted request tracing and release observability controls are present.')
           NODE
 
       - name: Guard auth callback redirect safety
