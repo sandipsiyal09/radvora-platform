@@ -6,6 +6,7 @@ import { createAdminClient } from '../../../../../lib/supabase/admin'
 export const runtime='nodejs'
 
 const MAX_BODY_BYTES=4096
+const PAID_ORDER_STATUSES=new Set(['paid','processing','shipped','delivered'])
 
 type VerifyBody={
   orderId?:string
@@ -46,13 +47,14 @@ export async function POST(request:Request){
 
   const {data:ownedOrder,error:ownedOrderError}=await supabase.from('orders').select('id,total,currency,status').eq('id',orderId).eq('user_id',user.id).maybeSingle()
   if(ownedOrderError||!ownedOrder) return json({error:'Order not found.'},404)
-  if(ownedOrder.status!=='pending') return json({ok:true,orderId,status:ownedOrder.status,alreadyProcessed:true})
+  if(PAID_ORDER_STATUSES.has(ownedOrder.status)) return json({ok:true,orderId,status:ownedOrder.status,alreadyProcessed:true})
+  if(ownedOrder.status!=='pending') return json({error:'This order is not eligible for payment confirmation.'},409)
 
   const admin=createAdminClient()
   const {data:attempt,error:attemptError}=await admin.from('payment_attempts')
     .select('id,provider_order_id,amount,currency,status')
     .eq('order_id',orderId).eq('provider','razorpay').eq('provider_order_id',returnedOrderId)
-    .in('status',['created','pending']).maybeSingle()
+    .eq('status','pending').maybeSingle()
   if(attemptError||!attempt) return json({error:'Active payment attempt not found.'},409)
 
   const storedProviderOrderId=String(attempt.provider_order_id||'')
@@ -72,16 +74,12 @@ export async function POST(request:Request){
     const valid=providerResponse.ok&&payment.id===paymentId&&payment.order_id===storedProviderOrderId&&payment.amount===expectedPaise&&String(payment.currency).toUpperCase()==='INR'&&payment.status==='captured'
     if(!valid) return json({error:'Payment is not yet confirmed as captured.',orderId,retryable:true},409)
 
-    const now=new Date().toISOString()
-    const {error:attemptUpdateError}=await admin.from('payment_attempts').update({
-      provider_payment_id:paymentId,status:'captured',failure_code:null,updated_at:now
-    }).eq('id',attempt.id).eq('order_id',orderId).eq('provider','razorpay').eq('status','pending')
-    if(attemptUpdateError) throw attemptUpdateError
-
-    const {error:orderUpdateError}=await admin.from('orders').update({
-      status:'paid',payment_provider:'razorpay',payment_reference:paymentId,updated_at:now
-    }).eq('id',orderId).eq('user_id',user.id).eq('status','pending').eq('currency','INR')
-    if(orderUpdateError) throw orderUpdateError
+    const {error:finalizeError}=await admin.rpc('finalize_razorpay_payment',{
+      p_order_id:orderId,
+      p_attempt_id:attempt.id,
+      p_payment_id:paymentId
+    })
+    if(finalizeError) throw finalizeError
 
     return json({ok:true,orderId,status:'paid'})
   }catch(error){
