@@ -53,16 +53,14 @@ export async function POST(request:Request){
   const admin=createAdminClient()
   const {data:attempt,error:attemptError}=await admin.from('payment_attempts')
     .select('id,provider_order_id,amount,currency,status')
-    .eq('order_id',orderId).eq('provider','razorpay').eq('provider_order_id',returnedOrderId)
-    .eq('status','pending').maybeSingle()
+    .eq('order_id',orderId).eq('provider','razorpay').eq('status','pending').maybeSingle()
   if(attemptError||!attempt) return json({error:'Active payment attempt not found.'},409)
 
   const storedProviderOrderId=String(attempt.provider_order_id||'')
+  if(!storedProviderOrderId||returnedOrderId!==storedProviderOrderId) return json({error:'Payment verification failed.'},400)
+
   const expected=createHmac('sha256',keySecret).update(`${storedProviderOrderId}|${paymentId}`).digest('hex')
-  if(!safeEqualHex(expected,signature)){
-    await admin.from('payment_attempts').update({status:'failed',failure_code:'invalid_payment_signature',updated_at:new Date().toISOString()}).eq('id',attempt.id).eq('status','pending')
-    return json({error:'Payment verification failed.'},400)
-  }
+  if(!safeEqualHex(expected,signature)) return json({error:'Payment verification failed.'},400)
 
   try{
     const auth=Buffer.from(`${keyId}:${keySecret}`).toString('base64')
