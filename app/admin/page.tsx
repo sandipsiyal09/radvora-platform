@@ -20,6 +20,7 @@ export default async function AdminPage(){
   ])
 
   const sections=[
+    ['/admin/readiness','Launch Readiness','India payment, catalog, domain and approval blockers','Pre-launch'],
     ['/admin/operations','Operations','Orders, payment attempts, support and warranty',`${orders??0} orders`],
     ['/admin/catalog','Catalog','Products, pricing and product availability',`${products??0} products`],
     ['/admin/crm','CRM','Business, dealer, distributor and contact leads',`${leads??0} leads`],
