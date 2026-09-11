@@ -1,7 +1,6 @@
 'use client'
 
 import { FormEvent, useState } from 'react'
-import { createClient } from '../../lib/supabase/client'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -16,18 +15,17 @@ export default function LoginPage() {
     setMessage('')
 
     try {
-      const supabase = createClient()
-      const callbackUrl = `${window.location.origin}/auth/callback?next=/account`
-      const { error } = await supabase.auth.signInWithOtp({
-        email:normalizedEmail,
-        options: { emailRedirectTo: callbackUrl },
+      const response=await fetch('/api/auth/magic-link',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:normalizedEmail}),
       })
-      if(error){
-        console.error('passwordless_login_request_failed',error)
-        setMessage('Unable to send the sign-in link right now. Please try again shortly.')
+      const result=await response.json().catch(()=>({})) as {message?:string;error?:string}
+      if(!response.ok){
+        setMessage(result.error||'Unable to send the sign-in link right now. Please try again shortly.')
         return
       }
-      setMessage('Check your email for the secure sign-in link.')
+      setMessage(result.message||'Check your email for the secure sign-in link.')
     } catch(error) {
       console.error('passwordless_login_request_failed',error)
       setMessage('Unable to send the sign-in link right now. Please try again shortly.')
