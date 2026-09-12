@@ -1,12 +1,19 @@
 name: RADVORA Production Health
 
 on:
+  push:
+    branches:
+      - main
   schedule:
     - cron: '17 * * * *'
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: radvora-production-health
+  cancel-in-progress: true
 
 jobs:
   health:
@@ -20,10 +27,14 @@ jobs:
         run: |
           set -euo pipefail
           health_url="${CONFIGURED_HEALTH_URL:-https://radvora-platform.vercel.app/api/health}"
-          response="$(curl --fail --silent --show-error --retry 2 --retry-delay 2 --max-time 20 \
-            --header 'Accept: application/json' \
-            "$health_url")"
-          HEALTH_RESPONSE="$response" node - <<'NODE'
+          response_file="$(mktemp)"
+          trap 'rm -f "$response_file"' EXIT
+
+          for attempt in $(seq 1 18); do
+            if curl --fail --silent --show-error --max-time 20 \
+              --header 'Accept: application/json' \
+              "$health_url" >"$response_file"; then
+              if HEALTH_RESPONSE="$(cat "$response_file")" node - <<'NODE'
           const body = JSON.parse(process.env.HEALTH_RESPONSE || '{}')
           const requiredSchema = '202609110050'
           const expectedCommit = String(process.env.EXPECTED_PRODUCTION_COMMIT || '').trim()
@@ -49,3 +60,16 @@ jobs:
           console.log(`RADVORA production healthy at exact commit ${body.release.commit}, schema ${body.runtimeSchemaVersion}.`)
           console.log(`Commerce activation remains independently gated: seller=${body.checks?.seller_profile}, payments=${body.checks?.india_payments}.`)
           NODE
+              then
+                exit 0
+              fi
+            fi
+
+            if [ "$attempt" -lt 18 ]; then
+              echo "Production has not reached the expected healthy commit yet (attempt $attempt/18); retrying in 10s."
+              sleep 10
+            fi
+          done
+
+          echo "Production health did not converge to the expected main commit within the release verification window." >&2
+          exit 1
