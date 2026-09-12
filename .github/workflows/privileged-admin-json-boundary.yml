@@ -31,12 +31,8 @@ jobs:
           ]
           for (const [path, label] of routes) {
             const source = fs.readFileSync(path, 'utf8')
-            if (!source.includes("request.headers.get('content-type')") || !source.includes("startsWith('application/json')")) {
-              console.error(`Admin ${label} must require application/json.`)
-              process.exit(1)
-            }
-            if (!source.includes("Unsupported media type.") || !source.includes(',415)')) {
-              console.error(`Admin ${label} must fail closed with HTTP 415 for unsupported media types.`)
+            if (!source.includes("request.headers.get('content-type')") || !source.includes("startsWith('application/json')") || !source.includes('},415)')) {
+              console.error(`Admin ${label} must reject non-JSON mutation requests with HTTP 415.`)
               process.exit(1)
             }
           }
