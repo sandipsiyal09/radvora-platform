@@ -38,8 +38,19 @@ jobs:
 
           magic_link = Path('app/api/auth/magic-link/route.ts').read_text()
           magic_required = [
-              "process.env.VERCEL_ENV==='production'",
-              "process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV",
+              "function isProductionRuntime()",
+              "function isSafeProductionOrigin(url:URL)",
+              "url.protocol==='https:'",
+              "!url.username",
+              "!url.password",
+              "hostname!=='localhost'",
+              "!hostname.endsWith('.')",
+              "hostname.includes('.')",
+              "!url.search",
+              "!url.hash",
+              "url.port===''||url.port==='443'",
+              "if(isProductionRuntime())return isSafeProductionOrigin(url)?url.origin:null",
+              "if(isProductionRuntime())return supplied!==canonical",
               "if(!expectedOrigin)return json({error:'Authentication is temporarily unavailable.'},503)",
               "if(!origin)return true",
               "startsWith('application/json')",
@@ -50,8 +61,13 @@ jobs:
           missing = [needle for needle in magic_required if needle not in magic_link]
           if missing:
               raise SystemExit(f'magic-link request boundary controls regressed: {missing}')
-          if "try{return new URL(configured).origin}catch{return null}" in magic_link:
-              raise SystemExit('magic-link canonical origin must validate scheme and fail closed in production')
+          forbidden = [
+              "return supplied!==requestOrigin&&supplied!==canonical\n  }catch{return true}",
+              "if(url.protocol==='https:'||url.hostname==='localhost')return url.origin\n    }catch",
+          ]
+          present = [needle for needle in forbidden if needle in magic_link]
+          if present:
+              raise SystemExit(f'magic-link production canonical-origin boundary regressed: {present}')
 
           print('Auth callback and magic-link origin boundaries are guarded.')
           PY
