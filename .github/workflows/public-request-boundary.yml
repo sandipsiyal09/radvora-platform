@@ -1,0 +1,51 @@
+name: RADVORA Public Request Boundary
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  guard-public-request-boundaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify public POST request boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          routes = [
+              Path('app/api/business-leads/route.ts'),
+              Path('app/api/product-verification/route.ts'),
+          ]
+
+          for route in routes:
+              text = route.read_text()
+              required = [
+                  "if (!origin) return true",
+                  "sec-fetch-site",
+                  "application/json",
+                  "status: 415",
+                  "MAX_BODY_BYTES",
+                  "Cache-Control",
+                  "no-store",
+              ]
+              missing = [needle for needle in required if needle not in text]
+              if missing:
+                  raise SystemExit(f'{route}: missing public request boundary controls: {missing}')
+
+          lead = routes[0].read_text()
+          if "clean(body.website, 200)" not in lead or "(count ?? 0) >= 3" not in lead:
+              raise SystemExit('business lead anti-abuse controls regressed')
+
+          verification = routes[1].read_text()
+          for needle in ['MAX_ATTEMPTS', 'isRateLimited', 'SERIAL_PATTERN']:
+              if needle not in verification:
+                  raise SystemExit(f'product verification anti-enumeration control regressed: {needle}')
+
+          print('Public request boundaries are guarded.')
+          PY
