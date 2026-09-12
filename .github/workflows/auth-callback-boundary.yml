@@ -11,16 +11,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify auth callback trust boundary
+      - name: Verify auth callback and magic-link trust boundaries
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
 
-          route = Path('app/auth/callback/route.ts')
-          text = route.read_text()
-          required = [
+          callback = Path('app/auth/callback/route.ts').read_text()
+          callback_required = [
               "MAX_AUTH_CODE_LENGTH",
               "process.env.VERCEL_ENV === 'production'",
               "process.env.NODE_ENV === 'production' && !process.env.VERCEL_ENV",
@@ -31,12 +30,28 @@ jobs:
               "destination.password",
               "private, no-store, max-age=0",
           ]
-          missing = [needle for needle in required if needle not in text]
+          missing = [needle for needle in callback_required if needle not in callback]
           if missing:
               raise SystemExit(f'auth callback boundary controls regressed: {missing}')
-
-          if "return requestUrl.origin" in text:
+          if "return requestUrl.origin" in callback:
               raise SystemExit('auth callback must not unconditionally trust request-derived origins')
 
-          print('Auth callback boundary is guarded.')
+          magic_link = Path('app/api/auth/magic-link/route.ts').read_text()
+          magic_required = [
+              "process.env.VERCEL_ENV==='production'",
+              "process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV",
+              "if(!expectedOrigin)return json({error:'Authentication is temporarily unavailable.'},503)",
+              "if(!origin)return true",
+              "startsWith('application/json')",
+              "MAX_BODY_BYTES=2048",
+              "email.length>254",
+              "emailRedirectTo:callbackUrl",
+          ]
+          missing = [needle for needle in magic_required if needle not in magic_link]
+          if missing:
+              raise SystemExit(f'magic-link request boundary controls regressed: {missing}')
+          if "try{return new URL(configured).origin}catch{return null}" in magic_link:
+              raise SystemExit('magic-link canonical origin must validate scheme and fail closed in production')
+
+          print('Auth callback and magic-link origin boundaries are guarded.')
           PY
