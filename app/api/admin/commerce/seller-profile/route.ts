@@ -16,6 +16,8 @@ function invalidOrigin(request:Request){
 
 export async function POST(request:Request){
   if(invalidOrigin(request))return json({error:'Invalid seller-profile request origin.'},403)
+  const contentType=request.headers.get('content-type')||''
+  if(!contentType.toLowerCase().startsWith('application/json'))return json({error:'Unsupported media type.'},415)
   const length=request.headers.get('content-length');if(length&&Number(length)>MAX_BODY_BYTES)return json({error:'Request is too large.'},413)
   const supabase=await createClient();const {data:{user}}=await supabase.auth.getUser();if(!user)return json({error:'Authentication required.'},401)
   const role=String(user.app_metadata?.role||'');if(role!=='admin'&&role!=='founder')return json({error:'Admin access required.'},403)
