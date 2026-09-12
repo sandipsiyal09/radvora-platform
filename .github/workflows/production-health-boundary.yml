@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Require production canonical URL to fail closed
+      - name: Require production health to fail closed
         shell: bash
         run: |
           set -euo pipefail
@@ -26,12 +26,17 @@ jobs:
             "release.environment==='production'&&!canonicalUrlReady",
             "'NEXT_PUBLIC_APP_URL'",
             'const configurationReady=missingRuntimeConfig.length===0',
+            ".eq('commerce_enabled',true)",
+            'const commerceEnabledProducts=commerceEnabledProductCount||0',
+            'const commerceActivationSafe=commerceEnabledProducts===0||(sellerReady===true&&indiaPaymentsConfigured)',
+            "commerce_activation:'unsafe'",
+            "commerce_activation:commerceEnabledProducts===0?'disabled':'ready'",
             "status:'degraded'",
             '{status:503,headers:responseHeaders()}',
           ]
           for (const snippet of required) {
             if (!source.includes(snippet)) {
-              console.error(`Production health canonical-origin fail-closed control missing: ${snippet}`)
+              console.error(`Production health fail-closed control missing: ${snippet}`)
               process.exit(1)
             }
           }
@@ -39,5 +44,5 @@ jobs:
             console.error('Production health must expose only the canonical URL readiness state, never the configured URL value.')
             process.exit(1)
           }
-          console.log('Production health fails closed when the canonical HTTPS application URL is not configured.')
+          console.log('Production health fails closed for missing canonical configuration and unsafe commerce activation.')
           NODE
