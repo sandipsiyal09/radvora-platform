@@ -56,6 +56,7 @@ jobs:
             runtimeSchemaVersion: body.runtimeSchemaVersion || 'missing',
             expectedRuntimeSchemaVersion: body.expectedRuntimeSchemaVersion || 'missing',
             release: body.release || {},
+            missingRuntimeConfig: Array.isArray(body.missingRuntimeConfig) ? body.missingRuntimeConfig : [],
             checks: body.checks || {}
           }
 
