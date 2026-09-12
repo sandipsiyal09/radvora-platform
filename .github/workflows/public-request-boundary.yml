@@ -27,8 +27,16 @@ jobs:
               text = route.read_text()
               required = [
                   "function canonicalOrigin",
-                  "VERCEL_ENV === 'production'",
-                  "NODE_ENV === 'production'",
+                  "function isProductionRuntime",
+                  "function isSafeProductionOrigin",
+                  "if (isProductionRuntime()) return isSafeProductionOrigin(url) ? url.origin : null",
+                  "url.protocol === 'https:'",
+                  "hostname !== 'localhost'",
+                  "hostname.includes('.')",
+                  "!url.username && !url.password",
+                  "!url.search && !url.hash",
+                  "url.port === '' || url.port === '443'",
+                  "if (isProductionRuntime()) return supplied !== canonical",
                   "if (!expectedOrigin)",
                   "if (!origin) return true",
                   "sec-fetch-site",
