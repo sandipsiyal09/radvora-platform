@@ -14,7 +14,7 @@ function clean(value: unknown, maxLength: number) {
 function invalidOrigin(request: NextRequest) {
   if (request.headers.get('sec-fetch-site')?.toLowerCase() === 'cross-site') return true
   const origin = request.headers.get('origin')
-  if (!origin) return false
+  if (!origin) return true
   try {
     const supplied = new URL(origin).origin
     const requestOrigin = request.nextUrl.origin
@@ -25,36 +25,44 @@ function invalidOrigin(request: NextRequest) {
   }
 }
 
+function response(body: Record<string, unknown>, status: number) {
+  return NextResponse.json(body, { status, headers: { 'Cache-Control': 'no-store' } })
+}
+
 export async function POST(request: NextRequest) {
   if (invalidOrigin(request)) {
-    return NextResponse.json({ error: 'Invalid enquiry origin.' }, { status: 403 })
+    return response({ error: 'Invalid enquiry origin.' }, 403)
   }
 
   const rawLength = request.headers.get('content-length')
   if (rawLength && Number(rawLength) > MAX_BODY_BYTES) {
-    return NextResponse.json({ error: 'Enquiry is too large.' }, { status: 413 })
+    return response({ error: 'Enquiry is too large.' }, 413)
+  }
+
+  if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) {
+    return response({ error: 'Invalid request.' }, 415)
   }
 
   let rawBody: string
   try {
     rawBody = await request.text()
   } catch {
-    return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
+    return response({ error: 'Invalid request.' }, 400)
   }
   if (Buffer.byteLength(rawBody, 'utf8') > MAX_BODY_BYTES) {
-    return NextResponse.json({ error: 'Enquiry is too large.' }, { status: 413 })
+    return response({ error: 'Enquiry is too large.' }, 413)
   }
 
   let body: Record<string, unknown>
   try {
     body = JSON.parse(rawBody)
   } catch {
-    return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
+    return response({ error: 'Invalid request.' }, 400)
   }
 
   // Honeypot: legitimate clients leave this field empty.
   if (clean(body.website, 200)) {
-    return NextResponse.json({ ok: true }, { status: 200 })
+    return response({ ok: true }, 200)
   }
 
   const fullName = clean(body.name, 120)
@@ -67,7 +75,7 @@ export async function POST(request: NextRequest) {
   const notes = clean(body.notes, 3000)
 
   if (fullName.length < 2 || !EMAIL_PATTERN.test(email)) {
-    return NextResponse.json({ error: 'Please provide a valid name and email address.' }, { status: 400 })
+    return response({ error: 'Please provide a valid name and email address.' }, 400)
   }
 
   try {
@@ -81,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     if (countError) throw countError
     if ((count ?? 0) >= 3) {
-      return NextResponse.json({ error: 'Too many recent enquiries. Please try again later.' }, { status: 429 })
+      return response({ error: 'Too many recent enquiries. Please try again later.' }, 429)
     }
 
     const { error } = await supabase.from('leads').insert({
@@ -97,9 +105,9 @@ export async function POST(request: NextRequest) {
     })
 
     if (error) throw error
-    return NextResponse.json({ ok: true }, { status: 201 })
+    return response({ ok: true }, 201)
   } catch (error) {
     console.error('business_lead_submission_failed', error)
-    return NextResponse.json({ error: 'We could not submit your enquiry. Please try again shortly.' }, { status: 500 })
+    return response({ error: 'We could not submit your enquiry. Please try again shortly.' }, 500)
   }
 }
