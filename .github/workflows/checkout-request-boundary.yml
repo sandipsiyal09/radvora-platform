@@ -30,6 +30,21 @@ jobs:
             "if(!origin)return json({error:'Invalid checkout request origin.'},403)",
             'NEXT_PUBLIC_APP_URL',
             'MAX_BODY_BYTES=8192',
+            "process.env.VERCEL_ENV==='production'",
+            'function isSafeProductionOrigin(url:URL)',
+            "url.protocol==='https:'",
+            "!url.username&&!url.password",
+            "hostname!=='localhost'",
+            "!hostname.endsWith('.')",
+            "hostname.includes('.')",
+            "(url.pathname==='/'||url.pathname==='')",
+            "!url.search&&!url.hash",
+            "(url.port===''||url.port==='443')",
+            'if(isProductionRuntime())return null',
+            'if(isProductionRuntime())return supplied!==canonical',
+            'const appOrigin=canonicalOrigin(request)',
+            "if(!appOrigin)return json({error:'India checkout is waiting for the final HTTPS application URL.'},503)",
+            'requestBoundaryError(request,appOrigin)',
           ]
           for (const snippet of required) {
             if (!source.includes(snippet)) {
@@ -37,9 +52,19 @@ jobs:
               process.exit(1)
             }
           }
+          const forbidden = [
+            'const configured=process.env.NEXT_PUBLIC_APP_URL?new URL(process.env.NEXT_PUBLIC_APP_URL).origin:requestOrigin',
+            "try{const configured=new URL(process.env.NEXT_PUBLIC_APP_URL||'');if(configured.protocol!=='https:')",
+          ]
+          for (const snippet of forbidden) {
+            if (source.includes(snippet)) {
+              console.error(`Checkout request boundary contains unsafe production fallback: ${snippet}`)
+              process.exit(1)
+            }
+          }
           if (source.includes('if(origin){')) {
             console.error('Checkout must reject missing Origin instead of treating Origin validation as optional.')
             process.exit(1)
           }
-          console.log('Razorpay checkout requires trusted Origin, JSON media type, and bounded request bodies.')
+          console.log('Razorpay checkout requires exact safe canonical production origin, JSON media type, and bounded request bodies.')
           NODE
