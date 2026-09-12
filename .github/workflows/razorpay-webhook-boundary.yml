@@ -1,0 +1,65 @@
+name: RADVORA Razorpay Webhook Boundary
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  webhook-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Razorpay webhook request boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const proxy = fs.readFileSync('proxy.ts', 'utf8')
+          const route = fs.readFileSync('app/api/webhooks/razorpay/route.ts', 'utf8')
+
+          const proxyRequired = [
+            "request.nextUrl.pathname === '/api/webhooks/razorpay'",
+            "request.method === 'POST'",
+            "request.headers.get('content-type')?.toLowerCase() || ''",
+            "contentType.startsWith('application/json')",
+            "/^[0-9a-f]{64}$/i.test(signature)",
+            "status: 415",
+          ]
+          for (const snippet of proxyRequired) {
+            if (!proxy.includes(snippet)) {
+              console.error(`Webhook proxy boundary is missing required control: ${snippet}`)
+              process.exit(1)
+            }
+          }
+
+          const routeRequired = [
+            'MAX_BODY_BYTES=256*1024',
+            "request.headers.get('x-razorpay-event-id')",
+            "createHmac('sha256',secret).update(rawBuffer).digest('hex')",
+            'timingSafeEqual(a,b)',
+            "claimEvent(admin,eventId,eventType)",
+            "if(rawBytes.byteLength>MAX_BODY_BYTES)",
+          ]
+          for (const snippet of routeRequired) {
+            if (!route.includes(snippet)) {
+              console.error(`Webhook route is missing required reconciliation control: ${snippet}`)
+              process.exit(1)
+            }
+          }
+
+          const hmacIndex = route.indexOf("createHmac('sha256',secret).update(rawBuffer).digest('hex')")
+          const parseIndex = route.indexOf('JSON.parse(rawBuffer.toString')
+          if (hmacIndex < 0 || parseIndex < 0 || hmacIndex > parseIndex) {
+            console.error('Webhook raw-body HMAC verification must happen before JSON parsing.')
+            process.exit(1)
+          }
+
+          console.log('Razorpay webhook requires JSON, a SHA-256 hex signature shape, bounded raw bodies, raw-body HMAC verification, and event-id replay protection.')
+          NODE
