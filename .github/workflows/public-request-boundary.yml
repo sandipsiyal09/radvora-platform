@@ -27,8 +27,15 @@ jobs:
               text = route.read_text()
               required = [
                   "function canonicalOrigin",
-                  "VERCEL_ENV === 'production'",
-                  "NODE_ENV === 'production'",
+                  "function isProductionRuntime",
+                  "function isSafeProductionOrigin",
+                  "url.protocol === 'https:'",
+                  "hostname !== 'localhost'",
+                  "hostname.includes('.')",
+                  "!url.username && !url.password",
+                  "!url.search && !url.hash",
+                  "url.port === '' || url.port === '443'",
+                  "if (isProductionRuntime()) return supplied !== canonical",
                   "if (!expectedOrigin)",
                   "if (!origin) return true",
                   "sec-fetch-site",
@@ -42,8 +49,13 @@ jobs:
               if missing:
                   raise SystemExit(f'{route}: missing public request boundary controls: {missing}')
 
-              if "process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL).origin : requestOrigin" in text:
-                  raise SystemExit(f'{route}: production canonical origin regressed to request-host fallback')
+              forbidden = [
+                  "process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL).origin : requestOrigin",
+                  "if (url.protocol === 'https:' || url.hostname === 'localhost') return url.origin\n    } catch",
+              ]
+              regressed = [needle for needle in forbidden if needle in text]
+              if regressed:
+                  raise SystemExit(f'{route}: production canonical origin regressed: {regressed}')
 
           lead = routes[0].read_text()
           if "clean(body.website, 200)" not in lead or "(count ?? 0) >= 3" not in lead:
