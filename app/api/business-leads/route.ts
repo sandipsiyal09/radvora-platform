@@ -11,15 +11,35 @@ function clean(value: unknown, maxLength: number) {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : ''
 }
 
-function invalidOrigin(request: NextRequest) {
+function canonicalOrigin(request: NextRequest) {
+  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim()
+  if (configured) {
+    try {
+      const url = new URL(configured)
+      if (url.protocol === 'https:' || url.hostname === 'localhost') return url.origin
+    } catch {
+      // Production public mutations fail closed below instead of trusting request.nextUrl.
+    }
+  }
+  if (process.env.VERCEL_ENV === 'production') return null
+  if (process.env.NODE_ENV === 'production' && !process.env.VERCEL_ENV) return null
+  const requestOrigin = request.nextUrl.origin
+  try {
+    const url = new URL(requestOrigin)
+    return url.protocol === 'https:' || url.hostname === 'localhost' ? url.origin : null
+  } catch {
+    return null
+  }
+}
+
+function invalidOrigin(request: NextRequest, canonical: string) {
   if (request.headers.get('sec-fetch-site')?.toLowerCase() === 'cross-site') return true
   const origin = request.headers.get('origin')
   if (!origin) return true
   try {
     const supplied = new URL(origin).origin
     const requestOrigin = request.nextUrl.origin
-    const configured = process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL).origin : requestOrigin
-    return supplied !== requestOrigin && supplied !== configured
+    return supplied !== requestOrigin && supplied !== canonical
   } catch {
     return true
   }
@@ -30,7 +50,9 @@ function response(body: Record<string, unknown>, status: number) {
 }
 
 export async function POST(request: NextRequest) {
-  if (invalidOrigin(request)) {
+  const expectedOrigin = canonicalOrigin(request)
+  if (!expectedOrigin) return response({ error: 'Enquiry service is temporarily unavailable.' }, 503)
+  if (invalidOrigin(request, expectedOrigin)) {
     return response({ error: 'Invalid enquiry origin.' }, 403)
   }
 
