@@ -11,18 +11,32 @@ function clean(value: unknown, maxLength: number) {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : ''
 }
 
+function isProductionRuntime() {
+  return process.env.VERCEL_ENV === 'production' || (process.env.NODE_ENV === 'production' && !process.env.VERCEL_ENV)
+}
+
+function isSafeProductionOrigin(url: URL) {
+  const hostname = url.hostname.toLowerCase()
+  const isIpLiteral = /^(?:\d{1,3}\.){3}\d{1,3}$/.test(hostname) || hostname.includes(':')
+  return url.protocol === 'https:' &&
+    !url.username && !url.password &&
+    !isIpLiteral && hostname !== 'localhost' && !hostname.endsWith('.') && hostname.includes('.') &&
+    (url.pathname === '/' || url.pathname === '') && !url.search && !url.hash &&
+    (url.port === '' || url.port === '443')
+}
+
 function canonicalOrigin(request: NextRequest) {
   const configured = process.env.NEXT_PUBLIC_APP_URL?.trim()
   if (configured) {
     try {
       const url = new URL(configured)
+      if (isProductionRuntime()) return isSafeProductionOrigin(url) ? url.origin : null
       if (url.protocol === 'https:' || url.hostname === 'localhost') return url.origin
     } catch {
       // Production public mutations fail closed below instead of trusting request.nextUrl.
     }
   }
-  if (process.env.VERCEL_ENV === 'production') return null
-  if (process.env.NODE_ENV === 'production' && !process.env.VERCEL_ENV) return null
+  if (isProductionRuntime()) return null
   const requestOrigin = request.nextUrl.origin
   try {
     const url = new URL(requestOrigin)
@@ -38,6 +52,7 @@ function invalidOrigin(request: NextRequest, canonical: string) {
   if (!origin) return true
   try {
     const supplied = new URL(origin).origin
+    if (isProductionRuntime()) return supplied !== canonical
     const requestOrigin = request.nextUrl.origin
     return supplied !== requestOrigin && supplied !== canonical
   } catch {
