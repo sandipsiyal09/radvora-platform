@@ -10,18 +10,24 @@ function json(body:Record<string,unknown>,status=200){
   return NextResponse.json(body,{status,headers:{'Cache-Control':'private, no-store, max-age=0'}})
 }
 
+function isProductionRuntime(){return process.env.VERCEL_ENV==='production'||(process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV)}
+function isSafeProductionOrigin(url:URL){
+  const hostname=url.hostname.toLowerCase()
+  const isIpLiteral=/^(?:\d{1,3}\.){3}\d{1,3}$/.test(hostname)||hostname.includes(':')
+  return url.protocol==='https:'&&!url.username&&!url.password&&!isIpLiteral&&hostname!=='localhost'&&!hostname.endsWith('.')&&hostname.includes('.')&&(url.pathname==='/'||url.pathname==='')&&!url.search&&!url.hash&&(url.port===''||url.port==='443')
+}
 function canonicalOrigin(request:Request){
   const configured=process.env.NEXT_PUBLIC_APP_URL?.trim()
   if(configured){
     try{
       const url=new URL(configured)
+      if(isProductionRuntime())return isSafeProductionOrigin(url)?url.origin:null
       if(url.protocol==='https:'||url.hostname==='localhost')return url.origin
     }catch{
       // Production sign-in requests must fail closed below rather than trusting request.url.
     }
   }
-  if(process.env.VERCEL_ENV==='production')return null
-  if(process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV)return null
+  if(isProductionRuntime())return null
   try{
     const url=new URL(request.url)
     return url.protocol==='https:'||url.hostname==='localhost'?url.origin:null
@@ -34,6 +40,7 @@ function invalidOrigin(request:Request,canonical:string){
   if(!origin)return true
   try{
     const supplied=new URL(origin).origin
+    if(isProductionRuntime())return supplied!==canonical
     const requestOrigin=new URL(request.url).origin
     return supplied!==requestOrigin&&supplied!==canonical
   }catch{return true}
