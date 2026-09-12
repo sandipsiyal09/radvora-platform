@@ -86,6 +86,31 @@ export async function proxy(request: NextRequest) {
   // caller-supplied X-Request-ID, otherwise external clients can spoof identifiers
   // that appear in application logs and incident-response traces.
   const requestId = crypto.randomUUID()
+
+  // Razorpay documents webhook deliveries as JSON POST requests and signs the raw
+  // body with an HMAC-SHA256 hex digest. Reject obviously malformed requests before
+  // they can consume payment-reconciliation resources; the route still performs the
+  // authoritative raw-body HMAC check and event-id replay protection.
+  if (request.nextUrl.pathname === '/api/webhooks/razorpay' && request.method === 'POST') {
+    const contentType = request.headers.get('content-type')?.toLowerCase() || ''
+    if (!contentType.startsWith('application/json')) {
+      return applySecurityHeaders(
+        NextResponse.json({ error: 'Unsupported webhook media type.' }, { status: 415 }),
+        request,
+        requestId,
+      )
+    }
+
+    const signature = request.headers.get('x-razorpay-signature')?.trim() || ''
+    if (!/^[0-9a-f]{64}$/i.test(signature)) {
+      return applySecurityHeaders(
+        NextResponse.json({ error: 'Invalid webhook request.' }, { status: 400 }),
+        request,
+        requestId,
+      )
+    }
+  }
+
   const buildResponse = () => {
     const requestHeaders = new Headers(request.headers)
     requestHeaders.set('x-request-id', requestId)
