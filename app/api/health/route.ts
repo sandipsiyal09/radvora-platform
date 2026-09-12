@@ -16,9 +16,12 @@ function releaseMetadata(){
 export async function GET(){
   const timestamp=new Date().toISOString()
   const release=releaseMetadata()
-  const missingRuntimeConfig=requiredRuntimeConfig.filter(key=>!process.env[key]?.trim())
-  const configurationReady=missingRuntimeConfig.length===0
   const canonicalUrlReady=(()=>{try{return new URL(process.env.NEXT_PUBLIC_APP_URL||'').protocol==='https:'}catch{return false}})()
+  const missingRuntimeConfig=[
+    ...requiredRuntimeConfig.filter(key=>!process.env[key]?.trim()),
+    ...(release.environment==='production'&&!canonicalUrlReady?['NEXT_PUBLIC_APP_URL'] as const:[]),
+  ]
+  const configurationReady=missingRuntimeConfig.length===0
   const indiaPaymentsConfigured=Boolean(process.env.RAZORPAY_KEY_ID?.trim()&&process.env.RAZORPAY_KEY_SECRET?.trim()&&process.env.RAZORPAY_WEBHOOK_SECRET?.trim())
 
   if(!configurationReady){

@@ -1,0 +1,43 @@
+name: RADVORA Production Health Boundary
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require production canonical URL to fail closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const source = fs.readFileSync('app/api/health/route.ts', 'utf8')
+          const required = [
+            "release.environment==='production'&&!canonicalUrlReady",
+            "'NEXT_PUBLIC_APP_URL'",
+            'const configurationReady=missingRuntimeConfig.length===0',
+            "status:'degraded'",
+            '{status:503,headers:responseHeaders()}',
+          ]
+          for (const snippet of required) {
+            if (!source.includes(snippet)) {
+              console.error(`Production health canonical-origin fail-closed control missing: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          if (!source.includes("canonical_url:canonicalUrlReady?'configured':'not_configured'")) {
+            console.error('Production health must expose only the canonical URL readiness state, never the configured URL value.')
+            process.exit(1)
+          }
+          console.log('Production health fails closed when the canonical HTTPS application URL is not configured.')
+          NODE
