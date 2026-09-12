@@ -26,6 +26,10 @@ jobs:
             "release.environment==='production'&&!canonicalUrlReady",
             "'NEXT_PUBLIC_APP_URL'",
             'const configurationReady=missingRuntimeConfig.length===0',
+            "const releaseProvenanceReady=release.environment!=='production'||(/^[0-9a-f]{40}$/i.test(release.commit)&&release.ref==='main')",
+            'if(!releaseProvenanceReady)',
+            "release_provenance:'unavailable'",
+            "release_provenance:'verified'",
             ".eq('commerce_enabled',true)",
             'const commerceEnabledProducts=commerceEnabledProductCount||0',
             'const commerceActivationSafe=commerceEnabledProducts===0||(sellerReady===true&&indiaPaymentsConfigured)',
@@ -44,5 +48,5 @@ jobs:
             console.error('Production health must expose only the canonical URL readiness state, never the configured URL value.')
             process.exit(1)
           }
-          console.log('Production health fails closed for missing canonical configuration and unsafe commerce activation.')
+          console.log('Production health fails closed for missing canonical configuration, unknown production provenance, and unsafe commerce activation.')
           NODE
