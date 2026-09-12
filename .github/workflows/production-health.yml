@@ -31,38 +31,65 @@ jobs:
           trap 'rm -f "$response_file"' EXIT
 
           for attempt in $(seq 1 18); do
-            if curl --fail --silent --show-error --max-time 20 \
+            http_status="$(curl --silent --show-error --max-time 20 \
               --header 'Accept: application/json' \
-              "$health_url" >"$response_file"; then
-              if HEALTH_RESPONSE="$(cat "$response_file")" node - <<'NODE'
-          const body = JSON.parse(process.env.HEALTH_RESPONSE || '{}')
+              --output "$response_file" \
+              --write-out '%{http_code}' \
+              "$health_url" || true)"
+
+            if HEALTH_RESPONSE="$(cat "$response_file")" HEALTH_HTTP_STATUS="$http_status" node - <<'NODE'
+          const raw = process.env.HEALTH_RESPONSE || ''
+          const httpStatus = String(process.env.HEALTH_HTTP_STATUS || '000')
           const requiredSchema = '202609110050'
           const expectedCommit = String(process.env.EXPECTED_PRODUCTION_COMMIT || '').trim()
-          if (!/^[0-9a-f]{40}$/i.test(expectedCommit)) throw new Error('Expected production commit metadata is invalid.')
-          if (body.status !== 'ok') throw new Error(`Production health status is ${body.status || 'missing'}`)
+          let body
+          try {
+            body = JSON.parse(raw)
+          } catch {
+            console.error(`Production health returned non-JSON response (HTTP ${httpStatus}).`)
+            process.exit(1)
+          }
+
+          const safeDiagnostic = {
+            httpStatus,
+            status: body.status || 'missing',
+            runtimeSchemaVersion: body.runtimeSchemaVersion || 'missing',
+            expectedRuntimeSchemaVersion: body.expectedRuntimeSchemaVersion || 'missing',
+            release: body.release || {},
+            checks: body.checks || {}
+          }
+
+          const fail = message => {
+            console.error(message)
+            console.error(`Safe health diagnostic: ${JSON.stringify(safeDiagnostic)}`)
+            process.exit(1)
+          }
+
+          if (!/^[0-9a-f]{40}$/i.test(expectedCommit)) fail('Expected production commit metadata is invalid.')
+          if (httpStatus !== '200') fail(`Production health returned HTTP ${httpStatus}.`)
+          if (body.status !== 'ok') fail(`Production health status is ${body.status || 'missing'}.`)
           if (body.runtimeSchemaVersion !== requiredSchema) {
-            throw new Error(`Runtime schema ${body.runtimeSchemaVersion || 'missing'} does not match ${requiredSchema}`)
+            fail(`Runtime schema ${body.runtimeSchemaVersion || 'missing'} does not match ${requiredSchema}.`)
           }
           if (body.checks?.database !== 'ok' || body.checks?.commerce_schema !== 'ok' || body.checks?.payment_session_schema !== 'ok') {
-            throw new Error('Production database/schema health checks are not green.')
+            fail('Production database/schema health checks are not green.')
           }
-          if (body.checks?.canonical_url !== 'configured') throw new Error('Canonical production URL is not configured.')
+          if (body.checks?.canonical_url !== 'configured') fail('Canonical production URL is not configured.')
           if (body.release?.environment !== 'production') {
-            throw new Error(`Health endpoint is not reporting production environment: ${body.release?.environment || 'missing'}`)
+            fail(`Health endpoint is not reporting production environment: ${body.release?.environment || 'missing'}.`)
           }
           if (body.release?.ref !== 'main') {
-            throw new Error(`Production health endpoint is not reporting the main branch: ${body.release?.ref || 'missing'}`)
+            fail(`Production health endpoint is not reporting the main branch: ${body.release?.ref || 'missing'}.`)
           }
-          if (!body.release?.commit || body.release.commit === 'unknown') throw new Error('Production release commit metadata is unavailable.')
+          if (!body.release?.commit || body.release.commit === 'unknown') fail('Production release commit metadata is unavailable.')
           if (body.release.commit !== expectedCommit) {
-            throw new Error(`Production commit ${body.release.commit} does not match workflow commit ${expectedCommit}`)
+            fail(`Production commit ${body.release.commit} does not match workflow commit ${expectedCommit}.`)
           }
           console.log(`RADVORA production healthy at exact commit ${body.release.commit}, schema ${body.runtimeSchemaVersion}.`)
           console.log(`Commerce activation remains independently gated: seller=${body.checks?.seller_profile}, payments=${body.checks?.india_payments}.`)
           NODE
-              then
-                exit 0
-              fi
+            then
+              exit 0
             fi
 
             if [ "$attempt" -lt 18 ]; then
