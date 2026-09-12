@@ -42,7 +42,7 @@ function invalidOrigin(request:Request,canonical:string){
     const supplied=new URL(origin).origin
     if(isProductionRuntime())return supplied!==canonical
     const requestOrigin=new URL(request.url).origin
-    return supplied!==requestOrigin&&supplied!==canonical
+    return supplied!==canonical&&supplied!==requestOrigin
   }catch{return true}
 }
 
