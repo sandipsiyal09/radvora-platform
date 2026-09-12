@@ -1,0 +1,51 @@
+name: RADVORA Production Health
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    env:
+      CONFIGURED_HEALTH_URL: ${{ vars.PRODUCTION_HEALTH_URL }}
+      EXPECTED_PRODUCTION_COMMIT: ${{ github.sha }}
+    steps:
+      - name: Verify production health contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          health_url="${CONFIGURED_HEALTH_URL:-https://radvora-platform.vercel.app/api/health}"
+          response="$(curl --fail --silent --show-error --retry 2 --retry-delay 2 --max-time 20 \
+            --header 'Accept: application/json' \
+            "$health_url")"
+          HEALTH_RESPONSE="$response" node - <<'NODE'
+          const body = JSON.parse(process.env.HEALTH_RESPONSE || '{}')
+          const requiredSchema = '202609110050'
+          const expectedCommit = String(process.env.EXPECTED_PRODUCTION_COMMIT || '').trim()
+          if (!/^[0-9a-f]{40}$/i.test(expectedCommit)) throw new Error('Expected production commit metadata is invalid.')
+          if (body.status !== 'ok') throw new Error(`Production health status is ${body.status || 'missing'}`)
+          if (body.runtimeSchemaVersion !== requiredSchema) {
+            throw new Error(`Runtime schema ${body.runtimeSchemaVersion || 'missing'} does not match ${requiredSchema}`)
+          }
+          if (body.checks?.database !== 'ok' || body.checks?.commerce_schema !== 'ok' || body.checks?.payment_session_schema !== 'ok') {
+            throw new Error('Production database/schema health checks are not green.')
+          }
+          if (body.checks?.canonical_url !== 'configured') throw new Error('Canonical production URL is not configured.')
+          if (body.release?.environment !== 'production') {
+            throw new Error(`Health endpoint is not reporting production environment: ${body.release?.environment || 'missing'}`)
+          }
+          if (body.release?.ref !== 'main') {
+            throw new Error(`Production health endpoint is not reporting the main branch: ${body.release?.ref || 'missing'}`)
+          }
+          if (!body.release?.commit || body.release.commit === 'unknown') throw new Error('Production release commit metadata is unavailable.')
+          if (body.release.commit !== expectedCommit) {
+            throw new Error(`Production commit ${body.release.commit} does not match workflow commit ${expectedCommit}`)
+          }
+          console.log(`RADVORA production healthy at exact commit ${body.release.commit}, schema ${body.runtimeSchemaVersion}.`)
+          console.log(`Commerce activation remains independently gated: seller=${body.checks?.seller_profile}, payments=${body.checks?.india_payments}.`)
+          NODE
