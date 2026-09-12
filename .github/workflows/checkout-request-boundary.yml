@@ -1,0 +1,45 @@
+name: RADVORA Checkout Request Boundary
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  checkout-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Razorpay checkout request boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const path = 'app/api/checkout/razorpay/route.ts'
+          const source = fs.readFileSync(path, 'utf8')
+          const required = [
+            "request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site'",
+            "request.headers.get('content-type')?.toLowerCase()||''",
+            "startsWith('application/json')",
+            "if(!origin)return json({error:'Invalid checkout request origin.'},403)",
+            'NEXT_PUBLIC_APP_URL',
+            'MAX_BODY_BYTES=8192',
+          ]
+          for (const snippet of required) {
+            if (!source.includes(snippet)) {
+              console.error(`Checkout request boundary is missing required control: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          if (source.includes('if(origin){')) {
+            console.error('Checkout must reject missing Origin instead of treating Origin validation as optional.')
+            process.exit(1)
+          }
+          console.log('Razorpay checkout requires trusted Origin, JSON media type, and bounded request bodies.')
+          NODE

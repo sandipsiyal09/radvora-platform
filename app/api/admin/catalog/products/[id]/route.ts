@@ -18,6 +18,8 @@ function invalidOrigin(request:Request){
 
 export async function POST(request:Request,{params}:Params){
   if(invalidOrigin(request)) return json({error:'Invalid catalog control origin.'},403)
+  const contentType=request.headers.get('content-type')||''
+  if(!contentType.toLowerCase().startsWith('application/json')) return json({error:'Unsupported media type.'},415)
   const {id}=await params
   if(!UUID.test(id)) return json({error:'Invalid product identifier.'},400)
   const supabase=await createClient();const {data:{user}}=await supabase.auth.getUser()
