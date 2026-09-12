@@ -6,6 +6,7 @@ on:
       - 'proxy.ts'
       - 'app/security/mfa/**'
       - 'app/api/admin/**'
+      - 'supabase/migrations/**'
       - '.github/workflows/admin-mfa-boundary.yml'
   push:
     branches: [main]
@@ -13,6 +14,7 @@ on:
       - 'proxy.ts'
       - 'app/security/mfa/**'
       - 'app/api/admin/**'
+      - 'supabase/migrations/**'
       - '.github/workflows/admin-mfa-boundary.yml'
 
 permissions:
@@ -32,6 +34,7 @@ jobs:
           const proxy = fs.readFileSync('proxy.ts', 'utf8')
           const page = fs.readFileSync('app/security/mfa/page.tsx', 'utf8')
           const form = fs.readFileSync('app/security/mfa/mfa-form.tsx', 'utf8')
+          const rls = fs.readFileSync('supabase/migrations/202609110050_require_aal2_for_admin_rls.sql', 'utf8')
 
           const requiredProxy = [
             "pathname === '/admin'",
@@ -55,5 +58,32 @@ jobs:
             if (!form.includes(token)) throw new Error(`Missing MFA client flow control: ${token}`)
           }
           if (!form.includes("factorType:'totp'")) throw new Error('Privileged MFA enrollment must use TOTP.')
-          console.log('Privileged admin AAL2/TOTP boundary is present.')
+
+          const expectedPolicies = [
+            'admins_read_agent_guardrails',
+            'admins_read_agents',
+            'admins_read_approvals',
+            'admins_read_audit_logs',
+            'claims_read_public_or_admin',
+            'lab_reports_read_public_or_admin',
+            'rf_tests_read_public_or_admin',
+            'orders_read_owner_or_admin',
+            'order_items_read_owner_or_admin',
+            'payment_attempts_read_owner_or_admin',
+            'refund_attempts_read_owner_or_admin',
+            'support_tickets_read_owner_or_admin',
+            'warranty_claims_read_owner_or_admin',
+            'admins_insert_products',
+            'admins_update_products',
+            'admins_update_support_tickets',
+            'admins_update_warranty_claims',
+          ]
+          if (!rls.includes("((select auth.jwt())->>'aal')='aal2'") && !rls.includes("((select auth.jwt())->>'aal') = 'aal2'")) {
+            throw new Error('AAL2 JWT requirement is missing from privileged RLS migration.')
+          }
+          for (const policy of expectedPolicies) {
+            if (!rls.includes(policy)) throw new Error(`Privileged RLS migration does not cover policy ${policy}`)
+          }
+          if (!rls.includes("select '202609110050'::text")) throw new Error('Runtime schema marker was not advanced with the AAL2 RLS migration.')
+          console.log('Privileged admin AAL2/TOTP boundary is present in proxy, UI, API boundary and RLS migration.')
           NODE
