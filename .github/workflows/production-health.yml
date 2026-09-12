@@ -24,7 +24,7 @@ jobs:
             "$health_url")"
           HEALTH_RESPONSE="$response" node - <<'NODE'
           const body = JSON.parse(process.env.HEALTH_RESPONSE || '{}')
-          const requiredSchema = '202609110049'
+          const requiredSchema = '202609110050'
           if (body.status !== 'ok') throw new Error(`Production health status is ${body.status || 'missing'}`)
           if (body.runtimeSchemaVersion !== requiredSchema) {
             throw new Error(`Runtime schema ${body.runtimeSchemaVersion || 'missing'} does not match ${requiredSchema}`)
