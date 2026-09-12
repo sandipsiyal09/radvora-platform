@@ -1,0 +1,42 @@
+name: RADVORA Auth Callback Boundary
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  guard-auth-callback-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify auth callback trust boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          route = Path('app/auth/callback/route.ts')
+          text = route.read_text()
+          required = [
+              "MAX_AUTH_CODE_LENGTH",
+              "process.env.VERCEL_ENV === 'production'",
+              "process.env.NODE_ENV === 'production' && !process.env.VERCEL_ENV",
+              "return null",
+              "code.length > MAX_AUTH_CODE_LENGTH",
+              "destination.origin !== origin",
+              "destination.username",
+              "destination.password",
+              "private, no-store, max-age=0",
+          ]
+          missing = [needle for needle in required if needle not in text]
+          if missing:
+              raise SystemExit(f'auth callback boundary controls regressed: {missing}')
+
+          if "return requestUrl.origin" in text:
+              raise SystemExit('auth callback must not unconditionally trust request-derived origins')
+
+          print('Auth callback boundary is guarded.')
+          PY
