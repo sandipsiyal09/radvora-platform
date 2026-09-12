@@ -75,6 +75,9 @@ jobs:
           if (body.checks?.database !== 'ok' || body.checks?.commerce_schema !== 'ok' || body.checks?.payment_session_schema !== 'ok') {
             fail('Production database/schema health checks are not green.')
           }
+          if (!['disabled','ready'].includes(body.checks?.commerce_activation)) {
+            fail(`Commerce activation safety is ${body.checks?.commerce_activation || 'missing'}.`)
+          }
           if (body.checks?.canonical_url !== 'configured') fail('Canonical production URL is not configured.')
           if (body.release?.environment !== 'production') {
             fail(`Health endpoint is not reporting production environment: ${body.release?.environment || 'missing'}.`)
@@ -87,7 +90,7 @@ jobs:
             fail(`Production commit ${body.release.commit} does not match workflow commit ${expectedCommit}.`)
           }
           console.log(`RADVORA production healthy at exact commit ${body.release.commit}, schema ${body.runtimeSchemaVersion}.`)
-          console.log(`Commerce activation remains independently gated: seller=${body.checks?.seller_profile}, payments=${body.checks?.india_payments}.`)
+          console.log(`Commerce activation safety=${body.checks?.commerce_activation}; seller=${body.checks?.seller_profile}, payments=${body.checks?.india_payments}.`)
           NODE
             then
               exit 0
