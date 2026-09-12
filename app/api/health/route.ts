@@ -4,7 +4,7 @@ import { createAdminClient } from '../../../lib/supabase/admin'
 export const dynamic='force-dynamic'
 
 const EXPECTED_RUNTIME_SCHEMA_VERSION='202609110050'
-const requiredRuntimeConfig=['NEXT_PUBLIC_SUPABASE_URL','NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY','SUPABASE_SERVICE_ROLE_KEY']
+const requiredRuntimeConfig=['NEXT_PUBLIC_SUPABASE_URL','NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY','SUPABASE_SERVICE_ROLE_KEY'] as const
 function responseHeaders(){return {'Cache-Control':'no-store'}}
 function releaseMetadata(){
   const commit=(process.env.VERCEL_GIT_COMMIT_SHA||process.env.GIT_COMMIT_SHA||'').trim()
@@ -16,12 +16,13 @@ function releaseMetadata(){
 export async function GET(){
   const timestamp=new Date().toISOString()
   const release=releaseMetadata()
-  const configurationReady=requiredRuntimeConfig.every(key=>Boolean(process.env[key]?.trim()))
+  const missingRuntimeConfig=requiredRuntimeConfig.filter(key=>!process.env[key]?.trim())
+  const configurationReady=missingRuntimeConfig.length===0
   const canonicalUrlReady=(()=>{try{return new URL(process.env.NEXT_PUBLIC_APP_URL||'').protocol==='https:'}catch{return false}})()
   const indiaPaymentsConfigured=Boolean(process.env.RAZORPAY_KEY_ID?.trim()&&process.env.RAZORPAY_KEY_SECRET?.trim()&&process.env.RAZORPAY_WEBHOOK_SECRET?.trim())
 
   if(!configurationReady){
-    return NextResponse.json({service:'radvora-platform',status:'degraded',release,checks:{configuration:'unavailable',database:'not_checked',commerce_schema:'not_checked',payment_session_schema:'not_checked',seller_profile:'not_checked',runtime_schema_version:'not_checked',canonical_url:canonicalUrlReady?'configured':'not_configured',india_payments:indiaPaymentsConfigured?'configured':'not_configured'},expectedRuntimeSchemaVersion:EXPECTED_RUNTIME_SCHEMA_VERSION,timestamp},{status:503,headers:responseHeaders()})
+    return NextResponse.json({service:'radvora-platform',status:'degraded',release,missingRuntimeConfig,checks:{configuration:'unavailable',database:'not_checked',commerce_schema:'not_checked',payment_session_schema:'not_checked',seller_profile:'not_checked',runtime_schema_version:'not_checked',canonical_url:canonicalUrlReady?'configured':'not_configured',india_payments:indiaPaymentsConfigured?'configured':'not_configured'},expectedRuntimeSchemaVersion:EXPECTED_RUNTIME_SCHEMA_VERSION,timestamp},{status:503,headers:responseHeaders()})
   }
 
   try{
@@ -37,9 +38,9 @@ export async function GET(){
     const runtimeSchemaVersion=String(schemaVersion||'')
     if(runtimeSchemaVersion!==EXPECTED_RUNTIME_SCHEMA_VERSION) throw new Error(`Runtime schema version mismatch: expected ${EXPECTED_RUNTIME_SCHEMA_VERSION}`)
 
-    return NextResponse.json({service:'radvora-platform',status:'ok',release,checks:{configuration:'ok',database:'ok',commerce_schema:'ok',payment_session_schema:'ok',seller_profile:sellerReady===true?'configured':'not_configured',runtime_schema_version:'ok',canonical_url:canonicalUrlReady?'configured':'not_configured',india_payments:indiaPaymentsConfigured?'configured':'not_configured'},runtimeSchemaVersion,expectedRuntimeSchemaVersion:EXPECTED_RUNTIME_SCHEMA_VERSION,timestamp},{status:200,headers:responseHeaders()})
+    return NextResponse.json({service:'radvora-platform',status:'ok',release,missingRuntimeConfig:[],checks:{configuration:'ok',database:'ok',commerce_schema:'ok',payment_session_schema:'ok',seller_profile:sellerReady===true?'configured':'not_configured',runtime_schema_version:'ok',canonical_url:canonicalUrlReady?'configured':'not_configured',india_payments:indiaPaymentsConfigured?'configured':'not_configured'},runtimeSchemaVersion,expectedRuntimeSchemaVersion:EXPECTED_RUNTIME_SCHEMA_VERSION,timestamp},{status:200,headers:responseHeaders()})
   }catch(error){
     console.error('health_check_failed',{release,error})
-    return NextResponse.json({service:'radvora-platform',status:'degraded',release,checks:{configuration:'ok',database:'unavailable_or_schema_mismatch',commerce_schema:'unavailable_or_outdated',payment_session_schema:'unavailable_or_outdated',seller_profile:'unavailable_or_outdated',runtime_schema_version:'mismatch_or_unavailable',canonical_url:canonicalUrlReady?'configured':'not_configured',india_payments:indiaPaymentsConfigured?'configured':'not_configured'},expectedRuntimeSchemaVersion:EXPECTED_RUNTIME_SCHEMA_VERSION,timestamp},{status:503,headers:responseHeaders()})
+    return NextResponse.json({service:'radvora-platform',status:'degraded',release,missingRuntimeConfig:[],checks:{configuration:'ok',database:'unavailable_or_schema_mismatch',commerce_schema:'unavailable_or_outdated',payment_session_schema:'unavailable_or_outdated',seller_profile:'unavailable_or_outdated',runtime_schema_version:'mismatch_or_unavailable',canonical_url:canonicalUrlReady?'configured':'not_configured',india_payments:indiaPaymentsConfigured?'configured':'not_configured'},expectedRuntimeSchemaVersion:EXPECTED_RUNTIME_SCHEMA_VERSION,timestamp},{status:503,headers:responseHeaders()})
   }
 }
