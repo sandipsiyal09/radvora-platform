@@ -29,6 +29,7 @@ jobs:
                   "function canonicalOrigin",
                   "function isProductionRuntime",
                   "function isSafeProductionOrigin",
+                  "if (isProductionRuntime()) return isSafeProductionOrigin(url) ? url.origin : null",
                   "url.protocol === 'https:'",
                   "hostname !== 'localhost'",
                   "hostname.includes('.')",
@@ -49,13 +50,8 @@ jobs:
               if missing:
                   raise SystemExit(f'{route}: missing public request boundary controls: {missing}')
 
-              forbidden = [
-                  "process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL).origin : requestOrigin",
-                  "if (url.protocol === 'https:' || url.hostname === 'localhost') return url.origin\n    } catch",
-              ]
-              regressed = [needle for needle in forbidden if needle in text]
-              if regressed:
-                  raise SystemExit(f'{route}: production canonical origin regressed: {regressed}')
+              if "process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL).origin : requestOrigin" in text:
+                  raise SystemExit(f'{route}: production canonical origin regressed to request-host fallback')
 
           lead = routes[0].read_text()
           if "clean(body.website, 200)" not in lead or "(count ?? 0) >= 3" not in lead:
