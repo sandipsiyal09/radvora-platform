@@ -13,9 +13,19 @@ function json(body:Record<string,unknown>,status=200){
 function canonicalOrigin(request:Request){
   const configured=process.env.NEXT_PUBLIC_APP_URL?.trim()
   if(configured){
-    try{return new URL(configured).origin}catch{return null}
+    try{
+      const url=new URL(configured)
+      if(url.protocol==='https:'||url.hostname==='localhost')return url.origin
+    }catch{
+      // Production sign-in requests must fail closed below rather than trusting request.url.
+    }
   }
-  try{return new URL(request.url).origin}catch{return null}
+  if(process.env.VERCEL_ENV==='production')return null
+  if(process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV)return null
+  try{
+    const url=new URL(request.url)
+    return url.protocol==='https:'||url.hostname==='localhost'?url.origin:null
+  }catch{return null}
 }
 
 function invalidOrigin(request:Request,canonical:string){
