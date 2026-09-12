@@ -23,9 +23,12 @@ function normalizePhone(value:string){const raw=value.replace(/[\s()-]/g,'');if(
 function moneyEqual(a:number,b:number){return Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<0.011}
 function requestBoundaryError(request:Request){
   if(request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site') return json({error:'Cross-site checkout requests are not allowed.'},403)
+  const contentType=request.headers.get('content-type')?.toLowerCase()||''
+  if(!contentType.startsWith('application/json'))return json({error:'Checkout requests must use application/json.'},415)
   const rawLength=request.headers.get('content-length');if(rawLength&&Number(rawLength)>MAX_BODY_BYTES)return json({error:'Checkout request is too large.'},413)
   const origin=request.headers.get('origin')
-  if(origin){try{const supplied=new URL(origin).origin;const requestOrigin=new URL(request.url).origin;const configured=process.env.NEXT_PUBLIC_APP_URL?new URL(process.env.NEXT_PUBLIC_APP_URL).origin:requestOrigin;if(supplied!==requestOrigin&&supplied!==configured)return json({error:'Invalid checkout request origin.'},403)}catch{return json({error:'Invalid checkout request origin.'},403)}}
+  if(!origin)return json({error:'Invalid checkout request origin.'},403)
+  try{const supplied=new URL(origin).origin;const requestOrigin=new URL(request.url).origin;const configured=process.env.NEXT_PUBLIC_APP_URL?new URL(process.env.NEXT_PUBLIC_APP_URL).origin:requestOrigin;if(supplied!==requestOrigin&&supplied!==configured)return json({error:'Invalid checkout request origin.'},403)}catch{return json({error:'Invalid checkout request origin.'},403)}
   return null
 }
 function linkMatches(link:ProviderLink,attemptId:string,amountPaise:number){return Boolean(link.id&&link.reference_id===attemptId&&link.amount===amountPaise&&String(link.currency||'').toUpperCase()==='INR')}
