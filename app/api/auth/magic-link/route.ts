@@ -22,7 +22,8 @@ function canonicalOrigin(request:Request){
     try{
       const url=new URL(configured)
       if(isProductionRuntime())return isSafeProductionOrigin(url)?url.origin:null
-      if(url.protocol==='https:'||url.hostname==='localhost')return url.origin
+      const safeNonProductionOrigin=url.protocol==='https:'||url.hostname==='localhost'
+      if(safeNonProductionOrigin)return url.origin
     }catch{
       // Production sign-in requests must fail closed below rather than trusting request.url.
     }
@@ -42,7 +43,7 @@ function invalidOrigin(request:Request,canonical:string){
     const supplied=new URL(origin).origin
     if(isProductionRuntime())return supplied!==canonical
     const requestOrigin=new URL(request.url).origin
-    return supplied!==requestOrigin&&supplied!==canonical
+    return supplied!==canonical&&supplied!==requestOrigin
   }catch{return true}
 }
 
