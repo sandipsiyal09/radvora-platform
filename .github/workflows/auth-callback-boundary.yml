@@ -61,13 +61,17 @@ jobs:
           missing = [needle for needle in magic_required if needle not in magic_link]
           if missing:
               raise SystemExit(f'magic-link request boundary controls regressed: {missing}')
-          forbidden = [
-              "return supplied!==requestOrigin&&supplied!==canonical\n  }catch{return true}",
-              "if(url.protocol==='https:'||url.hostname==='localhost')return url.origin\n    }catch",
-          ]
-          present = [needle for needle in forbidden if needle in magic_link]
-          if present:
-              raise SystemExit(f'magic-link production canonical-origin boundary regressed: {present}')
+
+          # The request-derived origin fallback is intentional outside production only.
+          # Guard the production branch explicitly instead of forbidding the fallback text globally.
+          production_guard = "if(isProductionRuntime())return supplied!==canonical"
+          fallback_guard = "return supplied!==canonical&&supplied!==requestOrigin"
+          if magic_link.find(production_guard) == -1 or magic_link.find(fallback_guard) == -1:
+              raise SystemExit('magic-link origin branch ordering regressed')
+          if magic_link.find(production_guard) > magic_link.find(fallback_guard):
+              raise SystemExit('production canonical-origin check must run before non-production request-origin fallback')
+          if "if(url.protocol==='https:'||url.hostname==='localhost')return url.origin\n    }catch" in magic_link:
+              raise SystemExit('magic-link production canonical URL validation regressed')
 
           print('Auth callback and magic-link origin boundaries are guarded.')
           PY
