@@ -52,7 +52,7 @@ function isRateLimited(key: string) {
 function invalidOrigin(request: NextRequest) {
   if (request.headers.get('sec-fetch-site')?.toLowerCase() === 'cross-site') return true
   const origin = request.headers.get('origin')
-  if (!origin) return false
+  if (!origin) return true
   try {
     const supplied = new URL(origin).origin
     const requestOrigin = request.nextUrl.origin
@@ -72,6 +72,10 @@ export async function POST(request: NextRequest) {
 
   const rawLength = request.headers.get('content-length')
   if (rawLength && Number(rawLength) > MAX_BODY_BYTES) return response({ error: 'Verification request is too large.' }, 413)
+
+  if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) {
+    return response({ error: 'Invalid request.' }, 415)
+  }
 
   const key = clientKey(request)
   if (isRateLimited(key)) return response({ error: 'Too many verification attempts. Please try again later.' }, 429)
