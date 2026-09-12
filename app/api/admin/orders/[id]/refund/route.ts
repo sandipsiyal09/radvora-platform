@@ -12,17 +12,35 @@ type ProviderRefund={id?:string;payment_id?:string;amount?:number;currency?:stri
 
 function json(body:Record<string,unknown>,status=200){return NextResponse.json(body,{status,headers:{'Cache-Control':'no-store'}})}
 
-function boundary(request:Request){
+function canonicalOrigin(request:Request){
+  const configured=process.env.NEXT_PUBLIC_APP_URL?.trim()
+  if(configured){
+    try{
+      const url=new URL(configured)
+      if(url.protocol==='https:'||url.hostname==='localhost')return url.origin
+    }catch{
+      // Production refund operations must fail closed below rather than trusting request.url.
+    }
+  }
+  if(process.env.VERCEL_ENV==='production')return null
+  if(process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV)return null
+  try{
+    const url=new URL(request.url)
+    return url.protocol==='https:'||url.hostname==='localhost'?url.origin:null
+  }catch{return null}
+}
+
+function boundary(request:Request,canonical:string){
   if(request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site') return json({error:'Cross-site refund requests are not allowed.'},403)
   const rawLength=request.headers.get('content-length')
   if(rawLength&&Number(rawLength)>MAX_BODY_BYTES) return json({error:'Refund request is too large.'},413)
+  if(!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) return json({error:'Unsupported refund media type.'},415)
   const origin=request.headers.get('origin')
   if(!origin) return json({error:'Invalid refund request origin.'},403)
   try{
     const supplied=new URL(origin).origin
     const requestOrigin=new URL(request.url).origin
-    const configured=process.env.NEXT_PUBLIC_APP_URL?new URL(process.env.NEXT_PUBLIC_APP_URL).origin:requestOrigin
-    if(supplied!==requestOrigin&&supplied!==configured) return json({error:'Invalid refund request origin.'},403)
+    if(supplied!==requestOrigin&&supplied!==canonical) return json({error:'Invalid refund request origin.'},403)
   }catch{return json({error:'Invalid refund request origin.'},403)}
   return null
 }
@@ -40,7 +58,9 @@ function validateProviderRefund(refund:ProviderRefund,paymentId:string,amountPai
 }
 
 export async function POST(request:Request,{params}:Params){
-  const requestError=boundary(request)
+  const expectedOrigin=canonicalOrigin(request)
+  if(!expectedOrigin) return json({error:'Refund operations are temporarily unavailable.'},503)
+  const requestError=boundary(request,expectedOrigin)
   if(requestError) return requestError
 
   const keyId=process.env.RAZORPAY_KEY_ID?.trim()

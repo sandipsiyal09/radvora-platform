@@ -1,0 +1,58 @@
+name: RADVORA Admin Payment Canonical Origin
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  admin-payment-origin:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify privileged payment routes fail closed on canonical origin
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const routes = [
+            ['app/api/admin/payments/[id]/reconcile/route.ts', false, 'payment reconciliation'],
+            ['app/api/admin/orders/[id]/refund/route.ts', true, 'refund submission'],
+          ]
+
+          for (const [path, requiresJson, label] of routes) {
+            const source = fs.readFileSync(path, 'utf8')
+            const required = [
+              'function canonicalOrigin(request:Request)',
+              "process.env.VERCEL_ENV==='production'",
+              "process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV",
+              'const expectedOrigin=canonicalOrigin(request)',
+              'if(!expectedOrigin)',
+              "request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site'",
+              "request.headers.get('origin')",
+              'NEXT_PUBLIC_APP_URL',
+            ]
+            for (const snippet of required) {
+              if (!source.includes(snippet)) {
+                console.error(`Admin ${label} is missing canonical-origin control: ${snippet}`)
+                process.exit(1)
+              }
+            }
+            if (source.includes('const configured=process.env.NEXT_PUBLIC_APP_URL?new URL(process.env.NEXT_PUBLIC_APP_URL).origin:requestOrigin')) {
+              console.error(`Admin ${label} must not fall back to requestOrigin when production canonical configuration is absent.`)
+              process.exit(1)
+            }
+            if (requiresJson && !source.includes("startsWith('application/json')")) {
+              console.error(`Admin ${label} must require JSON media types.`)
+              process.exit(1)
+            }
+          }
+
+          console.log('Privileged payment operations fail closed on missing canonical production origin; refund submission is JSON-only.')
+          NODE

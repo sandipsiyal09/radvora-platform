@@ -10,14 +10,33 @@ type Link={id?:string;status?:string;amount?:number;amount_paid?:number;currency
 type Payment={id?:string;order_id?:string;amount?:number;currency?:string;status?:string}
 
 function json(body:Record<string,unknown>,status=200){return NextResponse.json(body,{status,headers:{'Cache-Control':'no-store'}})}
-function invalidOrigin(request:Request){
+function canonicalOrigin(request:Request){
+  const configured=process.env.NEXT_PUBLIC_APP_URL?.trim()
+  if(configured){
+    try{
+      const url=new URL(configured)
+      if(url.protocol==='https:'||url.hostname==='localhost')return url.origin
+    }catch{
+      // Production payment operations must fail closed below rather than trusting request.url.
+    }
+  }
+  if(process.env.VERCEL_ENV==='production')return null
+  if(process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV)return null
+  try{
+    const url=new URL(request.url)
+    return url.protocol==='https:'||url.hostname==='localhost'?url.origin:null
+  }catch{return null}
+}
+function invalidOrigin(request:Request,canonical:string){
   if(request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site')return true
   const origin=request.headers.get('origin');if(!origin)return true
-  try{const supplied=new URL(origin).origin;const requestOrigin=new URL(request.url).origin;const configured=process.env.NEXT_PUBLIC_APP_URL?new URL(process.env.NEXT_PUBLIC_APP_URL).origin:requestOrigin;return supplied!==requestOrigin&&supplied!==configured}catch{return true}
+  try{const supplied=new URL(origin).origin;const requestOrigin=new URL(request.url).origin;return supplied!==requestOrigin&&supplied!==canonical}catch{return true}
 }
 
 export async function POST(request:Request,{params}:Params){
-  if(invalidOrigin(request))return json({error:'Invalid payment reconciliation origin.'},403)
+  const expectedOrigin=canonicalOrigin(request)
+  if(!expectedOrigin)return json({error:'Payment reconciliation is temporarily unavailable.'},503)
+  if(invalidOrigin(request,expectedOrigin))return json({error:'Invalid payment reconciliation origin.'},403)
   const {id:attemptId}=await params;if(!UUID.test(attemptId))return json({error:'Payment attempt not found.'},404)
   const supabase=await createClient();const {data:{user}}=await supabase.auth.getUser();if(!user)return json({error:'Authentication required.'},401)
   const role=String(user.app_metadata?.role||'');if(role!=='admin'&&role!=='founder')return json({error:'Admin access required.'},403)
