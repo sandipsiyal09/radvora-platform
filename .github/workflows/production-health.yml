@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CONFIGURED_HEALTH_URL: ${{ vars.PRODUCTION_HEALTH_URL }}
+      EXPECTED_PRODUCTION_COMMIT: ${{ github.sha }}
     steps:
       - name: Verify production health contract
         shell: bash
@@ -25,6 +26,8 @@ jobs:
           HEALTH_RESPONSE="$response" node - <<'NODE'
           const body = JSON.parse(process.env.HEALTH_RESPONSE || '{}')
           const requiredSchema = '202609110050'
+          const expectedCommit = String(process.env.EXPECTED_PRODUCTION_COMMIT || '').trim()
+          if (!/^[0-9a-f]{40}$/i.test(expectedCommit)) throw new Error('Expected production commit metadata is invalid.')
           if (body.status !== 'ok') throw new Error(`Production health status is ${body.status || 'missing'}`)
           if (body.runtimeSchemaVersion !== requiredSchema) {
             throw new Error(`Runtime schema ${body.runtimeSchemaVersion || 'missing'} does not match ${requiredSchema}`)
@@ -36,7 +39,13 @@ jobs:
           if (body.release?.environment !== 'production') {
             throw new Error(`Health endpoint is not reporting production environment: ${body.release?.environment || 'missing'}`)
           }
+          if (body.release?.ref !== 'main') {
+            throw new Error(`Production health endpoint is not reporting the main branch: ${body.release?.ref || 'missing'}`)
+          }
           if (!body.release?.commit || body.release.commit === 'unknown') throw new Error('Production release commit metadata is unavailable.')
-          console.log(`RADVORA production healthy at commit ${body.release.commit}, schema ${body.runtimeSchemaVersion}.`)
+          if (body.release.commit !== expectedCommit) {
+            throw new Error(`Production commit ${body.release.commit} does not match workflow commit ${expectedCommit}`)
+          }
+          console.log(`RADVORA production healthy at exact commit ${body.release.commit}, schema ${body.runtimeSchemaVersion}.`)
           console.log(`Commerce activation remains independently gated: seller=${body.checks?.seller_profile}, payments=${body.checks?.india_payments}.`)
           NODE
