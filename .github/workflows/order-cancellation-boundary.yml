@@ -29,6 +29,15 @@ jobs:
             'NEXT_PUBLIC_APP_URL',
             "process.env.VERCEL_ENV==='production'",
             "process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV",
+            "url.protocol==='https:'&&!url.username&&!url.password",
+            "hostname!=='localhost'",
+            "!hostname.endsWith('.')",
+            "hostname.includes('.')",
+            "(url.pathname==='/'||url.pathname==='')",
+            '!url.search',
+            '!url.hash',
+            "(url.port===''||url.port==='443')",
+            'if(isProductionRuntime())return supplied!==canonical',
             "if(!expectedOrigin)return json({error:'Order cancellation is temporarily unavailable.'},503)",
             "Invalid cancellation request origin.",
             "supabase.auth.getUser()",
@@ -41,9 +50,16 @@ jobs:
               process.exit(1)
             }
           }
-          if (source.includes("process.env.NEXT_PUBLIC_APP_URL?new URL(process.env.NEXT_PUBLIC_APP_URL).origin:requestOrigin")) {
-            console.error('Order cancellation must not fall back to the request-derived origin in production.')
-            process.exit(1)
+          const forbidden = [
+            'return supplied!==requestOrigin&&supplied!==canonical}catch{return true}',
+            'return supplied!==requestOrigin&&supplied!==canonical}catch{return true}',
+            "process.env.NEXT_PUBLIC_APP_URL?new URL(process.env.NEXT_PUBLIC_APP_URL).origin:requestOrigin",
+          ]
+          for (const snippet of forbidden) {
+            if (source.includes(snippet)) {
+              console.error(`Order cancellation production origin boundary regressed: ${snippet}`)
+              process.exit(1)
+            }
           }
-          console.log('Order cancellation requires an explicit trusted browser origin, a valid production canonical origin, and authenticated ownership checks.')
+          console.log('Order cancellation requires exact configured canonical origin in production, safe HTTPS canonical URL validation, authentication, ownership, and provider-authoritative reconciliation.')
           NODE
