@@ -23,6 +23,15 @@ jobs:
           const fs = require('fs')
           const source = fs.readFileSync('app/api/health/route.ts', 'utf8')
           const required = [
+            'function canonicalProductionUrlReady(value:string|undefined)',
+            "url.protocol==='https:'",
+            '!url.username&&!url.password',
+            "hostname!=='localhost'",
+            '!isIpLiteral',
+            "hostname.includes('.')",
+            "(url.pathname==='/'||url.pathname==='')&&!url.search&&!url.hash",
+            "(url.port===''||url.port==='443')",
+            'const canonicalUrlReady=canonicalProductionUrlReady(process.env.NEXT_PUBLIC_APP_URL)',
             "release.environment==='production'&&!canonicalUrlReady",
             "'NEXT_PUBLIC_APP_URL'",
             'const configurationReady=missingRuntimeConfig.length===0',
@@ -48,5 +57,5 @@ jobs:
             console.error('Production health must expose only the canonical URL readiness state, never the configured URL value.')
             process.exit(1)
           }
-          console.log('Production health fails closed for missing canonical configuration, unknown production provenance, and unsafe commerce activation.')
+          console.log('Production health fails closed for malformed canonical origins, unknown production provenance, and unsafe commerce activation.')
           NODE
