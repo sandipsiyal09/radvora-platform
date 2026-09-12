@@ -22,7 +22,8 @@ function canonicalOrigin(request:Request){
     try{
       const url=new URL(configured)
       if(isProductionRuntime())return isSafeProductionOrigin(url)?url.origin:null
-      if(url.protocol==='https:'||url.hostname==='localhost')return url.origin
+      const safeNonProductionOrigin=url.protocol==='https:'||url.hostname==='localhost'
+      if(safeNonProductionOrigin)return url.origin
     }catch{
       // Production sign-in requests must fail closed below rather than trusting request.url.
     }
