@@ -21,25 +21,53 @@ function json(body:Record<string,unknown>,status=200){return NextResponse.json(b
 function clean(value:unknown,max:number){return typeof value==='string'?value.trim().slice(0,max):''}
 function normalizePhone(value:string){const raw=value.replace(/[\s()-]/g,'');if(!PHONE_PATTERN.test(raw))return null;return raw.startsWith('+91')?raw:`+91${raw.replace(/^91/,'')}`}
 function moneyEqual(a:number,b:number){return Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<0.011}
-function requestBoundaryError(request:Request){
+function isProductionRuntime(){return process.env.VERCEL_ENV==='production'||(process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV)}
+function isSafeProductionOrigin(url:URL){
+  const hostname=url.hostname.toLowerCase()
+  const isIpLiteral=/^(?:\d{1,3}\.){3}\d{1,3}$/.test(hostname)||hostname.includes(':')
+  return url.protocol==='https:'&&!url.username&&!url.password&&!isIpLiteral&&hostname!=='localhost'&&!hostname.endsWith('.')&&hostname.includes('.')&&(url.pathname==='/'||url.pathname==='')&&!url.search&&!url.hash&&(url.port===''||url.port==='443')
+}
+function canonicalOrigin(request:Request){
+  const configured=process.env.NEXT_PUBLIC_APP_URL?.trim()
+  if(configured){
+    try{
+      const url=new URL(configured)
+      if(isProductionRuntime())return isSafeProductionOrigin(url)?url.origin:null
+      if(url.protocol==='https:'||url.hostname==='localhost')return url.origin
+    }catch{
+      // Production checkout fails closed below instead of trusting the request-derived host.
+    }
+  }
+  if(isProductionRuntime())return null
+  try{
+    const url=new URL(request.url)
+    return url.protocol==='https:'||url.hostname==='localhost'?url.origin:null
+  }catch{return null}
+}
+function requestBoundaryError(request:Request,canonical:string){
   if(request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site') return json({error:'Cross-site checkout requests are not allowed.'},403)
   const contentType=request.headers.get('content-type')?.toLowerCase()||''
   if(!contentType.startsWith('application/json'))return json({error:'Checkout requests must use application/json.'},415)
   const rawLength=request.headers.get('content-length');if(rawLength&&Number(rawLength)>MAX_BODY_BYTES)return json({error:'Checkout request is too large.'},413)
   const origin=request.headers.get('origin')
   if(!origin)return json({error:'Invalid checkout request origin.'},403)
-  try{const supplied=new URL(origin).origin;const requestOrigin=new URL(request.url).origin;const configured=process.env.NEXT_PUBLIC_APP_URL?new URL(process.env.NEXT_PUBLIC_APP_URL).origin:requestOrigin;if(supplied!==requestOrigin&&supplied!==configured)return json({error:'Invalid checkout request origin.'},403)}catch{return json({error:'Invalid checkout request origin.'},403)}
+  try{
+    const supplied=new URL(origin).origin
+    if(isProductionRuntime())return supplied!==canonical?json({error:'Invalid checkout request origin.'},403):null
+    const requestOrigin=new URL(request.url).origin
+    if(supplied!==requestOrigin&&supplied!==canonical)return json({error:'Invalid checkout request origin.'},403)
+  }catch{return json({error:'Invalid checkout request origin.'},403)}
   return null
 }
 function linkMatches(link:ProviderLink,attemptId:string,amountPaise:number){return Boolean(link.id&&link.reference_id===attemptId&&link.amount===amountPaise&&String(link.currency||'').toUpperCase()==='INR')}
 function checkoutPayload(order:CheckoutOrder,attemptId:string,link:ProviderLink,reused=false){return {paymentUrl:link.short_url,providerSessionId:link.id,expiresAt:link.expire_by?new Date(link.expire_by*1000).toISOString():null,orderId:order.id,orderNumber:order.order_number,amountPaise:Math.round(Number(order.total)*100),currency:'INR',paymentAttemptId:attemptId,reused}}
 
 export async function POST(request:Request){
-  const boundary=requestBoundaryError(request);if(boundary)return boundary
+  const appOrigin=canonicalOrigin(request)
+  if(!appOrigin)return json({error:'India checkout is waiting for the final HTTPS application URL.'},503)
+  const boundary=requestBoundaryError(request,appOrigin);if(boundary)return boundary
   const keyId=process.env.RAZORPAY_KEY_ID?.trim();const keySecret=process.env.RAZORPAY_KEY_SECRET?.trim()
   if(!keyId||!keySecret)return json({error:'India checkout is not yet available.'},503)
-  let appOrigin=''
-  try{const configured=new URL(process.env.NEXT_PUBLIC_APP_URL||'');if(configured.protocol!=='https:')throw new Error('https required');appOrigin=configured.origin}catch{return json({error:'India checkout is waiting for the final HTTPS application URL.'},503)}
 
   const supabase=await createClient();const {data:{user}}=await supabase.auth.getUser();if(!user)return json({error:'Authentication required.'},401)
   let rawBody='';try{rawBody=await request.text()}catch{return json({error:'Invalid checkout request.'},400)}
