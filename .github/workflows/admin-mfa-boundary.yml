@@ -1,0 +1,59 @@
+name: RADVORA Privileged Admin MFA Boundary
+
+on:
+  pull_request:
+    paths:
+      - 'proxy.ts'
+      - 'app/security/mfa/**'
+      - 'app/api/admin/**'
+      - '.github/workflows/admin-mfa-boundary.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'proxy.ts'
+      - 'app/security/mfa/**'
+      - 'app/api/admin/**'
+      - '.github/workflows/admin-mfa-boundary.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  privileged-mfa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify admin AAL2 enforcement and enrollment flow
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const proxy = fs.readFileSync('proxy.ts', 'utf8')
+          const page = fs.readFileSync('app/security/mfa/page.tsx', 'utf8')
+          const form = fs.readFileSync('app/security/mfa/mfa-form.tsx', 'utf8')
+
+          const requiredProxy = [
+            "pathname === '/admin'",
+            "pathname.startsWith('/api/admin/')",
+            'getAuthenticatorAssuranceLevel()',
+            "assurance.currentLevel !== 'aal2'",
+            "status: 428",
+            "new URL('/security/mfa'",
+          ]
+          for (const token of requiredProxy) {
+            if (!proxy.includes(token)) throw new Error(`Missing privileged MFA proxy guard: ${token}`)
+          }
+          if (!proxy.includes("role !== 'admin' && role !== 'founder'")) {
+            throw new Error('Privileged proxy must retain admin/founder role enforcement.')
+          }
+
+          for (const token of ["role!=='admin'&&role!=='founder'", "currentLevel==='aal2'", "redirect(next)"]) {
+            if (!page.includes(token)) throw new Error(`Missing MFA page server guard: ${token}`)
+          }
+          for (const token of ['mfa.enroll(', 'mfa.listFactors()', 'mfa.challenge(', 'mfa.verify(', "currentLevel!=='aal2'"]) {
+            if (!form.includes(token)) throw new Error(`Missing MFA client flow control: ${token}`)
+          }
+          if (!form.includes("factorType:'totp'")) throw new Error('Privileged MFA enrollment must use TOTP.')
+          console.log('Privileged admin AAL2/TOTP boundary is present.')
+          NODE
