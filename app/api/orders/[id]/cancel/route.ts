@@ -9,14 +9,27 @@ type Params={params:Promise<{id:string}>}
 type PaymentLink={id?:string;status?:string;amount?:number;amount_paid?:number;currency?:string;reference_id?:string}
 
 function json(body:Record<string,unknown>,status=200){return NextResponse.json(body,{status,headers:{'Cache-Control':'no-store'}})}
-function invalidOrigin(request:Request){
+function canonicalOrigin(request:Request){
+  const configured=process.env.NEXT_PUBLIC_APP_URL?.trim()
+  if(configured){
+    try{const url=new URL(configured);if(url.protocol==='https:'||url.hostname==='localhost')return url.origin}catch{
+      // Production cancellation mutations fail closed below instead of trusting request.url.
+    }
+  }
+  if(process.env.VERCEL_ENV==='production')return null
+  if(process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV)return null
+  try{const url=new URL(request.url);return url.protocol==='https:'||url.hostname==='localhost'?url.origin:null}catch{return null}
+}
+function invalidOrigin(request:Request,canonical:string){
   if(request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site')return true
   const origin=request.headers.get('origin');if(!origin)return true
-  try{const supplied=new URL(origin).origin;const requestOrigin=new URL(request.url).origin;const configured=process.env.NEXT_PUBLIC_APP_URL?new URL(process.env.NEXT_PUBLIC_APP_URL).origin:requestOrigin;return supplied!==requestOrigin&&supplied!==configured}catch{return true}
+  try{const supplied=new URL(origin).origin;const requestOrigin=new URL(request.url).origin;return supplied!==requestOrigin&&supplied!==canonical}catch{return true}
 }
 
 export async function POST(request:Request,{params}:Params){
-  if(invalidOrigin(request))return json({error:'Invalid cancellation request origin.'},403)
+  const expectedOrigin=canonicalOrigin(request)
+  if(!expectedOrigin)return json({error:'Order cancellation is temporarily unavailable.'},503)
+  if(invalidOrigin(request,expectedOrigin))return json({error:'Invalid cancellation request origin.'},403)
   const supabase=await createClient();const {data:{user}}=await supabase.auth.getUser();if(!user)return json({error:'Authentication required.'},401)
   const {id:orderId}=await params;if(!UUID_PATTERN.test(orderId))return json({error:'Order not found.'},404)
   const admin=createAdminClient()
