@@ -37,7 +37,8 @@ jobs:
               --write-out '%{http_code}' \
               "$health_url" || true)"
 
-            if HEALTH_RESPONSE="$(cat "$response_file")" HEALTH_HTTP_STATUS="$http_status" node - <<'NODE'
+            set +e
+            HEALTH_RESPONSE="$(cat "$response_file")" HEALTH_HTTP_STATUS="$http_status" node - <<'NODE'
           const raw = process.env.HEALTH_RESPONSE || ''
           const httpStatus = String(process.env.HEALTH_HTTP_STATUS || '000')
           const requiredSchema = '202609110050'
@@ -47,7 +48,7 @@ jobs:
             body = JSON.parse(raw)
           } catch {
             console.error(`Production health returned non-JSON response (HTTP ${httpStatus}).`)
-            process.exit(1)
+            process.exit(2)
           }
 
           const safeDiagnostic = {
@@ -60,14 +61,30 @@ jobs:
             checks: body.checks || {}
           }
 
-          const fail = message => {
+          const fail = (message, retryable = false) => {
             console.error(message)
             console.error(`Safe health diagnostic: ${JSON.stringify(safeDiagnostic)}`)
-            process.exit(1)
+            process.exit(retryable ? 2 : 1)
           }
 
           if (!/^[0-9a-f]{40}$/i.test(expectedCommit)) fail('Expected production commit metadata is invalid.')
-          if (httpStatus !== '200') fail(`Production health returned HTTP ${httpStatus}.`)
+
+          const reportedCommit = String(body.release?.commit || '').trim()
+          const validReportedCommit = /^[0-9a-f]{40}$/i.test(reportedCommit)
+          const deploymentLag = validReportedCommit && reportedCommit !== expectedCommit
+          if (deploymentLag) {
+            fail(`Production commit ${reportedCommit} does not match workflow commit ${expectedCommit}.`, true)
+          }
+
+          if (safeDiagnostic.missingRuntimeConfig.length > 0) {
+            fail(`Production runtime configuration is incomplete: ${safeDiagnostic.missingRuntimeConfig.join(', ')}.`)
+          }
+          if (body.checks?.canonical_url === 'not_configured') fail('Canonical production URL is not configured.')
+
+          if (httpStatus !== '200') {
+            const transientStatus = httpStatus === '000' || /^5\d\d$/.test(httpStatus)
+            fail(`Production health returned HTTP ${httpStatus}.`, transientStatus)
+          }
           if (body.status !== 'ok') fail(`Production health status is ${body.status || 'missing'}.`)
           if (body.runtimeSchemaVersion !== requiredSchema) {
             fail(`Runtime schema ${body.runtimeSchemaVersion || 'missing'} does not match ${requiredSchema}.`)
@@ -85,19 +102,26 @@ jobs:
           if (body.release?.ref !== 'main') {
             fail(`Production health endpoint is not reporting the main branch: ${body.release?.ref || 'missing'}.`)
           }
-          if (!body.release?.commit || body.release.commit === 'unknown') fail('Production release commit metadata is unavailable.')
-          if (body.release.commit !== expectedCommit) {
-            fail(`Production commit ${body.release.commit} does not match workflow commit ${expectedCommit}.`)
+          if (!validReportedCommit) fail('Production release commit metadata is unavailable or invalid.')
+          if (reportedCommit !== expectedCommit) {
+            fail(`Production commit ${reportedCommit} does not match workflow commit ${expectedCommit}.`, true)
           }
-          console.log(`RADVORA production healthy at exact commit ${body.release.commit}, schema ${body.runtimeSchemaVersion}.`)
+          console.log(`RADVORA production healthy at exact commit ${reportedCommit}, schema ${body.runtimeSchemaVersion}.`)
           console.log(`Commerce activation safety=${body.checks?.commerce_activation}; seller=${body.checks?.seller_profile}, payments=${body.checks?.india_payments}.`)
           NODE
-            then
+            verdict=$?
+            set -e
+
+            if [ "$verdict" -eq 0 ]; then
               exit 0
+            fi
+            if [ "$verdict" -eq 1 ]; then
+              echo "Production health reported a terminal release/configuration blocker; not retrying deployment promotion." >&2
+              exit 1
             fi
 
             if [ "$attempt" -lt 18 ]; then
-              echo "Production has not reached the expected healthy commit yet (attempt $attempt/18); retrying in 10s."
+              echo "Production has not reached a conclusive healthy state yet (attempt $attempt/18); retrying in 10s."
               sleep 10
             fi
           done
