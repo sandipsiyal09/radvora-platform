@@ -49,8 +49,8 @@ export async function GET(request:Request){
 
   try{
     const supabase=createAdminClient()
-    const [{count:commerceEnabledProductCount,error:productError},{error:itemError},{error:paymentError},{data:sellerReady,error:sellerError},{data:schemaVersion,error:schemaVersionError}]=await Promise.all([
-      supabase.from('products').select('id,commerce_enabled,hsn_code,gst_rate,price_inr_includes_gst,stock_on_hand,stock_reserved',{count:'exact',head:true}).eq('commerce_enabled',true).limit(1),
+    const [{data:commerceEnabledProducts,count:commerceEnabledProductCount,error:productError},{error:itemError},{error:paymentError},{data:sellerReady,error:sellerError},{data:schemaVersion,error:schemaVersionError}]=await Promise.all([
+      supabase.from('products').select('id,status,price_inr,currency,commerce_enabled,hsn_code,gst_rate,price_inr_includes_gst,stock_on_hand,stock_reserved',{count:'exact'}).eq('commerce_enabled',true).limit(1000),
       supabase.from('order_items').select('id,line_subtotal,tax_amount,hsn_code,gst_rate,price_includes_gst,inventory_reserved_quantity',{count:'exact',head:true}).limit(1),
       supabase.from('payment_attempts').select('id,provider_session_id,provider_session_url,provider_session_expires_at',{count:'exact',head:true}).limit(1),
       supabase.rpc('server_india_seller_profile_ready'),
@@ -60,13 +60,20 @@ export async function GET(request:Request){
     const runtimeSchemaVersion=String(schemaVersion||'')
     if(runtimeSchemaVersion!==EXPECTED_RUNTIME_SCHEMA_VERSION) throw new Error(`Runtime schema version mismatch: expected ${EXPECTED_RUNTIME_SCHEMA_VERSION}`)
 
-    const commerceEnabledProducts=commerceEnabledProductCount||0
-    const commerceActivationSafe=commerceEnabledProducts===0||(sellerReady===true&&indiaPaymentsConfigured)
+    const commerceEnabledProductsCount=commerceEnabledProductCount||0
+    const enabledCatalog=commerceEnabledProducts||[]
+    const completeEnabledCatalog=commerceEnabledProductsCount===enabledCatalog.length&&enabledCatalog.every(product=>{
+      const validHsn=Boolean(product.hsn_code&&/^\d{4,8}$/.test(String(product.hsn_code)))
+      const validGst=product.gst_rate!==null&&Number(product.gst_rate)>=0&&Number(product.gst_rate)<=100&&product.price_inr_includes_gst!==null
+      const availableStock=product.stock_on_hand===null?null:Number(product.stock_on_hand)-Number(product.stock_reserved||0)
+      return product.status==='active'&&product.currency==='INR'&&Number(product.price_inr)>0&&validHsn&&validGst&&availableStock!==null&&availableStock>0
+    })
+    const commerceActivationSafe=commerceEnabledProductsCount===0||(sellerReady===true&&indiaPaymentsConfigured&&completeEnabledCatalog)
     if(!commerceActivationSafe){
       return NextResponse.json({service:'radvora-platform',status:'degraded',release,missingRuntimeConfig:[],checks:{configuration:'ok',release_provenance:'verified',database:'ok',commerce_schema:'ok',commerce_activation:'unsafe',payment_session_schema:'ok',seller_profile:sellerReady===true?'configured':'not_configured',runtime_schema_version:'ok',canonical_url:canonicalUrlReady?'configured':'not_configured',india_payments:indiaPaymentsConfigured?'configured':'not_configured'},runtimeSchemaVersion,expectedRuntimeSchemaVersion:EXPECTED_RUNTIME_SCHEMA_VERSION,timestamp},{status:503,headers:responseHeaders()})
     }
 
-    return NextResponse.json({service:'radvora-platform',status:'ok',release,missingRuntimeConfig:[],checks:{configuration:'ok',release_provenance:'verified',database:'ok',commerce_schema:'ok',commerce_activation:commerceEnabledProducts===0?'disabled':'ready',payment_session_schema:'ok',seller_profile:sellerReady===true?'configured':'not_configured',runtime_schema_version:'ok',canonical_url:canonicalUrlReady?'configured':'not_configured',india_payments:indiaPaymentsConfigured?'configured':'not_configured'},runtimeSchemaVersion,expectedRuntimeSchemaVersion:EXPECTED_RUNTIME_SCHEMA_VERSION,timestamp},{status:200,headers:responseHeaders()})
+    return NextResponse.json({service:'radvora-platform',status:'ok',release,missingRuntimeConfig:[],checks:{configuration:'ok',release_provenance:'verified',database:'ok',commerce_schema:'ok',commerce_activation:commerceEnabledProductsCount===0?'disabled':'ready',payment_session_schema:'ok',seller_profile:sellerReady===true?'configured':'not_configured',runtime_schema_version:'ok',canonical_url:canonicalUrlReady?'configured':'not_configured',india_payments:indiaPaymentsConfigured?'configured':'not_configured'},runtimeSchemaVersion,expectedRuntimeSchemaVersion:EXPECTED_RUNTIME_SCHEMA_VERSION,timestamp},{status:200,headers:responseHeaders()})
   }catch(error){
     console.error('health_check_failed',{release,error})
     return NextResponse.json({service:'radvora-platform',status:'degraded',release,missingRuntimeConfig:[],checks:{configuration:'ok',release_provenance:'verified',database:'unavailable_or_schema_mismatch',commerce_schema:'unavailable_or_outdated',commerce_activation:'not_checked',payment_session_schema:'unavailable_or_outdated',seller_profile:'unavailable_or_outdated',runtime_schema_version:'mismatch_or_unavailable',canonical_url:canonicalUrlReady?'configured':'not_configured',india_payments:indiaPaymentsConfigured?'configured':'not_configured'},expectedRuntimeSchemaVersion:EXPECTED_RUNTIME_SCHEMA_VERSION,timestamp},{status:503,headers:responseHeaders()})
