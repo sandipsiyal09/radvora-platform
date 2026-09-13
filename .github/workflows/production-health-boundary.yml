@@ -23,7 +23,8 @@ jobs:
           const fs = require('fs')
           const source = fs.readFileSync('app/api/health/route.ts', 'utf8')
           const required = [
-            'function canonicalProductionUrlReady(value:string|undefined)',
+            'function canonicalProductionUrlReady(value:string|undefined,requestUrl:string)',
+            'const request=new URL(requestUrl)',
             "url.protocol==='https:'",
             '!url.username&&!url.password',
             "hostname!=='localhost'",
@@ -31,7 +32,9 @@ jobs:
             "hostname.includes('.')",
             "(url.pathname==='/'||url.pathname==='')&&!url.search&&!url.hash",
             "(url.port===''||url.port==='443')",
-            'const canonicalUrlReady=canonicalProductionUrlReady(process.env.NEXT_PUBLIC_APP_URL)',
+            "request.origin===url.origin&&request.pathname==='/api/health'",
+            'export async function GET(request:Request)',
+            'const canonicalUrlReady=canonicalProductionUrlReady(process.env.NEXT_PUBLIC_APP_URL,request.url)',
             "release.environment==='production'&&!canonicalUrlReady",
             "'NEXT_PUBLIC_APP_URL'",
             'const configurationReady=missingRuntimeConfig.length===0',
@@ -106,5 +109,5 @@ jobs:
             console.error('Production health must verify a reported lagging commit is a known ancestor before retrying and before enforcing version-specific response-contract checks.')
             process.exit(1)
           }
-          console.log('Production health runtime and monitor fail closed for malformed origins, unsafe commerce activation, missing monitor configuration, untrusted endpoints, stale/future responses, cacheable responses, stateful cookie-setting responses, and divergent/unknown release SHAs while retrying only known prior main ancestors during deployment propagation.')
+          console.log('Production health runtime and monitor fail closed for malformed origins, non-canonical request origins, unsafe commerce activation, missing monitor configuration, untrusted endpoints, stale/future responses, cacheable responses, stateful cookie-setting responses, and divergent/unknown release SHAs while retrying only known prior main ancestors during deployment propagation.')
           NODE
