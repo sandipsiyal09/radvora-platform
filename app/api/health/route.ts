@@ -5,7 +5,7 @@ export const dynamic='force-dynamic'
 
 const EXPECTED_RUNTIME_SCHEMA_VERSION='202609110050'
 const requiredRuntimeConfig=['NEXT_PUBLIC_SUPABASE_URL','NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY','SUPABASE_SERVICE_ROLE_KEY'] as const
-function responseHeaders(){return {'Cache-Control':'no-store, max-age=0','Pragma':'no-cache','Expires':'0','X-Content-Type-Options':'nosniff'}}
+function responseHeaders(){return {'Cache-Control':'no-store, max-age=0','Pragma':'no-cache','Expires':'0','X-Content-Type-Options':'nosniff','X-Robots-Tag':'noindex, nofollow, noarchive','Referrer-Policy':'no-referrer','Cross-Origin-Resource-Policy':'same-origin'}}
 function releaseMetadata(){
   const vercelEnvironment=(process.env.VERCEL_ENV||'').trim()
   const environment=(vercelEnvironment||process.env.NODE_ENV||'unknown').trim()
