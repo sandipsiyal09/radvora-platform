@@ -25,7 +25,7 @@ jobs:
           const required = [
             "const vercelEnvironment=(process.env.VERCEL_ENV||'').trim()",
             "const environment=(vercelEnvironment||process.env.NODE_ENV||'unknown').trim()",
-            "const commit=(environment==='production'?process.env.VERCEL_GIT_COMMIT_SHA:(process.env.VERCEL_GIT_COMMIT_SHA||process.env.GIT_COMMIT_SHA)||'').trim()",
+            "const commit=((environment==='production'?process.env.VERCEL_GIT_COMMIT_SHA:(process.env.VERCEL_GIT_COMMIT_SHA||process.env.GIT_COMMIT_SHA))||'').trim()",
             "function productionReleaseProvenanceReady(release:ReturnType<typeof releaseMetadata>)",
             "if(release.environment!=='production') return true",
             "const vercelCommit=(process.env.VERCEL_GIT_COMMIT_SHA||'').trim()",
@@ -45,13 +45,13 @@ jobs:
               process.exit(1)
             }
           }
-          const productionCommitAssignment = source.match(/const commit=\(environment==='production'\?([^:]+):/)
+          const productionCommitAssignment = source.match(/const commit=\(\(environment==='production'\?([^:]+):/)
           if (!productionCommitAssignment || !productionCommitAssignment[1].includes('process.env.VERCEL_GIT_COMMIT_SHA')) {
-            console.error('Production health must source its commit from Vercel deployment metadata.')
+            console.error('Production health must source its production commit from Vercel deployment metadata.')
             process.exit(1)
           }
-          if (productionCommitAssignment[1].includes('GIT_COMMIT_SHA') && !productionCommitAssignment[1].includes('VERCEL_GIT_COMMIT_SHA')) {
-            console.error('Production health must not accept a generic commit fallback for production provenance.')
+          if (productionCommitAssignment[1].includes('process.env.GIT_COMMIT_SHA')) {
+            console.error('Production branch of health release metadata must not accept a generic commit fallback.')
             process.exit(1)
           }
           console.log('Production health release provenance is bound to Vercel production metadata and cannot be satisfied by a generic commit fallback.')
