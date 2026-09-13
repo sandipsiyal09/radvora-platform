@@ -1,0 +1,49 @@
+name: RADVORA Commerce Health Boundary
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require fail-closed enabled catalog health
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const source = fs.readFileSync('app/api/health/route.ts', 'utf8')
+          const required = [
+            "select('id,status,price_inr,currency,commerce_enabled,hsn_code,gst_rate,price_inr_includes_gst,stock_on_hand,stock_reserved',{count:'exact'}).eq('commerce_enabled',true).limit(1000)",
+            'const commerceEnabledProductsCount=commerceEnabledProductCount||0',
+            'const enabledCatalog=commerceEnabledProducts||[]',
+            'const completeEnabledCatalog=commerceEnabledProductsCount===enabledCatalog.length&&enabledCatalog.every(product=>{',
+            "product.status==='active'",
+            "product.currency==='INR'",
+            'Number(product.price_inr)>0',
+            '/^\\d{4,8}$/.test(String(product.hsn_code))',
+            'Number(product.gst_rate)>=0&&Number(product.gst_rate)<=100',
+            'product.price_inr_includes_gst!==null',
+            'Number(product.stock_on_hand)-Number(product.stock_reserved||0)',
+            'availableStock!==null&&availableStock>0',
+            'commerceEnabledProductsCount===0||(sellerReady===true&&indiaPaymentsConfigured&&completeEnabledCatalog)',
+            "commerce_activation:'unsafe'",
+            "commerce_activation:commerceEnabledProductsCount===0?'disabled':'ready'",
+          ]
+          for (const snippet of required) {
+            if (!source.includes(snippet)) {
+              console.error(`Commerce health fail-closed control missing: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          console.log('Production health requires every commerce-enabled product to be active, INR-priced, HSN/GST-complete, and backed by positive governed available stock before reporting commerce ready.')
+          NODE
