@@ -130,6 +130,8 @@ jobs:
           const pragma = (rawHeaders.match(/^pragma:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase().trim()
           const expires = (rawHeaders.match(/^expires:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase().trim()
           const contentTypeOptions = (rawHeaders.match(/^x-content-type-options:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase().trim()
+          const frameOptions = (rawHeaders.match(/^x-frame-options:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase().trim()
+          const contentSecurityPolicy = (rawHeaders.match(/^content-security-policy:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase().trim()
           const contentType = (rawHeaders.match(/^content-type:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase()
           const contentMediaType = contentType.split(';', 1)[0].trim()
           const setCookiePresent = /^set-cookie:/im.test(rawHeaders)
@@ -151,6 +153,8 @@ jobs:
             pragmaNoCache: pragma === 'no-cache',
             expiresZero: expires === '0',
             contentTypeOptionsNoSniff: contentTypeOptions === 'nosniff',
+            frameOptionsDeny: frameOptions === 'deny',
+            contentSecurityPolicyIsolated: contentSecurityPolicy === "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
             contentTypeJson: contentMediaType === 'application/json',
             setCookieAbsent: !setCookiePresent,
             responseTimestampFresh,
@@ -189,6 +193,8 @@ jobs:
           if (!safeDiagnostic.pragmaNoCache) fail('Production health response must include Pragma: no-cache.')
           if (!safeDiagnostic.expiresZero) fail('Production health response must include Expires: 0.')
           if (!safeDiagnostic.contentTypeOptionsNoSniff) fail('Production health response must include X-Content-Type-Options: nosniff.')
+          if (!safeDiagnostic.frameOptionsDeny) fail('Production health response must include X-Frame-Options: DENY.')
+          if (!safeDiagnostic.contentSecurityPolicyIsolated) fail('Production health response must include the hardened browser-isolation Content-Security-Policy.')
           if (!safeDiagnostic.contentTypeJson) fail('Production health response Content-Type must be application/json.')
           if (!safeDiagnostic.setCookieAbsent) fail('Production health response must remain stateless and must not set cookies.')
           if (body.service !== 'radvora-platform') fail('Production health response service identity is invalid.')
