@@ -128,6 +128,7 @@ jobs:
 
           const cacheControl = (rawHeaders.match(/^cache-control:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase()
           const contentType = (rawHeaders.match(/^content-type:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase()
+          const contentMediaType = contentType.split(';', 1)[0].trim()
           const setCookiePresent = /^set-cookie:/im.test(rawHeaders)
           const timestampMs = Date.parse(String(body.timestamp || ''))
           const responseAgeMs = Date.now() - timestampMs
@@ -142,7 +143,7 @@ jobs:
             missingRuntimeConfig,
             checks: safeChecks,
             cacheControlNoStore: cacheControl.split(',').map(value => value.trim()).includes('no-store'),
-            contentTypeJson: contentType.startsWith('application/json'),
+            contentTypeJson: contentMediaType === 'application/json',
             setCookieAbsent: !setCookiePresent,
             responseTimestampFresh,
             diagnosticShapeValid
@@ -177,7 +178,7 @@ jobs:
 
           if (!diagnosticShapeValid) fail('Production health diagnostic shape contains unknown or invalid fields.')
           if (!safeDiagnostic.cacheControlNoStore) fail('Production health response is missing Cache-Control: no-store.')
-          if (!safeDiagnostic.contentTypeJson) fail('Production health response is not application/json.')
+          if (!safeDiagnostic.contentTypeJson) fail('Production health response Content-Type must be application/json.')
           if (!safeDiagnostic.setCookieAbsent) fail('Production health response must remain stateless and must not set cookies.')
           if (body.service !== 'radvora-platform') fail('Production health response service identity is invalid.')
           if (body.expectedRuntimeSchemaVersion !== requiredSchema) fail('Production health response schema contract is invalid.')
