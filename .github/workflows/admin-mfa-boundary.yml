@@ -50,6 +50,14 @@ jobs:
           if (!proxy.includes("role !== 'admin' && role !== 'founder'")) {
             throw new Error('Privileged proxy must retain admin/founder role enforcement.')
           }
+          for (const token of [
+            "if (!url || !publishableKey)",
+            "isPrivilegedAdminPath(request.nextUrl.pathname)",
+            "Privileged access is temporarily unavailable.",
+            "status: 503",
+          ]) {
+            if (!proxy.includes(token)) throw new Error(`Privileged auth configuration must fail closed: ${token}`)
+          }
 
           for (const token of ["role!=='admin'&&role!=='founder'", "currentLevel==='aal2'", "redirect(next)"]) {
             if (!page.includes(token)) throw new Error(`Missing MFA page server guard: ${token}`)
@@ -85,5 +93,5 @@ jobs:
             if (!rls.includes(policy)) throw new Error(`Privileged RLS migration does not cover policy ${policy}`)
           }
           if (!rls.includes("select '202609110050'::text")) throw new Error('Runtime schema marker was not advanced with the AAL2 RLS migration.')
-          console.log('Privileged admin AAL2/TOTP boundary is present in proxy, UI, API boundary and RLS migration.')
+          console.log('Privileged admin AAL2/TOTP boundary is present in proxy, UI, API boundary and RLS migration, including fail-closed auth configuration.')
           NODE
