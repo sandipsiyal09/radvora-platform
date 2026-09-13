@@ -27,6 +27,9 @@ jobs:
             "'Pragma':'no-cache'",
             "'Expires':'0'",
             "'X-Content-Type-Options':'nosniff'",
+            "'X-Robots-Tag':'noindex, nofollow, noarchive'",
+            "'Referrer-Policy':'no-referrer'",
+            "'Cross-Origin-Resource-Policy':'same-origin'",
             'headers:responseHeaders()'
           ]
           for (const snippet of required) {
@@ -44,5 +47,5 @@ jobs:
             console.error('Health route contains a cacheable Cache-Control variant.')
             process.exit(1)
           }
-          console.log('Health responses are explicitly non-cacheable and protected against MIME sniffing across success and fail-closed branches.')
+          console.log('Health responses are non-cacheable, non-indexable, referrer-safe, same-origin constrained, and protected against MIME sniffing across success and fail-closed branches.')
           NODE
