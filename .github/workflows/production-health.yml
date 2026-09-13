@@ -22,6 +22,11 @@ jobs:
       CONFIGURED_HEALTH_URL: ${{ vars.PRODUCTION_HEALTH_URL }}
       EXPECTED_PRODUCTION_COMMIT: ${{ github.sha }}
     steps:
+      - name: Checkout production history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Verify production health contract
         shell: bash
         run: |
@@ -66,6 +71,7 @@ jobs:
 
             set +e
             HEALTH_RESPONSE="$(cat "$response_file")" HEALTH_RESPONSE_HEADERS="$(cat "$headers_file")" HEALTH_HTTP_STATUS="$http_status" node - <<'NODE'
+          const { execFileSync } = require('child_process')
           const raw = process.env.HEALTH_RESPONSE || ''
           const rawHeaders = process.env.HEALTH_RESPONSE_HEADERS || ''
           const httpStatus = String(process.env.HEALTH_HTTP_STATUS || '000')
@@ -107,13 +113,24 @@ jobs:
 
           if (!/^[0-9a-f]{40}$/i.test(expectedCommit)) fail('Expected production commit metadata is invalid.')
 
-          // Deployment propagation is evaluated before version-specific response-contract checks.
-          // An older valid RADVORA build is retryable; only the exact expected commit can pass.
+          // Only a known ancestor of the expected main commit is valid deployment propagation lag.
+          // A divergent, future, or unknown SHA must fail closed instead of consuming the retry window.
           const reportedCommit = String(body.release?.commit || '').trim()
           const validReportedCommit = /^[0-9a-f]{40}$/i.test(reportedCommit)
           const deploymentLag = validReportedCommit && reportedCommit !== expectedCommit
           if (deploymentLag) {
-            fail(`Production commit ${reportedCommit} does not match workflow commit ${expectedCommit}.`, true)
+            let reportedCommitKnown = false
+            let reportedCommitIsAncestor = false
+            try {
+              execFileSync('git', ['cat-file', '-e', `${reportedCommit}^{commit}`], { stdio: 'ignore' })
+              reportedCommitKnown = true
+              execFileSync('git', ['merge-base', '--is-ancestor', reportedCommit, expectedCommit], { stdio: 'ignore' })
+              reportedCommitIsAncestor = true
+            } catch {}
+            if (!reportedCommitKnown || !reportedCommitIsAncestor) {
+              fail(`Production reported commit ${reportedCommit} is not a known ancestor of expected main commit ${expectedCommit}.`)
+            }
+            fail(`Production commit ${reportedCommit} is a known prior main commit and has not yet reached workflow commit ${expectedCommit}.`, true)
           }
 
           if (!safeDiagnostic.cacheControlNoStore) fail('Production health response is missing Cache-Control: no-store.')
