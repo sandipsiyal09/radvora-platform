@@ -1,0 +1,39 @@
+name: RADVORA Auth Callback Canonical Origin
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  guard-auth-callback-canonical-origin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify strict production callback origin
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          route = Path('app/auth/callback/route.ts').read_text()
+          required = [
+              'function isProductionRuntime()',
+              'function isSafeProductionOrigin(url: URL)',
+              "url.protocol === 'https:'",
+              '!url.username',
+              '!url.password',
+              "hostname !== 'localhost'",
+              "!hostname.endsWith('.')",
+              "hostname.includes('.')",
+              '!url.search',
+              '!url.hash',
+              "url.port === '' || url.port === '443'",
+              'if (isProductionRuntime()) return isSafeProductionOrigin(url) ? url.origin : null',
+              'if (isProductionRuntime()) return null',
+          ]
+          missing = [value for value in required if value not in route]
+          if missing:
+              raise SystemExit(f'auth callback canonical-origin controls regressed: {missing}')
+          print('Strict production auth callback canonical origin is guarded.')
+          PY
