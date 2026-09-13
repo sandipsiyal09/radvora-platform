@@ -1,0 +1,132 @@
+name: RADVORA India Payment Runtime Boundary
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  guard-india-payment-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enforce Razorpay-only India commerce runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const path = require('path')
+
+          const roots = [
+            'app',
+            'lib',
+            'components',
+            'middleware.ts',
+            'middleware.js',
+            'next.config.ts',
+            'next.config.js',
+            'package.json',
+            'package-lock.json',
+            '.env.example',
+            'vercel.json'
+          ]
+
+          const files = []
+          const walk = value => {
+            if (!fs.existsSync(value)) return
+            const stat = fs.statSync(value)
+            if (stat.isDirectory()) {
+              for (const entry of fs.readdirSync(value)) walk(path.join(value, entry))
+              return
+            }
+            if (stat.isFile()) files.push(value)
+          }
+          roots.forEach(walk)
+
+          const forbidden = [
+            /\bstripe\b/i,
+            /STRIPE_[A-Z0-9_]+/,
+            /@stripe\//i,
+            /stripe\.com/i
+          ]
+          const violations = []
+          for (const file of files) {
+            const text = fs.readFileSync(file, 'utf8')
+            for (const pattern of forbidden) {
+              if (pattern.test(text)) violations.push(`${file}: ${pattern}`)
+            }
+          }
+          if (violations.length) {
+            console.error('Prohibited non-Razorpay payment runtime/configuration detected:')
+            for (const violation of violations) console.error(`- ${violation}`)
+            process.exit(1)
+          }
+
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
+          const allDeps = {...(pkg.dependencies || {}), ...(pkg.devDependencies || {})}
+          for (const name of Object.keys(allDeps)) {
+            if (/stripe/i.test(name)) {
+              console.error(`Prohibited payment dependency detected: ${name}`)
+              process.exit(1)
+            }
+          }
+
+          const envExample = fs.readFileSync('.env.example', 'utf8')
+          const requiredEnv = ['RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET', 'RAZORPAY_WEBHOOK_SECRET']
+          for (const key of requiredEnv) {
+            if (!new RegExp(`^${key}=`, 'm').test(envExample)) {
+              console.error(`India payment configuration contract is missing ${key}.`)
+              process.exit(1)
+            }
+          }
+          const forbiddenPublicSecrets = ['NEXT_PUBLIC_RAZORPAY_KEY_SECRET', 'NEXT_PUBLIC_RAZORPAY_WEBHOOK_SECRET']
+          for (const key of forbiddenPublicSecrets) {
+            if (new RegExp(`^${key}=`, 'm').test(envExample)) {
+              console.error(`${key} must never be exposed as a public environment variable.`)
+              process.exit(1)
+            }
+          }
+
+          const healthPath = 'app/api/health/route.ts'
+          const webhookPath = 'app/api/webhooks/razorpay/route.ts'
+          if (!fs.existsSync(healthPath) || !fs.existsSync(webhookPath)) {
+            console.error('Required Razorpay health/webhook runtime routes are missing.')
+            process.exit(1)
+          }
+          const health = fs.readFileSync(healthPath, 'utf8')
+          const webhook = fs.readFileSync(webhookPath, 'utf8')
+          const healthRequired = [
+            "startsWith('rzp_live_')",
+            'RAZORPAY_KEY_SECRET',
+            'RAZORPAY_WEBHOOK_SECRET',
+            "india_payments:indiaPaymentsConfigured?'live_configured'"
+          ]
+          for (const marker of healthRequired) {
+            if (!health.includes(marker)) {
+              console.error(`Production health no longer enforces Razorpay Live Mode marker: ${marker}`)
+              process.exit(1)
+            }
+          }
+          const webhookRequired = [
+            "request.headers.get('x-razorpay-signature')",
+            "request.headers.get('x-razorpay-event-id')",
+            "createHmac('sha256',secret)",
+            "provider:'razorpay'",
+            "eventType==='payment_link.paid'",
+            "eventType==='refund.processed'||eventType==='refund.failed'"
+          ]
+          for (const marker of webhookRequired) {
+            if (!webhook.includes(marker)) {
+              console.error(`Razorpay provider-authoritative reconciliation marker is missing: ${marker}`)
+              process.exit(1)
+            }
+          }
+
+          console.log('India payment runtime remains Razorpay-only, server-secret scoped, Live-Mode gated, and provider-authoritative.')
+          NODE
