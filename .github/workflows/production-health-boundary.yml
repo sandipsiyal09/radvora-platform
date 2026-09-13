@@ -72,6 +72,9 @@ jobs:
             '--dump-header "$headers_file"',
             "const cacheControl = (rawHeaders.match(/^cache-control:",
             "includes('no-store')",
+            "const setCookiePresent = /^set-cookie:/im.test(rawHeaders)",
+            'setCookieAbsent: !setCookiePresent',
+            "fail('Production health response must remain stateless and must not set cookies.')",
             "const responseAgeMs = Date.now() - timestampMs",
             "responseAgeMs >= -60 * 1000 && responseAgeMs <= 5 * 60 * 1000",
             "fail('Production health response is missing Cache-Control: no-store.')",
@@ -87,5 +90,5 @@ jobs:
             console.error('Production health monitor must not fall back to a hard-coded deployment URL.')
             process.exit(1)
           }
-          console.log('Production health runtime and monitor fail closed for malformed origins, unsafe commerce activation, missing monitor configuration, untrusted endpoints, stale/future responses, and cacheable responses.')
+          console.log('Production health runtime and monitor fail closed for malformed origins, unsafe commerce activation, missing monitor configuration, untrusted endpoints, stale/future responses, cacheable responses, and stateful cookie-setting responses.')
           NODE
