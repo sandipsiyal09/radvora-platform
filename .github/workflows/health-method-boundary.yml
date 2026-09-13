@@ -1,0 +1,48 @@
+name: RADVORA Health Method Boundary
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  guard-health-method-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify unsupported health methods fail closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const path = 'app/api/health/route.ts'
+          const source = fs.readFileSync(path, 'utf8')
+          const required = [
+            "status:'method_not_allowed'",
+            'status:405',
+            "Allow:'GET, HEAD'",
+            "headers:{...responseHeaders(),Allow:'GET, HEAD'}",
+            'export const POST=methodNotAllowed',
+            'export const PUT=methodNotAllowed',
+            'export const PATCH=methodNotAllowed',
+            'export const DELETE=methodNotAllowed',
+            'export const OPTIONS=methodNotAllowed',
+          ]
+          for (const snippet of required) {
+            if (!source.includes(snippet)) {
+              console.error(`Health method boundary is missing: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          if (/Allow\s*:\s*['\"](?:[^'\"]*,\s*)?(POST|PUT|PATCH|DELETE|OPTIONS)/i.test(source)) {
+            console.error('Health endpoint must not advertise a state-changing method.')
+            process.exit(1)
+          }
+          console.log('Health endpoint unsupported methods fail closed with hardened response headers.')
+          NODE
