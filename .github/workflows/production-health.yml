@@ -28,18 +28,41 @@ jobs:
           set -euo pipefail
           health_url="${CONFIGURED_HEALTH_URL:-https://radvora-platform.vercel.app/api/health}"
           response_file="$(mktemp)"
-          trap 'rm -f "$response_file"' EXIT
+          headers_file="$(mktemp)"
+          trap 'rm -f "$response_file" "$headers_file"' EXIT
+
+          HEALTH_URL="$health_url" node - <<'NODE'
+          const raw = String(process.env.HEALTH_URL || '').trim()
+          try {
+            const url = new URL(raw)
+            const hostname = url.hostname.toLowerCase()
+            const isIpLiteral = /^(?:\d{1,3}\.){3}\d{1,3}$/.test(hostname) || hostname.includes(':')
+            const valid = url.protocol === 'https:' &&
+              !url.username && !url.password &&
+              hostname !== 'localhost' && !isIpLiteral &&
+              !hostname.endsWith('.') && hostname.includes('.') &&
+              url.pathname === '/api/health' && !url.search && !url.hash &&
+              (url.port === '' || url.port === '443')
+            if (!valid) throw new Error('unsafe production health URL')
+          } catch {
+            console.error('PRODUCTION_HEALTH_URL must be a clean HTTPS /api/health endpoint on a DNS hostname, without credentials, query, fragment, IP literal, localhost, trailing-dot host, or non-standard port.')
+            process.exit(1)
+          }
+          NODE
 
           for attempt in $(seq 1 18); do
+            : > "$headers_file"
             http_status="$(curl --silent --show-error --max-time 20 \
               --header 'Accept: application/json' \
+              --dump-header "$headers_file" \
               --output "$response_file" \
               --write-out '%{http_code}' \
               "$health_url" || true)"
 
             set +e
-            HEALTH_RESPONSE="$(cat "$response_file")" HEALTH_HTTP_STATUS="$http_status" node - <<'NODE'
+            HEALTH_RESPONSE="$(cat "$response_file")" HEALTH_RESPONSE_HEADERS="$(cat "$headers_file")" HEALTH_HTTP_STATUS="$http_status" node - <<'NODE'
           const raw = process.env.HEALTH_RESPONSE || ''
+          const rawHeaders = process.env.HEALTH_RESPONSE_HEADERS || ''
           const httpStatus = String(process.env.HEALTH_HTTP_STATUS || '000')
           const requiredSchema = '202609110050'
           const expectedCommit = String(process.env.EXPECTED_PRODUCTION_COMMIT || '').trim()
@@ -51,6 +74,7 @@ jobs:
             process.exit(2)
           }
 
+          const cacheControl = (rawHeaders.match(/^cache-control:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase()
           const safeDiagnostic = {
             httpStatus,
             status: body.status || 'missing',
@@ -58,7 +82,8 @@ jobs:
             expectedRuntimeSchemaVersion: body.expectedRuntimeSchemaVersion || 'missing',
             release: body.release || {},
             missingRuntimeConfig: Array.isArray(body.missingRuntimeConfig) ? body.missingRuntimeConfig : [],
-            checks: body.checks || {}
+            checks: body.checks || {},
+            cacheControlNoStore: cacheControl.split(',').map(value => value.trim()).includes('no-store')
           }
 
           const fail = (message, retryable = false) => {
@@ -68,6 +93,7 @@ jobs:
           }
 
           if (!/^[0-9a-f]{40}$/i.test(expectedCommit)) fail('Expected production commit metadata is invalid.')
+          if (!safeDiagnostic.cacheControlNoStore) fail('Production health response is missing Cache-Control: no-store.')
 
           const reportedCommit = String(body.release?.commit || '').trim()
           const validReportedCommit = /^[0-9a-f]{40}$/i.test(reportedCommit)

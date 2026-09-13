@@ -57,5 +57,25 @@ jobs:
             console.error('Production health must expose only the canonical URL readiness state, never the configured URL value.')
             process.exit(1)
           }
-          console.log('Production health fails closed for malformed canonical origins, unknown production provenance, and unsafe commerce activation.')
+
+          const monitor = fs.readFileSync('.github/workflows/production-health.yml', 'utf8')
+          const monitorRequired = [
+            'HEALTH_URL="$health_url" node',
+            "url.protocol === 'https:'",
+            "url.pathname === '/api/health'",
+            "hostname !== 'localhost' && !isIpLiteral",
+            "!hostname.endsWith('.') && hostname.includes('.')",
+            "(url.port === '' || url.port === '443')",
+            '--dump-header "$headers_file"',
+            "const cacheControl = (rawHeaders.match(/^cache-control:",
+            "includes('no-store')",
+            "fail('Production health response is missing Cache-Control: no-store.')",
+          ]
+          for (const snippet of monitorRequired) {
+            if (!monitor.includes(snippet)) {
+              console.error(`Production health monitor contract missing: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          console.log('Production health runtime and monitor fail closed for malformed origins, unsafe commerce activation, untrusted monitor endpoints, and cacheable responses.')
           NODE
