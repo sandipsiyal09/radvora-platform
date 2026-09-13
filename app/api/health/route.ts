@@ -7,10 +7,17 @@ const EXPECTED_RUNTIME_SCHEMA_VERSION='202609110050'
 const requiredRuntimeConfig=['NEXT_PUBLIC_SUPABASE_URL','NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY','SUPABASE_SERVICE_ROLE_KEY'] as const
 function responseHeaders(){return {'Cache-Control':'no-store, max-age=0','Pragma':'no-cache','Expires':'0','X-Content-Type-Options':'nosniff'}}
 function releaseMetadata(){
-  const commit=(process.env.VERCEL_GIT_COMMIT_SHA||process.env.GIT_COMMIT_SHA||'').trim()
+  const vercelEnvironment=(process.env.VERCEL_ENV||'').trim()
+  const environment=(vercelEnvironment||process.env.NODE_ENV||'unknown').trim()
+  const commit=(environment==='production'?process.env.VERCEL_GIT_COMMIT_SHA:(process.env.VERCEL_GIT_COMMIT_SHA||process.env.GIT_COMMIT_SHA)||'').trim()
   const ref=(process.env.VERCEL_GIT_COMMIT_REF||'').trim()
-  const environment=(process.env.VERCEL_ENV||process.env.NODE_ENV||'unknown').trim()
   return {commit:commit||'unknown',ref:ref||'unknown',environment}
+}
+function productionReleaseProvenanceReady(release:ReturnType<typeof releaseMetadata>){
+  if(release.environment!=='production') return true
+  const vercelCommit=(process.env.VERCEL_GIT_COMMIT_SHA||'').trim()
+  const vercelRef=(process.env.VERCEL_GIT_COMMIT_REF||'').trim()
+  return process.env.VERCEL_ENV==='production'&&/^[0-9a-f]{40}$/i.test(vercelCommit)&&vercelRef==='main'&&release.commit===vercelCommit&&release.ref===vercelRef
 }
 function canonicalProductionUrlReady(value:string|undefined,requestUrl:string){
   try{
@@ -31,7 +38,7 @@ export async function GET(request:Request){
   const timestamp=new Date().toISOString()
   const release=releaseMetadata()
   const canonicalUrlReady=canonicalProductionUrlReady(process.env.NEXT_PUBLIC_APP_URL,request.url)
-  const releaseProvenanceReady=release.environment!=='production'||(/^[0-9a-f]{40}$/i.test(release.commit)&&release.ref==='main')
+  const releaseProvenanceReady=productionReleaseProvenanceReady(release)
   const missingRuntimeConfig=[
     ...requiredRuntimeConfig.filter(key=>!process.env[key]?.trim()),
     ...(release.environment==='production'&&!canonicalUrlReady?['NEXT_PUBLIC_APP_URL'] as const:[]),
