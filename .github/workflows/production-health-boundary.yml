@@ -38,7 +38,15 @@ jobs:
             "release.environment==='production'&&!canonicalUrlReady",
             "'NEXT_PUBLIC_APP_URL'",
             'const configurationReady=missingRuntimeConfig.length===0',
-            "const releaseProvenanceReady=release.environment!=='production'||(/^[0-9a-f]{40}$/i.test(release.commit)&&release.ref==='main')",
+            'function productionReleaseProvenanceReady(release:ReturnType<typeof releaseMetadata>)',
+            "if(release.environment!=='production') return true",
+            "const vercelCommit=(process.env.VERCEL_GIT_COMMIT_SHA||'').trim()",
+            "const vercelRef=(process.env.VERCEL_GIT_COMMIT_REF||'').trim()",
+            "process.env.VERCEL_ENV==='production'",
+            "/^[0-9a-f]{40}$/i.test(vercelCommit)",
+            "vercelRef==='main'",
+            'release.commit===vercelCommit&&release.ref===vercelRef',
+            'const releaseProvenanceReady=productionReleaseProvenanceReady(release)',
             'if(!releaseProvenanceReady)',
             "release_provenance:'unavailable'",
             "release_provenance:'verified'",
@@ -67,6 +75,15 @@ jobs:
           }
           if (!source.includes("canonical_url:canonicalUrlReady?'configured':'not_configured'")) {
             console.error('Production health must expose only the canonical URL readiness state, never the configured URL value.')
+            process.exit(1)
+          }
+          const productionCommitAssignment = source.match(/const commit=\(\(environment==='production'\?([^:]+):/)
+          if (!productionCommitAssignment || !productionCommitAssignment[1].includes('process.env.VERCEL_GIT_COMMIT_SHA')) {
+            console.error('Production health release metadata must source its production commit from Vercel deployment metadata.')
+            process.exit(1)
+          }
+          if (productionCommitAssignment[1].includes('GIT_COMMIT_SHA') && !productionCommitAssignment[1].includes('VERCEL_GIT_COMMIT_SHA')) {
+            console.error('Production health must not accept a generic production commit fallback.')
             process.exit(1)
           }
 
@@ -166,5 +183,5 @@ jobs:
             console.error('Production health must verify a lagging commit ancestry before exact-version diagnostics, then reject unknown diagnostic shapes before enforcing the remaining response contract.')
             process.exit(1)
           }
-          console.log('Production health runtime and monitor fail closed for malformed origins, non-canonical request origins, unsafe or incomplete commerce activation, missing monitor configuration, untrusted endpoints, stale/future responses, incomplete anti-cache or MIME-sniffing headers, malformed JSON media types, stateful cookie-setting responses, divergent/unknown release SHAs, and unknown/unbounded diagnostic shapes while retrying only known prior main ancestors during deployment propagation.')
+          console.log('Production health runtime and monitor fail closed for malformed origins, non-canonical request origins, non-provider-authoritative production release metadata, unsafe or incomplete commerce activation, missing monitor configuration, untrusted endpoints, stale/future responses, incomplete anti-cache or MIME-sniffing headers, malformed JSON media types, stateful cookie-setting responses, divergent/unknown release SHAs, and unknown/unbounded diagnostic shapes while retrying only known prior main ancestors during deployment propagation.')
           NODE
