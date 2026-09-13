@@ -9,7 +9,7 @@ function responseHeaders(){return {'Cache-Control':'no-store, max-age=0','Pragma
 function releaseMetadata(){
   const vercelEnvironment=(process.env.VERCEL_ENV||'').trim()
   const environment=(vercelEnvironment||process.env.NODE_ENV||'unknown').trim()
-  const commit=(environment==='production'?process.env.VERCEL_GIT_COMMIT_SHA:(process.env.VERCEL_GIT_COMMIT_SHA||process.env.GIT_COMMIT_SHA)||'').trim()
+  const commit=((environment==='production'?process.env.VERCEL_GIT_COMMIT_SHA:(process.env.VERCEL_GIT_COMMIT_SHA||process.env.GIT_COMMIT_SHA))||'').trim()
   const ref=(process.env.VERCEL_GIT_COMMIT_REF||'').trim()
   return {commit:commit||'unknown',ref:ref||'unknown',environment}
 }
