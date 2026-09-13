@@ -1,0 +1,48 @@
+name: RADVORA Health Response Headers Boundary
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require hardened health response headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const source = fs.readFileSync('app/api/health/route.ts', 'utf8')
+          const required = [
+            "'Cache-Control':'no-store, max-age=0'",
+            "'Pragma':'no-cache'",
+            "'Expires':'0'",
+            "'X-Content-Type-Options':'nosniff'",
+            'headers:responseHeaders()'
+          ]
+          for (const snippet of required) {
+            if (!source.includes(snippet)) {
+              console.error(`Health response header control missing: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          const responseCount = (source.match(/headers:responseHeaders\(\)/g) || []).length
+          if (responseCount < 4) {
+            console.error(`Expected hardened headers on every health response branch; found only ${responseCount}.`)
+            process.exit(1)
+          }
+          if (/['\"]Cache-Control['\"]\s*:\s*['\"](?!no-store)/.test(source)) {
+            console.error('Health route contains a cacheable Cache-Control variant.')
+            process.exit(1)
+          }
+          console.log('Health responses are explicitly non-cacheable and protected against MIME sniffing across success and fail-closed branches.')
+          NODE

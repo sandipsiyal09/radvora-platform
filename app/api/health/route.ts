@@ -5,7 +5,7 @@ export const dynamic='force-dynamic'
 
 const EXPECTED_RUNTIME_SCHEMA_VERSION='202609110050'
 const requiredRuntimeConfig=['NEXT_PUBLIC_SUPABASE_URL','NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY','SUPABASE_SERVICE_ROLE_KEY'] as const
-function responseHeaders(){return {'Cache-Control':'no-store'}}
+function responseHeaders(){return {'Cache-Control':'no-store, max-age=0','Pragma':'no-cache','Expires':'0','X-Content-Type-Options':'nosniff'}}
 function releaseMetadata(){
   const commit=(process.env.VERCEL_GIT_COMMIT_SHA||process.env.GIT_COMMIT_SHA||'').trim()
   const ref=(process.env.VERCEL_GIT_COMMIT_REF||'').trim()
