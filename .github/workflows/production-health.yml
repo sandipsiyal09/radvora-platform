@@ -85,24 +85,67 @@ jobs:
             process.exit(2)
           }
 
+          const knownRuntimeConfigNames = new Set([
+            'NEXT_PUBLIC_SUPABASE_URL',
+            'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
+            'SUPABASE_SERVICE_ROLE_KEY',
+            'NEXT_PUBLIC_APP_URL'
+          ])
+          const rawMissingRuntimeConfig = Array.isArray(body.missingRuntimeConfig) ? body.missingRuntimeConfig : []
+          const missingRuntimeConfig = rawMissingRuntimeConfig.filter(value => typeof value === 'string' && knownRuntimeConfigNames.has(value))
+          const missingRuntimeConfigShapeValid = rawMissingRuntimeConfig.length === missingRuntimeConfig.length
+
+          const rawRelease = body.release && typeof body.release === 'object' && !Array.isArray(body.release) ? body.release : {}
+          const rawChecks = body.checks && typeof body.checks === 'object' && !Array.isArray(body.checks) ? body.checks : {}
+          const allowedCheckValues = {
+            configuration: new Set(['ok', 'unavailable']),
+            release_provenance: new Set(['verified', 'unavailable']),
+            database: new Set(['ok', 'not_checked', 'unavailable_or_schema_mismatch']),
+            commerce_schema: new Set(['ok', 'not_checked', 'unavailable_or_outdated']),
+            commerce_activation: new Set(['disabled', 'ready', 'unsafe', 'not_checked']),
+            payment_session_schema: new Set(['ok', 'not_checked', 'unavailable_or_outdated']),
+            seller_profile: new Set(['configured', 'not_configured', 'not_checked', 'unavailable_or_outdated']),
+            runtime_schema_version: new Set(['ok', 'not_checked', 'mismatch_or_unavailable']),
+            canonical_url: new Set(['configured', 'not_configured']),
+            india_payments: new Set(['live_configured', 'test_or_invalid_key', 'not_configured'])
+          }
+          const knownCheckKeys = new Set(Object.keys(allowedCheckValues))
+          const safeCheck = key => {
+            const value = rawChecks[key]
+            return typeof value === 'string' && allowedCheckValues[key].has(value) ? value : 'unexpected_or_missing'
+          }
+          const safeChecks = Object.fromEntries(Object.keys(allowedCheckValues).map(key => [key, safeCheck(key)]))
+          const checksShapeValid = Object.keys(rawChecks).every(key => knownCheckKeys.has(key)) &&
+            Object.values(safeChecks).every(value => value !== 'unexpected_or_missing')
+
+          const rawReportedCommit = typeof rawRelease.commit === 'string' ? rawRelease.commit.trim() : ''
+          const validReportedCommit = /^[0-9a-f]{40}$/i.test(rawReportedCommit)
+          const safeRelease = {
+            commit: validReportedCommit ? rawReportedCommit : 'invalid_or_missing',
+            ref: rawRelease.ref === 'main' ? 'main' : 'unexpected_or_missing',
+            environment: rawRelease.environment === 'production' ? 'production' : 'unexpected_or_missing'
+          }
+
           const cacheControl = (rawHeaders.match(/^cache-control:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase()
           const contentType = (rawHeaders.match(/^content-type:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase()
           const setCookiePresent = /^set-cookie:/im.test(rawHeaders)
           const timestampMs = Date.parse(String(body.timestamp || ''))
           const responseAgeMs = Date.now() - timestampMs
           const responseTimestampFresh = Number.isFinite(timestampMs) && responseAgeMs >= -60 * 1000 && responseAgeMs <= 5 * 60 * 1000
+          const diagnosticShapeValid = missingRuntimeConfigShapeValid && checksShapeValid
           const safeDiagnostic = {
             httpStatus,
-            status: body.status || 'missing',
-            runtimeSchemaVersion: body.runtimeSchemaVersion || 'missing',
-            expectedRuntimeSchemaVersion: body.expectedRuntimeSchemaVersion || 'missing',
-            release: body.release || {},
-            missingRuntimeConfig: Array.isArray(body.missingRuntimeConfig) ? body.missingRuntimeConfig : [],
-            checks: body.checks || {},
+            status: body.status === 'ok' || body.status === 'degraded' ? body.status : 'unexpected_or_missing',
+            runtimeSchemaVersion: body.runtimeSchemaVersion === requiredSchema ? requiredSchema : 'missing_or_unexpected',
+            expectedRuntimeSchemaVersion: body.expectedRuntimeSchemaVersion === requiredSchema ? requiredSchema : 'missing_or_unexpected',
+            release: safeRelease,
+            missingRuntimeConfig,
+            checks: safeChecks,
             cacheControlNoStore: cacheControl.split(',').map(value => value.trim()).includes('no-store'),
             contentTypeJson: contentType.startsWith('application/json'),
             setCookieAbsent: !setCookiePresent,
-            responseTimestampFresh
+            responseTimestampFresh,
+            diagnosticShapeValid
           }
 
           const fail = (message, retryable = false) => {
@@ -115,8 +158,7 @@ jobs:
 
           // Only a known ancestor of the expected main commit is valid deployment propagation lag.
           // A divergent, future, or unknown SHA must fail closed instead of consuming the retry window.
-          const reportedCommit = String(body.release?.commit || '').trim()
-          const validReportedCommit = /^[0-9a-f]{40}$/i.test(reportedCommit)
+          const reportedCommit = rawReportedCommit
           const deploymentLag = validReportedCommit && reportedCommit !== expectedCommit
           if (deploymentLag) {
             let reportedCommitKnown = false
@@ -128,11 +170,12 @@ jobs:
               reportedCommitIsAncestor = true
             } catch {}
             if (!reportedCommitKnown || !reportedCommitIsAncestor) {
-              fail(`Production reported commit ${reportedCommit} is not a known ancestor of expected main commit ${expectedCommit}.`)
+              fail(`Production reported commit ${safeRelease.commit} is not a known ancestor of expected main commit ${expectedCommit}.`)
             }
-            fail(`Production commit ${reportedCommit} is a known prior main commit and has not yet reached workflow commit ${expectedCommit}.`, true)
+            fail(`Production commit ${safeRelease.commit} is a known prior main commit and has not yet reached workflow commit ${expectedCommit}.`, true)
           }
 
+          if (!diagnosticShapeValid) fail('Production health diagnostic shape contains unknown or invalid fields.')
           if (!safeDiagnostic.cacheControlNoStore) fail('Production health response is missing Cache-Control: no-store.')
           if (!safeDiagnostic.contentTypeJson) fail('Production health response is not application/json.')
           if (!safeDiagnostic.setCookieAbsent) fail('Production health response must remain stateless and must not set cookies.')
@@ -143,35 +186,35 @@ jobs:
           if (safeDiagnostic.missingRuntimeConfig.length > 0) {
             fail(`Production runtime configuration is incomplete: ${safeDiagnostic.missingRuntimeConfig.join(', ')}.`)
           }
-          if (body.checks?.canonical_url === 'not_configured') fail('Canonical production URL is not configured.')
+          if (safeChecks.canonical_url === 'not_configured') fail('Canonical production URL is not configured.')
 
           if (httpStatus !== '200') {
             const transientStatus = httpStatus === '000' || /^5\d\d$/.test(httpStatus)
             fail(`Production health returned HTTP ${httpStatus}.`, transientStatus)
           }
-          if (body.status !== 'ok') fail(`Production health status is ${body.status || 'missing'}.`)
+          if (body.status !== 'ok') fail(`Production health status is ${safeDiagnostic.status}.`)
           if (body.runtimeSchemaVersion !== requiredSchema) {
-            fail(`Runtime schema ${body.runtimeSchemaVersion || 'missing'} does not match ${requiredSchema}.`)
+            fail(`Runtime schema ${safeDiagnostic.runtimeSchemaVersion} does not match ${requiredSchema}.`)
           }
-          if (body.checks?.database !== 'ok' || body.checks?.commerce_schema !== 'ok' || body.checks?.payment_session_schema !== 'ok') {
+          if (safeChecks.database !== 'ok' || safeChecks.commerce_schema !== 'ok' || safeChecks.payment_session_schema !== 'ok') {
             fail('Production database/schema health checks are not green.')
           }
-          if (!['disabled','ready'].includes(body.checks?.commerce_activation)) {
-            fail(`Commerce activation safety is ${body.checks?.commerce_activation || 'missing'}.`)
+          if (!['disabled','ready'].includes(safeChecks.commerce_activation)) {
+            fail(`Commerce activation safety is ${safeChecks.commerce_activation}.`)
           }
-          if (body.checks?.canonical_url !== 'configured') fail('Canonical production URL is not configured.')
-          if (body.release?.environment !== 'production') {
-            fail(`Health endpoint is not reporting production environment: ${body.release?.environment || 'missing'}.`)
+          if (safeChecks.canonical_url !== 'configured') fail('Canonical production URL is not configured.')
+          if (rawRelease.environment !== 'production') {
+            fail(`Health endpoint is not reporting production environment: ${safeRelease.environment}.`)
           }
-          if (body.release?.ref !== 'main') {
-            fail(`Production health endpoint is not reporting the main branch: ${body.release?.ref || 'missing'}.`)
+          if (rawRelease.ref !== 'main') {
+            fail(`Production health endpoint is not reporting the main branch: ${safeRelease.ref}.`)
           }
           if (!validReportedCommit) fail('Production release commit metadata is unavailable or invalid.')
           if (reportedCommit !== expectedCommit) {
-            fail(`Production commit ${reportedCommit} does not match workflow commit ${expectedCommit}.`, true)
+            fail(`Production commit ${safeRelease.commit} does not match workflow commit ${expectedCommit}.`, true)
           }
           console.log(`RADVORA production healthy at exact commit ${reportedCommit}, schema ${body.runtimeSchemaVersion}.`)
-          console.log(`Commerce activation safety=${body.checks?.commerce_activation}; seller=${body.checks?.seller_profile}, payments=${body.checks?.india_payments}.`)
+          console.log(`Commerce activation safety=${safeChecks.commerce_activation}; seller=${safeChecks.seller_profile}, payments=${safeChecks.india_payments}.`)
           NODE
             verdict=$?
             set -e
