@@ -1,0 +1,53 @@
+name: RADVORA Production Health Runtime Headers Boundary
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require production monitor to verify hardened response headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const monitor = fs.readFileSync('.github/workflows/production-health.yml', 'utf8')
+          const required = [
+            "const pragma = (rawHeaders.match(/^pragma:",
+            "const expires = (rawHeaders.match(/^expires:",
+            "const contentTypeOptions = (rawHeaders.match(/^x-content-type-options:",
+            "const cacheDirectives = cacheControl.split(',')",
+            "cacheControlNoStore: cacheDirectives.includes('no-store')",
+            "cacheControlMaxAgeZero: cacheDirectives.includes('max-age=0')",
+            "pragmaNoCache: pragma === 'no-cache'",
+            "expiresZero: expires === '0'",
+            "contentTypeOptionsNoSniff: contentTypeOptions === 'nosniff'",
+            "Production health response must include Cache-Control: no-store, max-age=0.",
+            "Production health response must include Pragma: no-cache.",
+            "Production health response must include Expires: 0.",
+            "Production health response must include X-Content-Type-Options: nosniff."
+          ]
+          for (const snippet of required) {
+            if (!monitor.includes(snippet)) {
+              console.error(`Production health runtime-header verification missing: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          const responseContractIndex = monitor.indexOf("if (!safeDiagnostic.cacheControlNoStore || !safeDiagnostic.cacheControlMaxAgeZero)")
+          const contentTypeIndex = monitor.indexOf("if (!safeDiagnostic.contentTypeJson)")
+          if (responseContractIndex < 0 || contentTypeIndex < 0 || responseContractIndex >= contentTypeIndex) {
+            console.error('Production health must enforce anti-cache and nosniff headers before accepting the JSON response contract.')
+            process.exit(1)
+          }
+          console.log('Production health certification verifies the deployed anti-cache and MIME-sniffing header contract at runtime.')
+          NODE

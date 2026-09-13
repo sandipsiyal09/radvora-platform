@@ -86,7 +86,15 @@ jobs:
             ': > "$response_file"',
             '--dump-header "$headers_file"',
             "const cacheControl = (rawHeaders.match(/^cache-control:",
-            "includes('no-store')",
+            "const pragma = (rawHeaders.match(/^pragma:",
+            "const expires = (rawHeaders.match(/^expires:",
+            "const contentTypeOptions = (rawHeaders.match(/^x-content-type-options:",
+            "const cacheDirectives = cacheControl.split(',')",
+            "cacheControlNoStore: cacheDirectives.includes('no-store')",
+            "cacheControlMaxAgeZero: cacheDirectives.includes('max-age=0')",
+            "pragmaNoCache: pragma === 'no-cache'",
+            "expiresZero: expires === '0'",
+            "contentTypeOptionsNoSniff: contentTypeOptions === 'nosniff'",
             "const contentType = (rawHeaders.match(/^content-type:",
             "const contentMediaType = contentType.split(';', 1)[0].trim()",
             "contentTypeJson: contentMediaType === 'application/json'",
@@ -96,7 +104,10 @@ jobs:
             "fail('Production health response must remain stateless and must not set cookies.')",
             "const responseAgeMs = Date.now() - timestampMs",
             "responseAgeMs >= -60 * 1000 && responseAgeMs <= 5 * 60 * 1000",
-            "fail('Production health response is missing Cache-Control: no-store.')",
+            "fail('Production health response must include Cache-Control: no-store, max-age=0.')",
+            "fail('Production health response must include Pragma: no-cache.')",
+            "fail('Production health response must include Expires: 0.')",
+            "fail('Production health response must include X-Content-Type-Options: nosniff.')",
             'timestamp is missing, invalid, stale, or implausibly in the future',
             "const { execFileSync } = require('child_process')",
             'const deploymentLag = validReportedCommit && reportedCommit !== expectedCommit',
@@ -150,10 +161,10 @@ jobs:
           const deploymentLagIndex = monitor.indexOf('if (deploymentLag)')
           const ancestryIndex = monitor.indexOf('if (!reportedCommitKnown || !reportedCommitIsAncestor)')
           const diagnosticShapeIndex = monitor.indexOf("if (!diagnosticShapeValid)")
-          const responseContractIndex = monitor.indexOf("if (!safeDiagnostic.cacheControlNoStore)")
+          const responseContractIndex = monitor.indexOf("if (!safeDiagnostic.cacheControlNoStore || !safeDiagnostic.cacheControlMaxAgeZero)")
           if (deploymentLagIndex < 0 || ancestryIndex < 0 || diagnosticShapeIndex < 0 || responseContractIndex < 0 || deploymentLagIndex >= ancestryIndex || ancestryIndex >= diagnosticShapeIndex || diagnosticShapeIndex >= responseContractIndex) {
             console.error('Production health must verify a lagging commit ancestry before exact-version diagnostics, then reject unknown diagnostic shapes before enforcing the remaining response contract.')
             process.exit(1)
           }
-          console.log('Production health runtime and monitor fail closed for malformed origins, non-canonical request origins, unsafe or incomplete commerce activation, missing monitor configuration, untrusted endpoints, stale/future responses, cacheable responses, malformed JSON media types, stateful cookie-setting responses, divergent/unknown release SHAs, and unknown/unbounded diagnostic shapes while retrying only known prior main ancestors during deployment propagation.')
+          console.log('Production health runtime and monitor fail closed for malformed origins, non-canonical request origins, unsafe or incomplete commerce activation, missing monitor configuration, untrusted endpoints, stale/future responses, incomplete anti-cache or MIME-sniffing headers, malformed JSON media types, stateful cookie-setting responses, divergent/unknown release SHAs, and unknown/unbounded diagnostic shapes while retrying only known prior main ancestors during deployment propagation.')
           NODE
