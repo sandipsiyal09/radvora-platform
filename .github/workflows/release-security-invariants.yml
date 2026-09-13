@@ -1,0 +1,71 @@
+name: RADVORA Release Security Invariant Guard
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  guard-release-security-invariants:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify read-only release security invariant contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const path = 'supabase/postdeploy/verify_release_security_invariants.sql'
+          if (!fs.existsSync(path)) {
+            console.error(`Missing release security invariant verifier: ${path}`)
+            process.exit(1)
+          }
+          const sql = fs.readFileSync(path, 'utf8')
+          const required = [
+            "public.server_runtime_schema_version()",
+            "runtime_schema_version = '202609110050'",
+            'privileged_policy_count = 25',
+            'privileged_policies_with_aal2 = 25',
+            'authenticated_direct_sensitive_write_grants = 0',
+            'customer_rpc_count = 6',
+            'customer_rpc_anon_execute_count = 0',
+            'customer_rpc_missing_authenticated_execute_count = 0',
+            'legacy_privileged_rpc_authenticated_execute_count = 0',
+            "'checkout_active_cart_india'",
+            "'register_product_serial'",
+            "'submit_support_ticket'",
+            "'submit_warranty_claim'",
+            "'publish_claim'",
+            "'decide_approval'",
+            "'set_agent_configuration'",
+          ]
+          for (const snippet of required) {
+            if (!sql.includes(snippet)) {
+              console.error(`Release security invariant verifier is missing: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          const forbidden = [
+            /\binsert\s+into\b/i,
+            /\bupdate\s+public\./i,
+            /\bdelete\s+from\b/i,
+            /\bdrop\s+(table|policy|function|view|schema)\b/i,
+            /\balter\s+(table|function|policy|role|schema)\b/i,
+            /\bcreate\s+(table|policy|function|view|schema|role)\b/i,
+            /\bgrant\b/i,
+            /\brevoke\b/i,
+          ]
+          for (const pattern of forbidden) {
+            if (pattern.test(sql)) {
+              console.error(`Release security verifier must remain read-only; forbidden SQL matched ${pattern}`)
+              process.exit(1)
+            }
+          }
+          console.log('Release security invariant verifier is present, fail-closed, and read-only.')
+          NODE
