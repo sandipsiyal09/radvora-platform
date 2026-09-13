@@ -127,9 +127,13 @@ jobs:
           }
 
           const cacheControl = (rawHeaders.match(/^cache-control:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase()
+          const pragma = (rawHeaders.match(/^pragma:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase().trim()
+          const expires = (rawHeaders.match(/^expires:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase().trim()
+          const contentTypeOptions = (rawHeaders.match(/^x-content-type-options:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase().trim()
           const contentType = (rawHeaders.match(/^content-type:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase()
           const contentMediaType = contentType.split(';', 1)[0].trim()
           const setCookiePresent = /^set-cookie:/im.test(rawHeaders)
+          const cacheDirectives = cacheControl.split(',').map(value => value.trim()).filter(Boolean)
           const timestampMs = Date.parse(String(body.timestamp || ''))
           const responseAgeMs = Date.now() - timestampMs
           const responseTimestampFresh = Number.isFinite(timestampMs) && responseAgeMs >= -60 * 1000 && responseAgeMs <= 5 * 60 * 1000
@@ -142,7 +146,11 @@ jobs:
             release: safeRelease,
             missingRuntimeConfig,
             checks: safeChecks,
-            cacheControlNoStore: cacheControl.split(',').map(value => value.trim()).includes('no-store'),
+            cacheControlNoStore: cacheDirectives.includes('no-store'),
+            cacheControlMaxAgeZero: cacheDirectives.includes('max-age=0'),
+            pragmaNoCache: pragma === 'no-cache',
+            expiresZero: expires === '0',
+            contentTypeOptionsNoSniff: contentTypeOptions === 'nosniff',
             contentTypeJson: contentMediaType === 'application/json',
             setCookieAbsent: !setCookiePresent,
             responseTimestampFresh,
@@ -177,7 +185,10 @@ jobs:
           }
 
           if (!diagnosticShapeValid) fail('Production health diagnostic shape contains unknown or invalid fields.')
-          if (!safeDiagnostic.cacheControlNoStore) fail('Production health response is missing Cache-Control: no-store.')
+          if (!safeDiagnostic.cacheControlNoStore || !safeDiagnostic.cacheControlMaxAgeZero) fail('Production health response must include Cache-Control: no-store, max-age=0.')
+          if (!safeDiagnostic.pragmaNoCache) fail('Production health response must include Pragma: no-cache.')
+          if (!safeDiagnostic.expiresZero) fail('Production health response must include Expires: 0.')
+          if (!safeDiagnostic.contentTypeOptionsNoSniff) fail('Production health response must include X-Content-Type-Options: nosniff.')
           if (!safeDiagnostic.contentTypeJson) fail('Production health response Content-Type must be application/json.')
           if (!safeDiagnostic.setCookieAbsent) fail('Production health response must remain stateless and must not set cookies.')
           if (body.service !== 'radvora-platform') fail('Production health response service identity is invalid.')
