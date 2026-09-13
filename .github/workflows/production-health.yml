@@ -55,6 +55,7 @@ jobs:
           NODE
 
           for attempt in $(seq 1 18); do
+            : > "$response_file"
             : > "$headers_file"
             http_status="$(curl --silent --show-error --max-time 20 \
               --header 'Accept: application/json' \
@@ -105,19 +106,22 @@ jobs:
           }
 
           if (!/^[0-9a-f]{40}$/i.test(expectedCommit)) fail('Expected production commit metadata is invalid.')
-          if (!safeDiagnostic.cacheControlNoStore) fail('Production health response is missing Cache-Control: no-store.')
-          if (!safeDiagnostic.contentTypeJson) fail('Production health response is not application/json.')
-          if (!safeDiagnostic.setCookieAbsent) fail('Production health response must remain stateless and must not set cookies.')
-          if (body.service !== 'radvora-platform') fail('Production health response service identity is invalid.')
-          if (body.expectedRuntimeSchemaVersion !== requiredSchema) fail('Production health response schema contract is invalid.')
-          if (!safeDiagnostic.responseTimestampFresh) fail('Production health response timestamp is missing, invalid, stale, or implausibly in the future.')
 
+          // Deployment propagation is evaluated before version-specific response-contract checks.
+          // An older valid RADVORA build is retryable; only the exact expected commit can pass.
           const reportedCommit = String(body.release?.commit || '').trim()
           const validReportedCommit = /^[0-9a-f]{40}$/i.test(reportedCommit)
           const deploymentLag = validReportedCommit && reportedCommit !== expectedCommit
           if (deploymentLag) {
             fail(`Production commit ${reportedCommit} does not match workflow commit ${expectedCommit}.`, true)
           }
+
+          if (!safeDiagnostic.cacheControlNoStore) fail('Production health response is missing Cache-Control: no-store.')
+          if (!safeDiagnostic.contentTypeJson) fail('Production health response is not application/json.')
+          if (!safeDiagnostic.setCookieAbsent) fail('Production health response must remain stateless and must not set cookies.')
+          if (body.service !== 'radvora-platform') fail('Production health response service identity is invalid.')
+          if (body.expectedRuntimeSchemaVersion !== requiredSchema) fail('Production health response schema contract is invalid.')
+          if (!safeDiagnostic.responseTimestampFresh) fail('Production health response timestamp is missing, invalid, stale, or implausibly in the future.')
 
           if (safeDiagnostic.missingRuntimeConfig.length > 0) {
             fail(`Production runtime configuration is incomplete: ${safeDiagnostic.missingRuntimeConfig.join(', ')}.`)

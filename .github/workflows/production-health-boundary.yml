@@ -69,6 +69,7 @@ jobs:
             "hostname !== 'localhost' && !isIpLiteral",
             "!hostname.endsWith('.') && hostname.includes('.')",
             "(url.port === '' || url.port === '443')",
+            ': > "$response_file"',
             '--dump-header "$headers_file"',
             "const cacheControl = (rawHeaders.match(/^cache-control:",
             "includes('no-store')",
@@ -79,6 +80,8 @@ jobs:
             "responseAgeMs >= -60 * 1000 && responseAgeMs <= 5 * 60 * 1000",
             "fail('Production health response is missing Cache-Control: no-store.')",
             'timestamp is missing, invalid, stale, or implausibly in the future',
+            'const deploymentLag = validReportedCommit && reportedCommit !== expectedCommit',
+            'if (deploymentLag)',
           ]
           for (const snippet of monitorRequired) {
             if (!monitor.includes(snippet)) {
@@ -90,5 +93,11 @@ jobs:
             console.error('Production health monitor must not fall back to a hard-coded deployment URL.')
             process.exit(1)
           }
-          console.log('Production health runtime and monitor fail closed for malformed origins, unsafe commerce activation, missing monitor configuration, untrusted endpoints, stale/future responses, cacheable responses, and stateful cookie-setting responses.')
+          const deploymentLagIndex = monitor.indexOf('if (deploymentLag)')
+          const responseContractIndex = monitor.indexOf("if (!safeDiagnostic.cacheControlNoStore)")
+          if (deploymentLagIndex < 0 || responseContractIndex < 0 || deploymentLagIndex >= responseContractIndex) {
+            console.error('Production health must classify a valid prior deployed commit as retryable before enforcing version-specific response-contract checks.')
+            process.exit(1)
+          }
+          console.log('Production health runtime and monitor fail closed for malformed origins, unsafe commerce activation, missing monitor configuration, untrusted endpoints, stale/future responses, cacheable responses, and stateful cookie-setting responses while retrying a valid prior commit during deployment propagation.')
           NODE
