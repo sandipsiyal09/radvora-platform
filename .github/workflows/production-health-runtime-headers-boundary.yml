@@ -26,16 +26,22 @@ jobs:
             "const pragma = (rawHeaders.match(/^pragma:",
             "const expires = (rawHeaders.match(/^expires:",
             "const contentTypeOptions = (rawHeaders.match(/^x-content-type-options:",
+            "const frameOptions = (rawHeaders.match(/^x-frame-options:",
+            "const contentSecurityPolicy = (rawHeaders.match(/^content-security-policy:",
             "const cacheDirectives = cacheControl.split(',')",
             "cacheControlNoStore: cacheDirectives.includes('no-store')",
             "cacheControlMaxAgeZero: cacheDirectives.includes('max-age=0')",
             "pragmaNoCache: pragma === 'no-cache'",
             "expiresZero: expires === '0'",
             "contentTypeOptionsNoSniff: contentTypeOptions === 'nosniff'",
+            "frameOptionsDeny: frameOptions === 'deny'",
+            "contentSecurityPolicyIsolated: contentSecurityPolicy === \"default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'\"",
             "Production health response must include Cache-Control: no-store, max-age=0.",
             "Production health response must include Pragma: no-cache.",
             "Production health response must include Expires: 0.",
-            "Production health response must include X-Content-Type-Options: nosniff."
+            "Production health response must include X-Content-Type-Options: nosniff.",
+            "Production health response must include X-Frame-Options: DENY.",
+            "Production health response must include the hardened browser-isolation Content-Security-Policy."
           ]
           for (const snippet of required) {
             if (!monitor.includes(snippet)) {
@@ -44,10 +50,12 @@ jobs:
             }
           }
           const responseContractIndex = monitor.indexOf("if (!safeDiagnostic.cacheControlNoStore || !safeDiagnostic.cacheControlMaxAgeZero)")
+          const frameOptionsIndex = monitor.indexOf("if (!safeDiagnostic.frameOptionsDeny)")
+          const cspIndex = monitor.indexOf("if (!safeDiagnostic.contentSecurityPolicyIsolated)")
           const contentTypeIndex = monitor.indexOf("if (!safeDiagnostic.contentTypeJson)")
-          if (responseContractIndex < 0 || contentTypeIndex < 0 || responseContractIndex >= contentTypeIndex) {
-            console.error('Production health must enforce anti-cache and nosniff headers before accepting the JSON response contract.')
+          if (responseContractIndex < 0 || frameOptionsIndex < 0 || cspIndex < 0 || contentTypeIndex < 0 || responseContractIndex >= frameOptionsIndex || frameOptionsIndex >= cspIndex || cspIndex >= contentTypeIndex) {
+            console.error('Production health must enforce anti-cache, browser-isolation, and nosniff headers before accepting the JSON response contract.')
             process.exit(1)
           }
-          console.log('Production health certification verifies the deployed anti-cache and MIME-sniffing header contract at runtime.')
+          console.log('Production health certification verifies the deployed anti-cache, MIME-sniffing, framing, and CSP browser-isolation header contract at runtime.')
           NODE
