@@ -12,23 +12,25 @@ function releaseMetadata(){
   const environment=(process.env.VERCEL_ENV||process.env.NODE_ENV||'unknown').trim()
   return {commit:commit||'unknown',ref:ref||'unknown',environment}
 }
-function canonicalProductionUrlReady(value:string|undefined){
+function canonicalProductionUrlReady(value:string|undefined,requestUrl:string){
   try{
     const url=new URL(value||'')
+    const request=new URL(requestUrl)
     const hostname=url.hostname.toLowerCase()
     const isIpLiteral=/^(?:\d{1,3}\.){3}\d{1,3}$/.test(hostname)||hostname.includes(':')
-    return url.protocol==='https:'&&
+    const canonicalOriginReady=url.protocol==='https:'&&
       !url.username&&!url.password&&
       !isIpLiteral&&hostname!=='localhost'&&hostname.endsWith('.')===false&&hostname.includes('.')&&
       (url.pathname==='/'||url.pathname==='')&&!url.search&&!url.hash&&
       (url.port===''||url.port==='443')
+    return canonicalOriginReady&&request.origin===url.origin&&request.pathname==='/api/health'
   }catch{return false}
 }
 
-export async function GET(){
+export async function GET(request:Request){
   const timestamp=new Date().toISOString()
   const release=releaseMetadata()
-  const canonicalUrlReady=canonicalProductionUrlReady(process.env.NEXT_PUBLIC_APP_URL)
+  const canonicalUrlReady=canonicalProductionUrlReady(process.env.NEXT_PUBLIC_APP_URL,request.url)
   const releaseProvenanceReady=release.environment!=='production'||(/^[0-9a-f]{40}$/i.test(release.commit)&&release.ref==='main')
   const missingRuntimeConfig=[
     ...requiredRuntimeConfig.filter(key=>!process.env[key]?.trim()),
