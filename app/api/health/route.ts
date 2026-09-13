@@ -88,3 +88,16 @@ export async function GET(request:Request){
     return NextResponse.json({service:'radvora-platform',status:'degraded',release,missingRuntimeConfig:[],checks:{configuration:'ok',release_provenance:'verified',database:'unavailable_or_schema_mismatch',commerce_schema:'unavailable_or_outdated',commerce_activation:'not_checked',payment_session_schema:'unavailable_or_outdated',seller_profile:'unavailable_or_outdated',runtime_schema_version:'mismatch_or_unavailable',canonical_url:canonicalUrlReady?'configured':'not_configured',india_payments:indiaPaymentsConfigured?'live_configured':razorpayKeyId?'test_or_invalid_key':'not_configured'},expectedRuntimeSchemaVersion:EXPECTED_RUNTIME_SCHEMA_VERSION,timestamp},{status:503,headers:responseHeaders()})
   }
 }
+
+function methodNotAllowed(){
+  return NextResponse.json(
+    {service:'radvora-platform',status:'method_not_allowed'},
+    {status:405,headers:{...responseHeaders(),Allow:'GET, HEAD'}},
+  )
+}
+
+export const POST=methodNotAllowed
+export const PUT=methodNotAllowed
+export const PATCH=methodNotAllowed
+export const DELETE=methodNotAllowed
+export const OPTIONS=methodNotAllowed
