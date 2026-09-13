@@ -60,6 +60,9 @@ jobs:
 
           const monitor = fs.readFileSync('.github/workflows/production-health.yml', 'utf8')
           const monitorRequired = [
+            'health_url="${CONFIGURED_HEALTH_URL:-}"',
+            'if [ -z "$health_url" ]; then',
+            'PRODUCTION_HEALTH_URL repository variable must be explicitly configured',
             'HEALTH_URL="$health_url" node',
             "url.protocol === 'https:'",
             "url.pathname === '/api/health'",
@@ -69,7 +72,10 @@ jobs:
             '--dump-header "$headers_file"',
             "const cacheControl = (rawHeaders.match(/^cache-control:",
             "includes('no-store')",
+            "const responseAgeMs = Date.now() - timestampMs",
+            "responseAgeMs >= -60 * 1000 && responseAgeMs <= 5 * 60 * 1000",
             "fail('Production health response is missing Cache-Control: no-store.')",
+            'timestamp is missing, invalid, stale, or implausibly in the future',
           ]
           for (const snippet of monitorRequired) {
             if (!monitor.includes(snippet)) {
@@ -77,5 +83,9 @@ jobs:
               process.exit(1)
             }
           }
-          console.log('Production health runtime and monitor fail closed for malformed origins, unsafe commerce activation, untrusted monitor endpoints, and cacheable responses.')
+          if (monitor.includes('https://radvora-platform.vercel.app/api/health')) {
+            console.error('Production health monitor must not fall back to a hard-coded deployment URL.')
+            process.exit(1)
+          }
+          console.log('Production health runtime and monitor fail closed for malformed origins, unsafe commerce activation, missing monitor configuration, untrusted endpoints, stale/future responses, and cacheable responses.')
           NODE
