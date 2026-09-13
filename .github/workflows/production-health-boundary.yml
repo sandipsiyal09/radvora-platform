@@ -87,6 +87,10 @@ jobs:
             '--dump-header "$headers_file"',
             "const cacheControl = (rawHeaders.match(/^cache-control:",
             "includes('no-store')",
+            "const contentType = (rawHeaders.match(/^content-type:",
+            "const contentMediaType = contentType.split(';', 1)[0].trim()",
+            "contentTypeJson: contentMediaType === 'application/json'",
+            "fail('Production health response Content-Type must be application/json.')",
             "const setCookiePresent = /^set-cookie:/im.test(rawHeaders)",
             'setCookieAbsent: !setCookiePresent',
             "fail('Production health response must remain stateless and must not set cookies.')",
@@ -124,6 +128,10 @@ jobs:
               process.exit(1)
             }
           }
+          if (monitor.includes("contentType.startsWith('application/json')")) {
+            console.error('Production health monitor must require the exact application/json media type, not a prefix match.')
+            process.exit(1)
+          }
           if (monitor.includes('https://radvora-platform.vercel.app/api/health')) {
             console.error('Production health monitor must not fall back to a hard-coded deployment URL.')
             process.exit(1)
@@ -147,5 +155,5 @@ jobs:
             console.error('Production health must verify a lagging commit ancestry before exact-version diagnostics, then reject unknown diagnostic shapes before enforcing the remaining response contract.')
             process.exit(1)
           }
-          console.log('Production health runtime and monitor fail closed for malformed origins, non-canonical request origins, unsafe or incomplete commerce activation, missing monitor configuration, untrusted endpoints, stale/future responses, cacheable responses, stateful cookie-setting responses, divergent/unknown release SHAs, and unknown/unbounded diagnostic shapes while retrying only known prior main ancestors during deployment propagation.')
+          console.log('Production health runtime and monitor fail closed for malformed origins, non-canonical request origins, unsafe or incomplete commerce activation, missing monitor configuration, untrusted endpoints, stale/future responses, cacheable responses, malformed JSON media types, stateful cookie-setting responses, divergent/unknown release SHAs, and unknown/unbounded diagnostic shapes while retrying only known prior main ancestors during deployment propagation.')
           NODE
