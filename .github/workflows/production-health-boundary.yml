@@ -60,6 +60,8 @@ jobs:
 
           const monitor = fs.readFileSync('.github/workflows/production-health.yml', 'utf8')
           const monitorRequired = [
+            'uses: actions/checkout@v4',
+            'fetch-depth: 0',
             'health_url="${CONFIGURED_HEALTH_URL:-}"',
             'if [ -z "$health_url" ]; then',
             'PRODUCTION_HEALTH_URL repository variable must be explicitly configured',
@@ -80,7 +82,11 @@ jobs:
             "responseAgeMs >= -60 * 1000 && responseAgeMs <= 5 * 60 * 1000",
             "fail('Production health response is missing Cache-Control: no-store.')",
             'timestamp is missing, invalid, stale, or implausibly in the future',
+            "const { execFileSync } = require('child_process')",
             'const deploymentLag = validReportedCommit && reportedCommit !== expectedCommit',
+            "execFileSync('git', ['cat-file', '-e', `${reportedCommit}^{commit}`]",
+            "execFileSync('git', ['merge-base', '--is-ancestor', reportedCommit, expectedCommit]",
+            'if (!reportedCommitKnown || !reportedCommitIsAncestor)',
             'if (deploymentLag)',
           ]
           for (const snippet of monitorRequired) {
@@ -94,10 +100,11 @@ jobs:
             process.exit(1)
           }
           const deploymentLagIndex = monitor.indexOf('if (deploymentLag)')
+          const ancestryIndex = monitor.indexOf('if (!reportedCommitKnown || !reportedCommitIsAncestor)')
           const responseContractIndex = monitor.indexOf("if (!safeDiagnostic.cacheControlNoStore)")
-          if (deploymentLagIndex < 0 || responseContractIndex < 0 || deploymentLagIndex >= responseContractIndex) {
-            console.error('Production health must classify a valid prior deployed commit as retryable before enforcing version-specific response-contract checks.')
+          if (deploymentLagIndex < 0 || ancestryIndex < 0 || responseContractIndex < 0 || deploymentLagIndex >= ancestryIndex || ancestryIndex >= responseContractIndex) {
+            console.error('Production health must verify a reported lagging commit is a known ancestor before retrying and before enforcing version-specific response-contract checks.')
             process.exit(1)
           }
-          console.log('Production health runtime and monitor fail closed for malformed origins, unsafe commerce activation, missing monitor configuration, untrusted endpoints, stale/future responses, cacheable responses, and stateful cookie-setting responses while retrying a valid prior commit during deployment propagation.')
+          console.log('Production health runtime and monitor fail closed for malformed origins, unsafe commerce activation, missing monitor configuration, untrusted endpoints, stale/future responses, cacheable responses, stateful cookie-setting responses, and divergent/unknown release SHAs while retrying only known prior main ancestors during deployment propagation.')
           NODE
