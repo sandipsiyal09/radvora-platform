@@ -75,6 +75,9 @@ jobs:
           }
 
           const cacheControl = (rawHeaders.match(/^cache-control:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase()
+          const contentType = (rawHeaders.match(/^content-type:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase()
+          const timestampMs = Date.parse(String(body.timestamp || ''))
+          const responseTimestampFresh = Number.isFinite(timestampMs) && Math.abs(Date.now() - timestampMs) <= 5 * 60 * 1000
           const safeDiagnostic = {
             httpStatus,
             status: body.status || 'missing',
@@ -83,7 +86,9 @@ jobs:
             release: body.release || {},
             missingRuntimeConfig: Array.isArray(body.missingRuntimeConfig) ? body.missingRuntimeConfig : [],
             checks: body.checks || {},
-            cacheControlNoStore: cacheControl.split(',').map(value => value.trim()).includes('no-store')
+            cacheControlNoStore: cacheControl.split(',').map(value => value.trim()).includes('no-store'),
+            contentTypeJson: contentType.startsWith('application/json'),
+            responseTimestampFresh
           }
 
           const fail = (message, retryable = false) => {
@@ -94,6 +99,10 @@ jobs:
 
           if (!/^[0-9a-f]{40}$/i.test(expectedCommit)) fail('Expected production commit metadata is invalid.')
           if (!safeDiagnostic.cacheControlNoStore) fail('Production health response is missing Cache-Control: no-store.')
+          if (!safeDiagnostic.contentTypeJson) fail('Production health response is not application/json.')
+          if (body.service !== 'radvora-platform') fail('Production health response service identity is invalid.')
+          if (body.expectedRuntimeSchemaVersion !== requiredSchema) fail('Production health response schema contract is invalid.')
+          if (!safeDiagnostic.responseTimestampFresh) fail('Production health response timestamp is missing, invalid, or stale.')
 
           const reportedCommit = String(body.release?.commit || '').trim()
           const validReportedCommit = /^[0-9a-f]{40}$/i.test(reportedCommit)
