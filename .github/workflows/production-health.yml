@@ -130,6 +130,9 @@ jobs:
           const pragma = (rawHeaders.match(/^pragma:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase().trim()
           const expires = (rawHeaders.match(/^expires:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase().trim()
           const contentTypeOptions = (rawHeaders.match(/^x-content-type-options:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase().trim()
+          const robotsTag = (rawHeaders.match(/^x-robots-tag:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase().trim()
+          const referrerPolicy = (rawHeaders.match(/^referrer-policy:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase().trim()
+          const crossOriginResourcePolicy = (rawHeaders.match(/^cross-origin-resource-policy:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase().trim()
           const frameOptions = (rawHeaders.match(/^x-frame-options:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase().trim()
           const contentSecurityPolicy = (rawHeaders.match(/^content-security-policy:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase().trim()
           const contentType = (rawHeaders.match(/^content-type:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase()
@@ -153,6 +156,9 @@ jobs:
             pragmaNoCache: pragma === 'no-cache',
             expiresZero: expires === '0',
             contentTypeOptionsNoSniff: contentTypeOptions === 'nosniff',
+            robotsTagPrivate: robotsTag === 'noindex, nofollow, noarchive',
+            referrerPolicyNoReferrer: referrerPolicy === 'no-referrer',
+            crossOriginResourcePolicySameOrigin: crossOriginResourcePolicy === 'same-origin',
             frameOptionsDeny: frameOptions === 'deny',
             contentSecurityPolicyIsolated: contentSecurityPolicy === "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
             contentTypeJson: contentMediaType === 'application/json',
@@ -193,6 +199,9 @@ jobs:
           if (!safeDiagnostic.pragmaNoCache) fail('Production health response must include Pragma: no-cache.')
           if (!safeDiagnostic.expiresZero) fail('Production health response must include Expires: 0.')
           if (!safeDiagnostic.contentTypeOptionsNoSniff) fail('Production health response must include X-Content-Type-Options: nosniff.')
+          if (!safeDiagnostic.robotsTagPrivate) fail('Production health response must include X-Robots-Tag: noindex, nofollow, noarchive.')
+          if (!safeDiagnostic.referrerPolicyNoReferrer) fail('Production health response must include Referrer-Policy: no-referrer.')
+          if (!safeDiagnostic.crossOriginResourcePolicySameOrigin) fail('Production health response must include Cross-Origin-Resource-Policy: same-origin.')
           if (!safeDiagnostic.frameOptionsDeny) fail('Production health response must include X-Frame-Options: DENY.')
           if (!safeDiagnostic.contentSecurityPolicyIsolated) fail('Production health response must include the hardened browser-isolation Content-Security-Policy.')
           if (!safeDiagnostic.contentTypeJson) fail('Production health response Content-Type must be application/json.')
