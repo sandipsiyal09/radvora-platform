@@ -109,9 +109,18 @@ export async function proxy(request: NextRequest) {
   }
   let response = buildResponse()
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-  if (!url || !publishableKey) return applySecurityHeaders(response, request, requestId)
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim()
+  if (!url || !publishableKey) {
+    if (isPrivilegedAdminPath(request.nextUrl.pathname)) {
+      return applySecurityHeaders(
+        NextResponse.json({ error: 'Privileged access is temporarily unavailable.' }, { status: 503 }),
+        request,
+        requestId,
+      )
+    }
+    return applySecurityHeaders(response, request, requestId)
+  }
 
   const supabase = createServerClient(url, publishableKey, {
     cookies: {
