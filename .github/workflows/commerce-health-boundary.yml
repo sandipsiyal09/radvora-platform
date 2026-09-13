@@ -35,7 +35,11 @@ jobs:
             'product.price_inr_includes_gst!==null',
             'Number(product.stock_on_hand)-Number(product.stock_reserved||0)',
             'availableStock!==null&&availableStock>0',
+            "const razorpayKeyId=(process.env.RAZORPAY_KEY_ID||'').trim()",
+            "const razorpayLiveKeyReady=razorpayKeyId.startsWith('rzp_live_')",
+            'const indiaPaymentsConfigured=Boolean(razorpayLiveKeyReady&&process.env.RAZORPAY_KEY_SECRET?.trim()&&process.env.RAZORPAY_WEBHOOK_SECRET?.trim())',
             'commerceEnabledProductsCount===0||(sellerReady===true&&indiaPaymentsConfigured&&completeEnabledCatalog)',
+            "india_payments:indiaPaymentsConfigured?'live_configured':razorpayKeyId?'test_or_invalid_key':'not_configured'",
             "commerce_activation:'unsafe'",
             "commerce_activation:commerceEnabledProductsCount===0?'disabled':'ready'",
           ]
@@ -45,5 +49,5 @@ jobs:
               process.exit(1)
             }
           }
-          console.log('Production health requires every commerce-enabled product to be active, INR-priced, HSN/GST-complete, and backed by positive governed available stock before reporting commerce ready.')
+          console.log('Production health requires every commerce-enabled product to be active, INR-priced, HSN/GST-complete, backed by positive governed available stock, and configured with a Razorpay Live Mode key before reporting commerce ready.')
           NODE
