@@ -1,0 +1,58 @@
+name: RADVORA Health Release Provenance Boundary
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require provider-authoritative production release metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const source = fs.readFileSync('app/api/health/route.ts', 'utf8')
+          const required = [
+            "const vercelEnvironment=(process.env.VERCEL_ENV||'').trim()",
+            "const environment=(vercelEnvironment||process.env.NODE_ENV||'unknown').trim()",
+            "const commit=(environment==='production'?process.env.VERCEL_GIT_COMMIT_SHA:(process.env.VERCEL_GIT_COMMIT_SHA||process.env.GIT_COMMIT_SHA)||'').trim()",
+            "function productionReleaseProvenanceReady(release:ReturnType<typeof releaseMetadata>)",
+            "if(release.environment!=='production') return true",
+            "const vercelCommit=(process.env.VERCEL_GIT_COMMIT_SHA||'').trim()",
+            "const vercelRef=(process.env.VERCEL_GIT_COMMIT_REF||'').trim()",
+            "process.env.VERCEL_ENV==='production'",
+            "/^[0-9a-f]{40}$/i.test(vercelCommit)",
+            "vercelRef==='main'",
+            "release.commit===vercelCommit",
+            "release.ref===vercelRef",
+            "const releaseProvenanceReady=productionReleaseProvenanceReady(release)",
+            "release_provenance:releaseProvenanceReady?'verified':'unavailable'",
+            "if(!releaseProvenanceReady)",
+          ]
+          for (const snippet of required) {
+            if (!source.includes(snippet)) {
+              console.error(`Provider-authoritative production release provenance control missing: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          const productionCommitAssignment = source.match(/const commit=\(environment==='production'\?([^:]+):/)
+          if (!productionCommitAssignment || !productionCommitAssignment[1].includes('process.env.VERCEL_GIT_COMMIT_SHA')) {
+            console.error('Production health must source its commit from Vercel deployment metadata.')
+            process.exit(1)
+          }
+          if (productionCommitAssignment[1].includes('GIT_COMMIT_SHA') && !productionCommitAssignment[1].includes('VERCEL_GIT_COMMIT_SHA')) {
+            console.error('Production health must not accept a generic commit fallback for production provenance.')
+            process.exit(1)
+          }
+          console.log('Production health release provenance is bound to Vercel production metadata and cannot be satisfied by a generic commit fallback.')
+          NODE
