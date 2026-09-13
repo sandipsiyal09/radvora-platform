@@ -76,8 +76,8 @@ export async function GET(request:Request){
     }
 
     return NextResponse.json({service:'radvora-platform',status:'ok',release,missingRuntimeConfig:[],checks:{configuration:'ok',release_provenance:'verified',database:'ok',commerce_schema:'ok',commerce_activation:commerceEnabledProductsCount===0?'disabled':'ready',payment_session_schema:'ok',seller_profile:sellerReady===true?'configured':'not_configured',runtime_schema_version:'ok',canonical_url:canonicalUrlReady?'configured':'not_configured',india_payments:indiaPaymentsConfigured?'live_configured':razorpayKeyId?'test_or_invalid_key':'not_configured'},runtimeSchemaVersion,expectedRuntimeSchemaVersion:EXPECTED_RUNTIME_SCHEMA_VERSION,timestamp},{status:200,headers:responseHeaders()})
-  }catch(error){
-    console.error('health_check_failed',{release,error})
+  }catch{
+    console.error('health_check_failed',{release,component:'database_or_schema'})
     return NextResponse.json({service:'radvora-platform',status:'degraded',release,missingRuntimeConfig:[],checks:{configuration:'ok',release_provenance:'verified',database:'unavailable_or_schema_mismatch',commerce_schema:'unavailable_or_outdated',commerce_activation:'not_checked',payment_session_schema:'unavailable_or_outdated',seller_profile:'unavailable_or_outdated',runtime_schema_version:'mismatch_or_unavailable',canonical_url:canonicalUrlReady?'configured':'not_configured',india_payments:indiaPaymentsConfigured?'live_configured':razorpayKeyId?'test_or_invalid_key':'not_configured'},expectedRuntimeSchemaVersion:EXPECTED_RUNTIME_SCHEMA_VERSION,timestamp},{status:503,headers:responseHeaders()})
   }
 }

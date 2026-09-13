@@ -1,0 +1,52 @@
+name: RADVORA Health Log Safety Boundary
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require bounded health failure logging
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const source = fs.readFileSync('app/api/health/route.ts', 'utf8')
+          const required = [
+            "console.error('health_check_failed',{release,component:'database_or_schema'})",
+            "database:'unavailable_or_schema_mismatch'",
+            "commerce_schema:'unavailable_or_outdated'",
+            "payment_session_schema:'unavailable_or_outdated'",
+            "runtime_schema_version:'mismatch_or_unavailable'",
+          ]
+          for (const snippet of required) {
+            if (!source.includes(snippet)) {
+              console.error(`Health log safety control missing: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          const forbidden = [
+            "console.error('health_check_failed',{release,error})",
+            "console.error('health_check_failed',error)",
+            "console.error(error)",
+            "error.message",
+            "JSON.stringify(error)",
+          ]
+          for (const snippet of forbidden) {
+            if (source.includes(snippet)) {
+              console.error(`Health route must not emit raw failure details to production logs: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          console.log('Health failure logging is bounded to release metadata and a static component classification; raw database/provider error objects and messages are not logged.')
+          NODE
