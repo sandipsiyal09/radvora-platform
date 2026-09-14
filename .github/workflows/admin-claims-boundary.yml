@@ -1,0 +1,91 @@
+name: RADVORA Admin Claims Boundary
+
+on:
+  pull_request:
+    paths:
+      - 'app/api/admin/labs/claims/[id]/route.ts'
+      - '.github/workflows/admin-claims-boundary.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/api/admin/labs/claims/[id]/route.ts'
+      - '.github/workflows/admin-claims-boundary.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  admin-claims-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Guard privileged claim review/publish boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const path = 'app/api/admin/labs/claims/[id]/route.ts'
+          const source = fs.readFileSync(path, 'utf8')
+          const required = [
+            "export const runtime='nodejs'",
+            'export const maxDuration=10',
+            "'Cache-Control':'no-store'",
+            "'Pragma':'no-cache'",
+            "'X-Content-Type-Options':'nosniff'",
+            "'X-Frame-Options':'DENY'",
+            "'Referrer-Policy':'no-referrer'",
+            "'Cross-Origin-Resource-Policy':'same-origin'",
+            "'Permissions-Policy':'camera=(), microphone=(), geolocation=(), payment=(), usb=()'",
+            "request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site'",
+            'NEXT_PUBLIC_APP_URL',
+            "process.env.VERCEL_ENV==='production'",
+            "process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV",
+            "url.protocol==='https:'&&!url.username&&!url.password",
+            "hostname!=='localhost'",
+            "!hostname.endsWith('.')",
+            "hostname.includes('.')",
+            "(url.pathname==='/'||url.pathname==='')",
+            '!url.search',
+            '!url.hash',
+            "(url.port===''||url.port==='443')",
+            '!Number.isSafeInteger(declaredLength)',
+            'declaredLength<0',
+            'request.arrayBuffer()',
+            "typeof parsed!=='object'||Array.isArray(parsed)",
+            'supabase.auth.getUser()',
+            "role!=='admin'&&role!=='founder'",
+            'server_review_claim',
+            'server_publish_claim',
+            "'scientific'",
+            "'compliance'",
+            "'approved'",
+            "'rejected'",
+            "'changes_requested'",
+            "console.error('server_claim_review_failed')",
+            "console.error('server_claim_publish_failed')",
+          ]
+          for (const snippet of required) {
+            if (!source.includes(snippet)) {
+              console.error(`${path} is missing required privileged claim control: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          for (const unsafe of [
+            "console.error('server_claim_review_failed',error)",
+            "console.error('server_claim_publish_failed',error)",
+          ]) {
+            if (source.includes(unsafe)) {
+              console.error(`${path} must not log raw database/RPC errors`)
+              process.exit(1)
+            }
+          }
+          const maxDuration = Number(source.match(/export const maxDuration\s*=\s*(\d+)/)?.[1] || 0)
+          if (maxDuration < 1 || maxDuration > 15) {
+            console.error(`${path} maxDuration must remain bounded to 1-15 seconds; found ${maxDuration || 'missing'}`)
+            process.exit(1)
+          }
+          console.log('Privileged claim review/publication requires admin/founder auth, bounded exact-origin JSON, hardened responses, safe logging, governed scientific/compliance reviews, and evidence-gated publication.')
+          NODE
