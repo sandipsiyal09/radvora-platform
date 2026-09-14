@@ -139,6 +139,7 @@ jobs:
           const contentType = (rawHeaders.match(/^content-type:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase()
           const contentMediaType = contentType.split(';', 1)[0].trim()
           const setCookiePresent = /^set-cookie:/im.test(rawHeaders)
+          const corsHeaderPresent = /^access-control-allow-(?:origin|credentials|methods|headers):/im.test(rawHeaders)
           const cacheDirectives = cacheControl.split(',').map(value => value.trim()).filter(Boolean)
           const timestampMs = Date.parse(String(body.timestamp || ''))
           const responseAgeMs = Date.now() - timestampMs
@@ -165,6 +166,7 @@ jobs:
             contentSecurityPolicyIsolated: contentSecurityPolicy === "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
             contentTypeJson: contentMediaType === 'application/json',
             setCookieAbsent: !setCookiePresent,
+            corsHeadersAbsent: !corsHeaderPresent,
             responseTimestampFresh,
             diagnosticShapeValid
           }
@@ -209,6 +211,7 @@ jobs:
           if (!safeDiagnostic.contentSecurityPolicyIsolated) fail('Production health response must include the hardened browser-isolation Content-Security-Policy.')
           if (!safeDiagnostic.contentTypeJson) fail('Production health response Content-Type must be application/json.')
           if (!safeDiagnostic.setCookieAbsent) fail('Production health response must remain stateless and must not set cookies.')
+          if (!safeDiagnostic.corsHeadersAbsent) fail('Production health response must remain same-origin and must not expose CORS allow headers.')
           if (body.service !== 'radvora-platform') fail('Production health response service identity is invalid.')
           if (body.expectedRuntimeSchemaVersion !== requiredSchema) fail('Production health response schema contract is invalid.')
           if (!safeDiagnostic.responseTimestampFresh) fail('Production health response timestamp is missing, invalid, stale, or implausibly in the future.')
