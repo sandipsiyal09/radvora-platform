@@ -2,12 +2,21 @@ import { NextResponse } from 'next/server'
 import { createClient } from '../../../../lib/supabase/server'
 
 export const runtime='nodejs'
+export const maxDuration=10
 
 const MAX_BODY_BYTES=2048
 const EMAIL=/^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function json(body:Record<string,unknown>,status=200){
-  return NextResponse.json(body,{status,headers:{'Cache-Control':'private, no-store, max-age=0'}})
+  return NextResponse.json(body,{status,headers:{
+    'Cache-Control':'private, no-store, max-age=0',
+    'Pragma':'no-cache',
+    'Expires':'0',
+    'X-Content-Type-Options':'nosniff',
+    'Referrer-Policy':'no-referrer',
+    'Cross-Origin-Resource-Policy':'same-origin',
+    'X-Robots-Tag':'noindex, nofollow, noarchive',
+  }})
 }
 
 function isProductionRuntime(){return process.env.VERCEL_ENV==='production'||(process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV)}
@@ -53,22 +62,30 @@ export async function POST(request:Request){
   if(invalidOrigin(request,expectedOrigin))return json({error:'Invalid authentication request origin.'},403)
 
   const length=request.headers.get('content-length')
-  if(length&&Number(length)>MAX_BODY_BYTES)return json({error:'Request is too large.'},413)
+  if(length){
+    const declaredLength=Number(length)
+    if(!Number.isFinite(declaredLength)||declaredLength<0)return json({error:'Invalid request.'},400)
+    if(declaredLength>MAX_BODY_BYTES)return json({error:'Request is too large.'},413)
+  }
   if(!request.headers.get('content-type')?.toLowerCase().startsWith('application/json'))return json({error:'Invalid request.'},415)
 
-  const raw=await request.text()
+  let raw:string
+  try{raw=await request.text()}catch{return json({error:'Invalid request.'},400)}
   if(Buffer.byteLength(raw,'utf8')>MAX_BODY_BYTES)return json({error:'Request is too large.'},413)
 
-  let body:unknown
-  try{body=JSON.parse(raw||'{}')}catch{return json({error:'Invalid request.'},400)}
-  const email=typeof body==='object'&&body!==null&&'email' in body?String((body as {email?:unknown}).email||'').trim().toLowerCase():''
+  let parsedBody:unknown
+  try{parsedBody=JSON.parse(raw||'{}')}catch{return json({error:'Invalid request.'},400)}
+  if(!parsedBody||typeof parsedBody!=='object'||Array.isArray(parsedBody))return json({error:'Invalid request.'},400)
+  const body=parsedBody as Record<string,unknown>
+  const email=typeof body.email==='string'?body.email.trim().toLowerCase():''
   if(!email||email.length>254||!EMAIL.test(email))return json({error:'Enter a valid email address.'},400)
 
   const supabase=await createClient()
   const callbackUrl=`${expectedOrigin}/auth/callback?next=/account`
   const {error}=await supabase.auth.signInWithOtp({email,options:{emailRedirectTo:callbackUrl}})
   if(error){
-    console.error('passwordless_login_request_failed',{message:error.message})
+    const errorName=error instanceof Error?error.name:'auth_error'
+    console.error('passwordless_login_request_failed',{component:'auth_magic_link',errorName})
     return json({error:'Unable to send the sign-in link right now. Please try again shortly.'},503)
   }
 
