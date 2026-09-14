@@ -38,6 +38,8 @@ jobs:
 
           magic_link = Path('app/api/auth/magic-link/route.ts').read_text()
           magic_required = [
+              "export const runtime='nodejs'",
+              "export const maxDuration=10",
               "function isProductionRuntime()",
               "function isSafeProductionOrigin(url:URL)",
               "url.protocol==='https:'",
@@ -55,12 +57,21 @@ jobs:
               "if(!origin)return true",
               "startsWith('application/json')",
               "MAX_BODY_BYTES=2048",
+              "Number.isFinite(declaredLength)",
+              "Array.isArray(parsedBody)",
+              "'X-Content-Type-Options':'nosniff'",
+              "'Referrer-Policy':'no-referrer'",
+              "'Cross-Origin-Resource-Policy':'same-origin'",
+              "'X-Robots-Tag':'noindex, nofollow, noarchive'",
               "email.length>254",
               "emailRedirectTo:callbackUrl",
+              "console.error('passwordless_login_request_failed',{component:'auth_magic_link',errorName})",
           ]
           missing = [needle for needle in magic_required if needle not in magic_link]
           if missing:
               raise SystemExit(f'magic-link request boundary controls regressed: {missing}')
+          if "console.error('passwordless_login_request_failed',{message:error.message})" in magic_link:
+              raise SystemExit('magic-link logging regressed to provider error-message output')
 
           # The request-derived origin fallback is intentional outside production only.
           # Guard the production branch explicitly instead of forbidding the fallback text globally.
