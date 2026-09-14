@@ -141,7 +141,7 @@ select
   razorpay_only_payment_provider_constraint_count,
   non_razorpay_payment_attempt_count,
   (
-    runtime_schema_version = '202609110050'
+    runtime_schema_version = '202609140051'
     and privileged_policy_count = 25
     and privileged_policies_with_aal2 = 25
     and authenticated_direct_sensitive_write_grants = 0
