@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Guard authenticated order cancellation origin boundary
+      - name: Guard authenticated order cancellation origin and runtime boundary
         shell: bash
         run: |
           set -euo pipefail
@@ -24,6 +24,15 @@ jobs:
           const routePath = 'app/api/orders/[id]/cancel/route.ts'
           const source = fs.readFileSync(routePath, 'utf8')
           const required = [
+            "export const runtime='nodejs'",
+            'export const maxDuration=10',
+            'const PROVIDER_DEADLINE_MS=8000',
+            "'Cache-Control':'no-store'",
+            "'Pragma':'no-cache'",
+            "'X-Content-Type-Options':'nosniff'",
+            "'Referrer-Policy':'no-referrer'",
+            "'Cross-Origin-Resource-Policy':'same-origin'",
+            "'Permissions-Policy':'camera=(), microphone=(), geolocation=(), payment=(), usb=()'",
             "request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site'",
             'if(!origin)return true',
             'NEXT_PUBLIC_APP_URL',
@@ -39,10 +48,18 @@ jobs:
             "(url.port===''||url.port==='443')",
             'if(isProductionRuntime())return supplied!==canonical',
             "if(!expectedOrigin)return json({error:'Order cancellation is temporarily unavailable.'},503)",
-            "Invalid cancellation request origin.",
-            "supabase.auth.getUser()",
-            "order.user_id!==user.id",
-            "cancel_pending_order",
+            'Invalid cancellation request origin.',
+            'supabase.auth.getUser()',
+            'order.user_id!==user.id',
+            "const providerAbort=new AbortController()",
+            'setTimeout(()=>providerAbort.abort(),PROVIDER_DEADLINE_MS)',
+            'signal:providerAbort.signal',
+            'clearTimeout(providerTimeout)',
+            'close_razorpay_payment_link_attempt',
+            'cancel_pending_order',
+            "console.error('payment_link_cancel_reconcile_failed')",
+            "console.error('payment_link_cancel_failed')",
+            "console.error('pending_order_cancel_failed')",
           ]
           for (const snippet of required) {
             if (!source.includes(snippet)) {
@@ -52,14 +69,26 @@ jobs:
           }
           const forbidden = [
             'return supplied!==requestOrigin&&supplied!==canonical}catch{return true}',
-            'return supplied!==requestOrigin&&supplied!==canonical}catch{return true}',
             "process.env.NEXT_PUBLIC_APP_URL?new URL(process.env.NEXT_PUBLIC_APP_URL).origin:requestOrigin",
+            "console.error('payment_link_cancel_reconcile_failed',closeError)",
+            "console.error('payment_link_cancel_failed',error)",
+            "console.error('pending_order_cancel_failed',error)",
           ]
           for (const snippet of forbidden) {
             if (source.includes(snippet)) {
-              console.error(`Order cancellation production origin boundary regressed: ${snippet}`)
+              console.error(`Order cancellation runtime or production-origin boundary regressed: ${snippet}`)
               process.exit(1)
             }
           }
-          console.log('Order cancellation requires exact configured canonical origin in production, safe HTTPS canonical URL validation, authentication, ownership, and provider-authoritative reconciliation.')
+          const maxDuration = Number(source.match(/export const maxDuration\s*=\s*(\d+)/)?.[1] || 0)
+          const providerDeadline = Number(source.match(/PROVIDER_DEADLINE_MS\s*=\s*(\d+)/)?.[1] || 0)
+          if (maxDuration < 1 || maxDuration > 15) {
+            console.error(`Order cancellation maxDuration must remain bounded to 1-15 seconds; found ${maxDuration || 'missing'}`)
+            process.exit(1)
+          }
+          if (providerDeadline < 1000 || providerDeadline >= maxDuration * 1000) {
+            console.error(`Razorpay reconciliation deadline must be at least 1s and below maxDuration; found ${providerDeadline || 'missing'}ms`)
+            process.exit(1)
+          }
+          console.log('Order cancellation requires exact configured canonical origin in production, authentication/ownership, bounded provider-authoritative Razorpay reconciliation, safe logging, and hardened responses.')
           NODE
