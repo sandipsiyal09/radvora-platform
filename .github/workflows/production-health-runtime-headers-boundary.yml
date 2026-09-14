@@ -30,6 +30,7 @@ jobs:
             "const referrerPolicy = (rawHeaders.match(/^referrer-policy:",
             "const crossOriginResourcePolicy = (rawHeaders.match(/^cross-origin-resource-policy:",
             "const frameOptions = (rawHeaders.match(/^x-frame-options:",
+            "const permissionsPolicy = (rawHeaders.match(/^permissions-policy:",
             "const contentSecurityPolicy = (rawHeaders.match(/^content-security-policy:",
             "const cacheDirectives = cacheControl.split(',')",
             "cacheControlNoStore: cacheDirectives.includes('no-store')",
@@ -41,6 +42,7 @@ jobs:
             "referrerPolicyNoReferrer: referrerPolicy === 'no-referrer'",
             "crossOriginResourcePolicySameOrigin: crossOriginResourcePolicy === 'same-origin'",
             "frameOptionsDeny: frameOptions === 'deny'",
+            "permissionsPolicyRestricted: permissionsPolicy === 'camera=(), microphone=(), geolocation=(), payment=(), usb=()'",
             "contentSecurityPolicyIsolated: contentSecurityPolicy === \"default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'\"",
             "Production health response must include Cache-Control: no-store, max-age=0.",
             "Production health response must include Pragma: no-cache.",
@@ -50,6 +52,7 @@ jobs:
             "Production health response must include Referrer-Policy: no-referrer.",
             "Production health response must include Cross-Origin-Resource-Policy: same-origin.",
             "Production health response must include X-Frame-Options: DENY.",
+            "Production health response must include the restrictive Permissions-Policy.",
             "Production health response must include the hardened browser-isolation Content-Security-Policy."
           ]
           for (const snippet of required) {
@@ -63,12 +66,13 @@ jobs:
           const referrerIndex = monitor.indexOf("if (!safeDiagnostic.referrerPolicyNoReferrer)")
           const corpIndex = monitor.indexOf("if (!safeDiagnostic.crossOriginResourcePolicySameOrigin)")
           const frameOptionsIndex = monitor.indexOf("if (!safeDiagnostic.frameOptionsDeny)")
+          const permissionsPolicyIndex = monitor.indexOf("if (!safeDiagnostic.permissionsPolicyRestricted)")
           const cspIndex = monitor.indexOf("if (!safeDiagnostic.contentSecurityPolicyIsolated)")
           const contentTypeIndex = monitor.indexOf("if (!safeDiagnostic.contentTypeJson)")
-          if (responseContractIndex < 0 || robotsIndex < 0 || referrerIndex < 0 || corpIndex < 0 || frameOptionsIndex < 0 || cspIndex < 0 || contentTypeIndex < 0 ||
-              responseContractIndex >= robotsIndex || robotsIndex >= referrerIndex || referrerIndex >= corpIndex || corpIndex >= frameOptionsIndex || frameOptionsIndex >= cspIndex || cspIndex >= contentTypeIndex) {
-            console.error('Production health must enforce anti-cache, anti-indexing, referrer, cross-origin isolation, framing, CSP, and nosniff headers before accepting the JSON response contract.')
+          if (responseContractIndex < 0 || robotsIndex < 0 || referrerIndex < 0 || corpIndex < 0 || frameOptionsIndex < 0 || permissionsPolicyIndex < 0 || cspIndex < 0 || contentTypeIndex < 0 ||
+              responseContractIndex >= robotsIndex || robotsIndex >= referrerIndex || referrerIndex >= corpIndex || corpIndex >= frameOptionsIndex || frameOptionsIndex >= permissionsPolicyIndex || permissionsPolicyIndex >= cspIndex || cspIndex >= contentTypeIndex) {
+            console.error('Production health must enforce anti-cache, anti-indexing, referrer, cross-origin isolation, framing, browser-permission, CSP, and nosniff headers before accepting the JSON response contract.')
             process.exit(1)
           }
-          console.log('Production health certification verifies the deployed anti-cache, anti-indexing, referrer, cross-origin, MIME-sniffing, framing, and CSP browser-isolation header contract at runtime.')
+          console.log('Production health certification verifies the deployed anti-cache, anti-indexing, referrer, cross-origin, MIME-sniffing, framing, browser-permission, and CSP isolation header contract at runtime.')
           NODE

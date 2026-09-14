@@ -134,6 +134,7 @@ jobs:
           const referrerPolicy = (rawHeaders.match(/^referrer-policy:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase().trim()
           const crossOriginResourcePolicy = (rawHeaders.match(/^cross-origin-resource-policy:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase().trim()
           const frameOptions = (rawHeaders.match(/^x-frame-options:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase().trim()
+          const permissionsPolicy = (rawHeaders.match(/^permissions-policy:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase().trim()
           const contentSecurityPolicy = (rawHeaders.match(/^content-security-policy:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase().trim()
           const contentType = (rawHeaders.match(/^content-type:\s*([^\r\n]+)/im)?.[1] || '').toLowerCase()
           const contentMediaType = contentType.split(';', 1)[0].trim()
@@ -160,6 +161,7 @@ jobs:
             referrerPolicyNoReferrer: referrerPolicy === 'no-referrer',
             crossOriginResourcePolicySameOrigin: crossOriginResourcePolicy === 'same-origin',
             frameOptionsDeny: frameOptions === 'deny',
+            permissionsPolicyRestricted: permissionsPolicy === 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
             contentSecurityPolicyIsolated: contentSecurityPolicy === "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
             contentTypeJson: contentMediaType === 'application/json',
             setCookieAbsent: !setCookiePresent,
@@ -203,6 +205,7 @@ jobs:
           if (!safeDiagnostic.referrerPolicyNoReferrer) fail('Production health response must include Referrer-Policy: no-referrer.')
           if (!safeDiagnostic.crossOriginResourcePolicySameOrigin) fail('Production health response must include Cross-Origin-Resource-Policy: same-origin.')
           if (!safeDiagnostic.frameOptionsDeny) fail('Production health response must include X-Frame-Options: DENY.')
+          if (!safeDiagnostic.permissionsPolicyRestricted) fail('Production health response must include the restrictive Permissions-Policy.')
           if (!safeDiagnostic.contentSecurityPolicyIsolated) fail('Production health response must include the hardened browser-isolation Content-Security-Policy.')
           if (!safeDiagnostic.contentTypeJson) fail('Production health response Content-Type must be application/json.')
           if (!safeDiagnostic.setCookieAbsent) fail('Production health response must remain stateless and must not set cookies.')
