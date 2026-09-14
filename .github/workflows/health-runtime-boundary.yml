@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Require Node.js runtime for privileged health route
+      - name: Require bounded Node.js runtime for privileged health route
         shell: bash
         run: |
           set -euo pipefail
@@ -28,3 +28,11 @@ jobs:
             echo 'Production /api/health must never run in the Edge runtime because it uses privileged server-only database access.' >&2
             exit 1
           fi
+          grep -Eq '^export const maxDuration=10$' "$route" || {
+            echo 'Production /api/health must remain bounded to a 10-second function duration.' >&2
+            exit 1
+          }
+          grep -Eq '^const HEALTH_QUERY_TIMEOUT_MS=8000$' "$route" || {
+            echo 'Production /api/health database work must remain bounded below the function duration.' >&2
+            exit 1
+          }
