@@ -102,6 +102,20 @@ legacy_privileged_rpc_exposure as (
       'set_agent_configuration'
     )
 ),
+payment_provider_constraint as (
+  select count(*) as razorpay_only_constraints
+  from pg_constraint c
+  where c.conrelid = 'public.payment_attempts'::regclass
+    and c.contype = 'c'
+    and c.conname = 'payment_attempts_provider_check'
+    and pg_get_constraintdef(c.oid) ilike '%provider = ''razorpay''%'
+    and pg_get_constraintdef(c.oid) not ilike '%stripe%'
+),
+payment_provider_rows as (
+  select count(*) as non_razorpay_rows
+  from public.payment_attempts
+  where provider <> 'razorpay'
+),
 checks as (
   select
     public.server_runtime_schema_version() as runtime_schema_version,
@@ -111,8 +125,10 @@ checks as (
     customer_rpc_exposure.rpc_count as customer_rpc_count,
     customer_rpc_exposure.anon_exec as customer_rpc_anon_execute_count,
     customer_rpc_exposure.missing_authenticated_exec as customer_rpc_missing_authenticated_execute_count,
-    legacy_privileged_rpc_exposure.authenticated_exec as legacy_privileged_rpc_authenticated_execute_count
-  from policy_check, direct_write_grants, customer_rpc_exposure, legacy_privileged_rpc_exposure
+    legacy_privileged_rpc_exposure.authenticated_exec as legacy_privileged_rpc_authenticated_execute_count,
+    payment_provider_constraint.razorpay_only_constraints as razorpay_only_payment_provider_constraint_count,
+    payment_provider_rows.non_razorpay_rows as non_razorpay_payment_attempt_count
+  from policy_check, direct_write_grants, customer_rpc_exposure, legacy_privileged_rpc_exposure, payment_provider_constraint, payment_provider_rows
 )
 select
   runtime_schema_version,
@@ -123,6 +139,8 @@ select
   customer_rpc_anon_execute_count,
   customer_rpc_missing_authenticated_execute_count,
   legacy_privileged_rpc_authenticated_execute_count,
+  razorpay_only_payment_provider_constraint_count,
+  non_razorpay_payment_attempt_count,
   (
     runtime_schema_version = '202609110050'
     and privileged_policy_count = 25
@@ -132,5 +150,7 @@ select
     and customer_rpc_anon_execute_count = 0
     and customer_rpc_missing_authenticated_execute_count = 0
     and legacy_privileged_rpc_authenticated_execute_count = 0
+    and razorpay_only_payment_provider_constraint_count = 1
+    and non_razorpay_payment_attempt_count = 0
   ) as ok
 from checks;
