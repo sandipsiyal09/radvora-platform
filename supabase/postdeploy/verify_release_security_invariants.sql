@@ -110,10 +110,37 @@ payment_provider_constraint as (
     and c.conname = 'payment_attempts_provider_check'
     and pg_get_constraintdef(c.oid) ilike '%provider = ''razorpay''%'
 ),
+webhook_provider_constraint as (
+  select count(*) as razorpay_only_constraints
+  from pg_constraint c
+  where c.conrelid = 'public.payment_webhook_events'::regclass
+    and c.contype = 'c'
+    and c.conname = 'payment_webhook_events_provider_check'
+    and pg_get_constraintdef(c.oid) ilike '%provider = ''razorpay''%'
+),
+order_provider_constraint as (
+  select count(*) as razorpay_only_constraints
+  from pg_constraint c
+  where c.conrelid = 'public.orders'::regclass
+    and c.contype = 'c'
+    and c.conname = 'orders_payment_provider_check'
+    and pg_get_constraintdef(c.oid) ilike '%payment_provider%razorpay%'
+),
 payment_provider_rows as (
   select count(*) as non_razorpay_rows
   from public.payment_attempts
   where provider <> 'razorpay'
+),
+webhook_provider_rows as (
+  select count(*) as non_razorpay_rows
+  from public.payment_webhook_events
+  where provider <> 'razorpay'
+),
+order_provider_rows as (
+  select count(*) as non_razorpay_rows
+  from public.orders
+  where payment_provider is not null
+    and payment_provider <> 'razorpay'
 ),
 checks as (
   select
@@ -126,8 +153,14 @@ checks as (
     customer_rpc_exposure.missing_authenticated_exec as customer_rpc_missing_authenticated_execute_count,
     legacy_privileged_rpc_exposure.authenticated_exec as legacy_privileged_rpc_authenticated_execute_count,
     payment_provider_constraint.razorpay_only_constraints as razorpay_only_payment_provider_constraint_count,
-    payment_provider_rows.non_razorpay_rows as non_razorpay_payment_attempt_count
-  from policy_check, direct_write_grants, customer_rpc_exposure, legacy_privileged_rpc_exposure, payment_provider_constraint, payment_provider_rows
+    webhook_provider_constraint.razorpay_only_constraints as razorpay_only_webhook_provider_constraint_count,
+    order_provider_constraint.razorpay_only_constraints as razorpay_only_order_provider_constraint_count,
+    payment_provider_rows.non_razorpay_rows as non_razorpay_payment_attempt_count,
+    webhook_provider_rows.non_razorpay_rows as non_razorpay_webhook_event_count,
+    order_provider_rows.non_razorpay_rows as non_razorpay_order_provider_count
+  from policy_check, direct_write_grants, customer_rpc_exposure, legacy_privileged_rpc_exposure,
+       payment_provider_constraint, webhook_provider_constraint, order_provider_constraint,
+       payment_provider_rows, webhook_provider_rows, order_provider_rows
 )
 select
   runtime_schema_version,
@@ -139,9 +172,13 @@ select
   customer_rpc_missing_authenticated_execute_count,
   legacy_privileged_rpc_authenticated_execute_count,
   razorpay_only_payment_provider_constraint_count,
+  razorpay_only_webhook_provider_constraint_count,
+  razorpay_only_order_provider_constraint_count,
   non_razorpay_payment_attempt_count,
+  non_razorpay_webhook_event_count,
+  non_razorpay_order_provider_count,
   (
-    runtime_schema_version = '202609140051'
+    runtime_schema_version = '202609140052'
     and privileged_policy_count = 25
     and privileged_policies_with_aal2 = 25
     and authenticated_direct_sensitive_write_grants = 0
@@ -150,6 +187,10 @@ select
     and customer_rpc_missing_authenticated_execute_count = 0
     and legacy_privileged_rpc_authenticated_execute_count = 0
     and razorpay_only_payment_provider_constraint_count = 1
+    and razorpay_only_webhook_provider_constraint_count = 1
+    and razorpay_only_order_provider_constraint_count = 1
     and non_razorpay_payment_attempt_count = 0
+    and non_razorpay_webhook_event_count = 0
+    and non_razorpay_order_provider_count = 0
   ) as ok
 from checks;

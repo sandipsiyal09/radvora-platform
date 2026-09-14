@@ -75,7 +75,7 @@ jobs:
           const raw = process.env.HEALTH_RESPONSE || ''
           const rawHeaders = process.env.HEALTH_RESPONSE_HEADERS || ''
           const httpStatus = String(process.env.HEALTH_HTTP_STATUS || '000')
-          const requiredSchema = '202609140051'
+          const requiredSchema = '202609140052'
           const expectedCommit = String(process.env.EXPECTED_PRODUCTION_COMMIT || '').trim()
           let body
           try {
