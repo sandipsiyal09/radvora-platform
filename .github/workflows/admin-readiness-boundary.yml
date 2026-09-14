@@ -1,0 +1,80 @@
+name: RADVORA Admin Readiness Boundary
+
+on:
+  pull_request:
+    paths:
+      - 'app/admin/readiness/page.tsx'
+      - '.github/workflows/admin-readiness-boundary.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/admin/readiness/page.tsx'
+      - '.github/workflows/admin-readiness-boundary.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  admin-readiness-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Guard launch-readiness fail-closed checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const path = 'app/admin/readiness/page.tsx'
+          const source = fs.readFileSync(path, 'utf8')
+          const required = [
+            "const EXPECTED_RUNTIME_SCHEMA_VERSION='202609140052'",
+            'supabase.auth.getUser()',
+            "role!=='admin'&&role!=='founder'",
+            'createAdminClient()',
+            "admin.rpc('server_runtime_schema_version')",
+            "admin.rpc('server_india_seller_profile_ready')",
+            'canonicalProductionUrlReady(appUrl)',
+            "url.protocol==='https:'",
+            '!url.username&&!url.password',
+            "hostname!=='localhost'",
+            "!hostname.endsWith('.')",
+            "hostname.includes('.')",
+            "(url.pathname==='/'||url.pathname==='')",
+            '!url.search&&!url.hash',
+            "(url.port===''||url.port==='443')",
+            'razorpayLiveConfigurationReady()',
+            '/^rzp_live_[A-Za-z0-9]+$/.test(keyId)',
+            'process.env.RAZORPAY_KEY_SECRET?.trim()',
+            'process.env.RAZORPAY_WEBHOOK_SECRET?.trim()',
+            "p.commerce_enabled===true",
+            "p.currency==='INR'",
+            'hasTaxConfig(p)',
+            'hasInventory(p)',
+            'sellerProfileReady',
+            'unsafeAgents.length===0',
+            "guard.require_approval_for_external_publish!==true",
+            "guard.require_approval_for_money!==true",
+            "guard.require_approval_for_claims!==true",
+          ]
+          for (const snippet of required) {
+            if (!source.includes(snippet)) {
+              console.error(`Admin readiness boundary is missing required control: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          const forbidden = [
+            "Boolean(process.env.RAZORPAY_KEY_ID&&process.env.RAZORPAY_KEY_SECRET&&process.env.RAZORPAY_WEBHOOK_SECRET)",
+            "appUrl.startsWith('https://')",
+            'rzp_test_',
+          ]
+          for (const snippet of forbidden) {
+            if (source.includes(snippet)) {
+              console.error(`Admin readiness boundary contains unsafe readiness shortcut: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          console.log('Admin readiness remains fail-closed on production schema, verified seller state, live Razorpay configuration, strict canonical origin, catalog tax/inventory, and AI approval guardrails.')
+          NODE
