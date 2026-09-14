@@ -31,6 +31,7 @@ jobs:
             "'Referrer-Policy':'no-referrer'",
             "'Cross-Origin-Resource-Policy':'same-origin'",
             "'X-Frame-Options':'DENY'",
+            "'Permissions-Policy':'camera=(), microphone=(), geolocation=(), payment=(), usb=()'",
             "'Content-Security-Policy':\"default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'\"",
             'headers:responseHeaders()'
           ]
@@ -49,5 +50,5 @@ jobs:
             console.error('Health route contains a cacheable Cache-Control variant.')
             process.exit(1)
           }
-          console.log('Health responses are non-cacheable, non-indexable, referrer-safe, same-origin constrained, frame-denied, script/content inert, and protected against MIME sniffing across success and fail-closed branches.')
+          console.log('Health responses are non-cacheable, non-indexable, referrer-safe, same-origin constrained, frame-denied, browser-permission inert, script/content inert, and protected against MIME sniffing across success and fail-closed branches.')
           NODE
