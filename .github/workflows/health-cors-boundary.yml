@@ -1,0 +1,63 @@
+name: RADVORA Health CORS Boundary
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require same-origin health exposure
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const source = fs.readFileSync('app/api/health/route.ts', 'utf8')
+
+          const required = [
+            "'Cross-Origin-Resource-Policy':'same-origin'",
+            "'Referrer-Policy':'no-referrer'",
+            "'X-Frame-Options':'DENY'",
+            "'Content-Security-Policy':\"default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'\""
+          ]
+          for (const snippet of required) {
+            if (!source.includes(snippet)) {
+              console.error(`Health same-origin/browser isolation control missing: ${snippet}`)
+              process.exit(1)
+            }
+          }
+
+          const prohibited = [
+            /access-control-allow-origin/i,
+            /access-control-allow-credentials/i,
+            /access-control-allow-methods/i,
+            /access-control-allow-headers/i
+          ]
+          for (const pattern of prohibited) {
+            if (pattern.test(source)) {
+              console.error(`Health route must not opt into cross-origin access: ${pattern}`)
+              process.exit(1)
+            }
+          }
+
+          if (!source.includes("export const OPTIONS=methodNotAllowed")) {
+            console.error('Health route must fail closed on OPTIONS rather than advertising a CORS preflight contract.')
+            process.exit(1)
+          }
+
+          if (!source.includes("Allow:'GET, HEAD'")) {
+            console.error('Health route Allow header must remain restricted to GET and HEAD.')
+            process.exit(1)
+          }
+
+          console.log('Health endpoint remains same-origin only: no CORS opt-in headers, OPTIONS fails closed, and browser-isolation controls remain present.')
+          NODE
