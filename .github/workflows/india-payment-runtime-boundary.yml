@@ -102,16 +102,20 @@ jobs:
           const health = fs.readFileSync(healthPath, 'utf8')
           const webhook = fs.readFileSync(webhookPath, 'utf8')
           const healthRequired = [
-            "startsWith('rzp_live_')",
+            'const razorpayLiveKeyReady=/^rzp_live_[A-Za-z0-9]+$/.test(razorpayKeyId)',
             'RAZORPAY_KEY_SECRET',
             'RAZORPAY_WEBHOOK_SECRET',
             "india_payments:indiaPaymentsConfigured?'live_configured'"
           ]
           for (const marker of healthRequired) {
             if (!health.includes(marker)) {
-              console.error(`Production health no longer enforces Razorpay Live Mode marker: ${marker}`)
+              console.error(`Production health no longer enforces structurally valid Razorpay Live Mode readiness: ${marker}`)
               process.exit(1)
             }
+          }
+          if (/razorpayLiveKeyReady\s*=\s*razorpayKeyId\.startsWith\(['\"]rzp_live_['\"]\)/.test(health)) {
+            console.error('Production health must not accept a bare or malformed rzp_live_ prefix as sufficient Live Mode evidence.')
+            process.exit(1)
           }
           const webhookRequired = [
             "request.headers.get('x-razorpay-signature')",
@@ -128,5 +132,5 @@ jobs:
             }
           }
 
-          console.log('India payment runtime remains Razorpay-only, server-secret scoped, Live-Mode gated, and provider-authoritative.')
+          console.log('India payment runtime remains Razorpay-only, server-secret scoped, structurally Live-Mode gated, and provider-authoritative.')
           NODE

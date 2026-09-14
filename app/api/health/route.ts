@@ -55,7 +55,7 @@ export async function GET(request:Request){
   ]
   const configurationReady=missingRuntimeConfig.length===0
   const razorpayKeyId=(process.env.RAZORPAY_KEY_ID||'').trim()
-  const razorpayLiveKeyReady=razorpayKeyId.startsWith('rzp_live_')
+  const razorpayLiveKeyReady=/^rzp_live_[A-Za-z0-9]+$/.test(razorpayKeyId)
   const indiaPaymentsConfigured=Boolean(razorpayLiveKeyReady&&process.env.RAZORPAY_KEY_SECRET?.trim()&&process.env.RAZORPAY_WEBHOOK_SECRET?.trim())
 
   if(!configurationReady){
