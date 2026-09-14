@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '../../../lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+export const maxDuration = 10
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX_BODY_BYTES = 8 * 1024
@@ -61,7 +63,18 @@ function invalidOrigin(request: NextRequest, canonical: string) {
 }
 
 function response(body: Record<string, unknown>, status: number) {
-  return NextResponse.json(body, { status, headers: { 'Cache-Control': 'no-store' } })
+  return NextResponse.json(body, {
+    status,
+    headers: {
+      'Cache-Control': 'no-store, max-age=0',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'X-Content-Type-Options': 'nosniff',
+      'Referrer-Policy': 'no-referrer',
+      'Cross-Origin-Resource-Policy': 'same-origin',
+      'X-Robots-Tag': 'noindex, nofollow, noarchive',
+    },
+  })
 }
 
 export async function POST(request: NextRequest) {
@@ -72,8 +85,14 @@ export async function POST(request: NextRequest) {
   }
 
   const rawLength = request.headers.get('content-length')
-  if (rawLength && Number(rawLength) > MAX_BODY_BYTES) {
-    return response({ error: 'Enquiry is too large.' }, 413)
+  if (rawLength) {
+    const declaredLength = Number(rawLength)
+    if (!Number.isFinite(declaredLength) || declaredLength < 0) {
+      return response({ error: 'Invalid request.' }, 400)
+    }
+    if (declaredLength > MAX_BODY_BYTES) {
+      return response({ error: 'Enquiry is too large.' }, 413)
+    }
   }
 
   if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) {
@@ -90,12 +109,16 @@ export async function POST(request: NextRequest) {
     return response({ error: 'Enquiry is too large.' }, 413)
   }
 
-  let body: Record<string, unknown>
+  let parsedBody: unknown
   try {
-    body = JSON.parse(rawBody)
+    parsedBody = JSON.parse(rawBody)
   } catch {
     return response({ error: 'Invalid request.' }, 400)
   }
+  if (!parsedBody || typeof parsedBody !== 'object' || Array.isArray(parsedBody)) {
+    return response({ error: 'Invalid request.' }, 400)
+  }
+  const body = parsedBody as Record<string, unknown>
 
   // Honeypot: legitimate clients leave this field empty.
   if (clean(body.website, 200)) {
@@ -144,7 +167,8 @@ export async function POST(request: NextRequest) {
     if (error) throw error
     return response({ ok: true }, 201)
   } catch (error) {
-    console.error('business_lead_submission_failed', error)
+    const errorName = error instanceof Error ? error.name : 'unknown_error'
+    console.error('business_lead_submission_failed', { component: 'leads', errorName })
     return response({ error: 'We could not submit your enquiry. Please try again shortly.' }, 500)
   }
 }

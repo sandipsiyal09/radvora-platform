@@ -54,10 +54,14 @@ jobs:
             process.exit(1)
           }
 
-          if (!source.includes("Allow:'GET, HEAD'")) {
-            console.error('Health route Allow header must remain restricted to GET and HEAD.')
+          if (!source.includes("Allow:'GET'")) {
+            console.error('Health route Allow header must remain restricted to GET only.')
+            process.exit(1)
+          }
+          if (/Allow\s*:\s*['\"][^'\"]*(HEAD|POST|PUT|PATCH|DELETE|OPTIONS)/i.test(source)) {
+            console.error('Health route must not advertise HEAD or any state-changing/negotiation method.')
             process.exit(1)
           }
 
-          console.log('Health endpoint remains same-origin only: no CORS opt-in headers, OPTIONS fails closed, and browser-isolation controls remain present.')
+          console.log('Health endpoint remains same-origin only: no CORS opt-in headers, OPTIONS fails closed, and only GET is advertised.')
           NODE
