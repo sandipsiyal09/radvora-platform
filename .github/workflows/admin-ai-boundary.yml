@@ -1,0 +1,106 @@
+name: RADVORA Admin AI Boundary
+
+on:
+  pull_request:
+    paths:
+      - 'app/api/admin/ai/agents/[id]/route.ts'
+      - 'app/api/admin/ai/approvals/[id]/route.ts'
+      - '.github/workflows/admin-ai-boundary.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/api/admin/ai/agents/[id]/route.ts'
+      - 'app/api/admin/ai/approvals/[id]/route.ts'
+      - '.github/workflows/admin-ai-boundary.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  admin-ai-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Guard privileged AI runtime boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const routes = [
+            {
+              path: 'app/api/admin/ai/agents/[id]/route.ts',
+              rpc: 'server_set_agent_configuration',
+              safeLog: "console.error('server_agent_config_failed')",
+              unsafeLog: "console.error('server_agent_config_failed',error)",
+            },
+            {
+              path: 'app/api/admin/ai/approvals/[id]/route.ts',
+              rpc: 'server_decide_approval',
+              safeLog: "console.error('server_approval_decision_failed')",
+              unsafeLog: "console.error('server_approval_decision_failed',error)",
+            },
+          ]
+          const common = [
+            "export const runtime='nodejs'",
+            'export const maxDuration=10',
+            "'Cache-Control':'no-store'",
+            "'Pragma':'no-cache'",
+            "'X-Content-Type-Options':'nosniff'",
+            "'X-Frame-Options':'DENY'",
+            "'Referrer-Policy':'no-referrer'",
+            "'Cross-Origin-Resource-Policy':'same-origin'",
+            "'Permissions-Policy':'camera=(), microphone=(), geolocation=(), payment=(), usb=()'",
+            "request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site'",
+            'NEXT_PUBLIC_APP_URL',
+            "process.env.VERCEL_ENV==='production'",
+            "process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV",
+            "url.protocol==='https:'&&!url.username&&!url.password",
+            "hostname!=='localhost'",
+            "!hostname.endsWith('.')",
+            "hostname.includes('.')",
+            "(url.pathname==='/'||url.pathname==='')",
+            '!url.search',
+            '!url.hash',
+            "(url.port===''||url.port==='443')",
+            '!Number.isSafeInteger(declaredLength)',
+            'declaredLength<0',
+            'request.arrayBuffer()',
+            "typeof parsed!=='object'||Array.isArray(parsed)",
+            'supabase.auth.getUser()',
+            "role!=='admin'&&role!=='founder'",
+          ]
+          for (const route of routes) {
+            const source = fs.readFileSync(route.path, 'utf8')
+            for (const snippet of [...common, route.rpc, route.safeLog]) {
+              if (!source.includes(snippet)) {
+                console.error(`${route.path} is missing required privileged AI control: ${snippet}`)
+                process.exit(1)
+              }
+            }
+            if (source.includes(route.unsafeLog)) {
+              console.error(`${route.path} must not log raw database/RPC errors`)
+              process.exit(1)
+            }
+            const maxDuration = Number(source.match(/export const maxDuration\s*=\s*(\d+)/)?.[1] || 0)
+            if (maxDuration < 1 || maxDuration > 15) {
+              console.error(`${route.path} maxDuration must remain bounded to 1-15 seconds; found ${maxDuration || 'missing'}`)
+              process.exit(1)
+            }
+          }
+          const agent = fs.readFileSync(routes[0].path, 'utf8')
+          if (!agent.includes('Number(body.autonomyLevel)>4') || !agent.includes('level 5 remains disabled')) {
+            console.error('AI agent control must preserve the non-disableable level-5 prohibition and founder approval path.')
+            process.exit(1)
+          }
+          const approval = fs.readFileSync(routes[1].path, 'utf8')
+          for (const decision of ['approved','rejected','changes_requested']) {
+            if (!approval.includes(decision)) {
+              console.error(`AI approval route must preserve governed decision state: ${decision}`)
+              process.exit(1)
+            }
+          }
+          console.log('Privileged AI configuration and approval writes require admin/founder auth, bounded exact-origin JSON, hardened responses, safe logging, governed RPCs, and non-disableable AI safety gates.')
+          NODE
