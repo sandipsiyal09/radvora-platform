@@ -110,8 +110,13 @@ jobs:
               }
               if (depth === 0 && expectKey) {
                 if (/\s|,/.test(ch)) continue
-                const match = objectText.slice(i).match(/^([A-Za-z_$][A-Za-z0-9_$]*)\s*:/)
+                const remainder = objectText.slice(i)
+                const match = remainder.match(/^([A-Za-z_$][A-Za-z0-9_$]*)(\s*:)?/)
                 if (!match) throw new Error(`unable to parse bounded diagnostic key near: ${objectText.slice(i, i + 40)}`)
+                const after = remainder.slice(match[0].length).trimStart()
+                if (!match[2] && !after.startsWith(',') && !after.startsWith('}')) {
+                  throw new Error(`unreviewed shorthand/computed diagnostic property near: ${objectText.slice(i, i + 40)}`)
+                }
                 keys.push(match[1])
                 i += match[0].length - 1
                 expectKey = false
