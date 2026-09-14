@@ -10,6 +10,24 @@ type AgentRow={id:string;name:string;enabled:boolean;autonomy_level:number;allow
 type GuardrailRow={agent_id:string;max_single_spend:number|string|null;max_daily_spend:number|string|null;require_approval_for_external_publish:boolean;require_approval_for_money:boolean;require_approval_for_claims:boolean}
 type ReservationRow={inventory_reserved_quantity:number;orders:{status:string;created_at:string}|null}
 
+function canonicalProductionUrlReady(value:string|undefined){
+  try{
+    const url=new URL(value||'')
+    const hostname=url.hostname.toLowerCase()
+    const isIpLiteral=/^(?:\d{1,3}\.){3}\d{1,3}$/.test(hostname)||hostname.includes(':')
+    return url.protocol==='https:'&&
+      !url.username&&!url.password&&
+      !isIpLiteral&&hostname!=='localhost'&&hostname.endsWith('.')===false&&hostname.includes('.')&&
+      (url.pathname==='/'||url.pathname==='')&&!url.search&&!url.hash&&
+      (url.port===''||url.port==='443')
+  }catch{return false}
+}
+
+function razorpayLiveConfigurationReady(){
+  const keyId=(process.env.RAZORPAY_KEY_ID||'').trim()
+  return /^rzp_live_[A-Za-z0-9]+$/.test(keyId)&&Boolean(process.env.RAZORPAY_KEY_SECRET?.trim()&&process.env.RAZORPAY_WEBHOOK_SECRET?.trim())
+}
+
 export default async function ReadinessPage(){
   const supabase=await createClient()
   const {data:{user}}=await supabase.auth.getUser()
@@ -42,9 +60,9 @@ export default async function ReadinessPage(){
   const activeMissingInventory=catalog.filter(p=>p.status==='active'&&!hasInventory(p))
   const commerceMisconfigured=catalog.filter(p=>p.commerce_enabled===true&&(!sellerProfileReady||p.status!=='active'||p.currency!=='INR'||p.price_inr===null||Number(p.price_inr)<=0||!hasTaxConfig(p)||!hasInventory(p)))
   const staleReservations=((reservationRows||[]) as unknown as ReservationRow[]).filter(row=>row.orders?.status==='pending'&&Date.now()-Date.parse(row.orders.created_at)>60*60*1000)
-  const gatewayReady=Boolean(process.env.RAZORPAY_KEY_ID&&process.env.RAZORPAY_KEY_SECRET&&process.env.RAZORPAY_WEBHOOK_SECRET)
+  const gatewayReady=razorpayLiveConfigurationReady()
   const appUrl=process.env.NEXT_PUBLIC_APP_URL?.trim()||''
-  const canonicalReady=appUrl.startsWith('https://')
+  const canonicalReady=canonicalProductionUrlReady(appUrl)
   const paymentOpsHealthy=(failedWebhooks??0)===0&&(openRefunds??0)===0&&(failedRefunds??0)===0
   const runtimeSchemaReady=!runtimeSchemaError&&String(runtimeSchemaVersion||'')===EXPECTED_RUNTIME_SCHEMA_VERSION
 
@@ -60,7 +78,7 @@ export default async function ReadinessPage(){
   const checks:Check[]=[
     {label:'Runtime database release',ready:runtimeSchemaReady,detail:runtimeSchemaReady?`Database runtime schema matches release ${EXPECTED_RUNTIME_SCHEMA_VERSION}.`:`Database does not report required runtime schema ${EXPECTED_RUNTIME_SCHEMA_VERSION}. Apply and verify all committed migrations before payment activation.`,href:'/api/health'},
     {label:'India seller / invoice identity',ready:sellerProfileReady,detail:sellerProfileReady?'Seller legal name, GSTIN, registered state/address and support email are configured.':'Real India seller/invoice identity is not configured. Enter verified legal/GST data before enabling commerce.',href:'/admin/commerce'},
-    {label:'Indian payment gateway',ready:gatewayReady,detail:gatewayReady?'Razorpay server keys and webhook secret are configured.':'Production Razorpay key ID, key secret and webhook secret are still required.',href:'/api/health'},
+    {label:'Indian payment gateway',ready:gatewayReady,detail:gatewayReady?'Razorpay live server key ID, key secret and webhook secret are configured.':'Production Razorpay live key ID, key secret and webhook secret are still required.',href:'/api/health'},
     {label:'Sellable India catalog',ready:sellable.length>0,detail:sellable.length?`${sellable.length} product${sellable.length===1?'':'s'} enabled with seller identity, approved INR pricing, GST/HSN and available stock.`:'No product is currently fully ready and enabled for India commerce.',href:'/admin/catalog'},
     {label:'Catalog pricing completeness',ready:activeMissingPrice.length===0,detail:activeMissingPrice.length?`${activeMissingPrice.length} active product${activeMissingPrice.length===1?' is':'s are'} still unpriced.`:'All active products have positive prices.',href:'/admin/catalog'},
     {label:'India GST/HSN completeness',ready:activeMissingTax.length===0,detail:activeMissingTax.length?`${activeMissingTax.length} active product${activeMissingTax.length===1?' is':'s are'} missing explicit HSN, GST rate or GST-inclusive/exclusive price treatment.`:'All active products have complete India tax configuration.',href:'/admin/catalog'},
@@ -69,7 +87,7 @@ export default async function ReadinessPage(){
     {label:'Commerce gate consistency',ready:commerceMisconfigured.length===0,detail:commerceMisconfigured.length?'One or more commerce-enabled products fail the seller/active/INR/price/GST/HSN/inventory rules.':'No inconsistent commerce-enabled product records detected.',href:'/admin/catalog'},
     {label:'Payment operations ledger',ready:paymentOpsHealthy,detail:paymentOpsHealthy?'No failed webhook events or unresolved refund attempts are recorded.':`${failedWebhooks??0} failed webhook event${failedWebhooks===1?'':'s'}, ${openRefunds??0} open refund${openRefunds===1?'':'s'}, ${failedRefunds??0} failed refund${failedRefunds===1?'':'s'} require review.`,href:'/admin/operations'},
     {label:'AI autonomy safety',ready:unsafeAgents.length===0,detail:unsafeAgents.length===0?(enabledAgents.length===0?'All autonomous agents are disabled. Money, publishing and claims approval gates remain intact.':`${enabledAgents.length} enabled agent${enabledAgents.length===1?' is':'s are'} within launch guardrails.`):`${unsafeAgents.length} enabled agent${unsafeAgents.length===1?'':'s'} violates launch autonomy/approval guardrails.`,href:'/admin/ai'},
-    {label:'Canonical application URL',ready:canonicalReady,detail:canonicalReady?`HTTPS application URL configured: ${appUrl}`:'NEXT_PUBLIC_APP_URL must be configured to the final HTTPS production domain before launch.'},
+    {label:'Canonical application URL',ready:canonicalReady,detail:canonicalReady?`Canonical HTTPS application origin configured: ${appUrl}`:'NEXT_PUBLIC_APP_URL must be the final canonical HTTPS origin with no credentials, path, query, fragment, non-standard port, localhost, or IP literal before launch.'},
     {label:'Human approval queue',ready:(pendingApprovals??0)===0,detail:(pendingApprovals??0)===0?'No pending human approvals.':`${pendingApprovals??0} human approval${pendingApprovals===1?'':'s'} pending. Sensitive scientific/AI workflows remain gated.`,href:'/admin/ai'},
   ]
   const blockers=checks.filter(check=>!check.ready)
