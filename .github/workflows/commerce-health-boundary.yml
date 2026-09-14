@@ -36,7 +36,7 @@ jobs:
             'Number(product.stock_on_hand)-Number(product.stock_reserved||0)',
             'availableStock!==null&&availableStock>0',
             "const razorpayKeyId=(process.env.RAZORPAY_KEY_ID||'').trim()",
-            "const razorpayLiveKeyReady=razorpayKeyId.startsWith('rzp_live_')",
+            'const razorpayLiveKeyReady=/^rzp_live_[A-Za-z0-9]+$/.test(razorpayKeyId)',
             'const indiaPaymentsConfigured=Boolean(razorpayLiveKeyReady&&process.env.RAZORPAY_KEY_SECRET?.trim()&&process.env.RAZORPAY_WEBHOOK_SECRET?.trim())',
             'commerceEnabledProductsCount===0||(sellerReady===true&&indiaPaymentsConfigured&&completeEnabledCatalog)',
             "india_payments:indiaPaymentsConfigured?'live_configured':razorpayKeyId?'test_or_invalid_key':'not_configured'",
@@ -49,5 +49,9 @@ jobs:
               process.exit(1)
             }
           }
-          console.log('Production health requires every commerce-enabled product to be active, INR-priced, HSN/GST-complete, backed by positive governed available stock, and configured with a Razorpay Live Mode key before reporting commerce ready.')
+          if (/razorpayLiveKeyReady\s*=\s*razorpayKeyId\.startsWith\(['\"]rzp_live_['\"]\)/.test(source)) {
+            console.error('Commerce health must not accept a bare or malformed rzp_live_ prefix as sufficient Live Mode evidence.')
+            process.exit(1)
+          }
+          console.log('Production health requires every commerce-enabled product to be active, INR-priced, HSN/GST-complete, backed by positive governed available stock, and configured with a structurally valid Razorpay Live Mode key before reporting commerce ready.')
           NODE
