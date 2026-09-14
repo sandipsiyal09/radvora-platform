@@ -1,0 +1,69 @@
+name: RADVORA Health Query Timeout Boundary
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  guard-health-query-timeout:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify health database checks are time-bounded and fail closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const path = 'app/api/health/route.ts'
+          const source = fs.readFileSync(path, 'utf8')
+          const required = [
+            'const HEALTH_QUERY_TIMEOUT_MS=8000',
+            'async function withHealthTimeout<T>(operation:PromiseLike<T>):Promise<T>',
+            "new Error('health_query_timeout')",
+            'timeout=setTimeout(',
+            'HEALTH_QUERY_TIMEOUT_MS',
+            'if(timeout) clearTimeout(timeout)',
+            'await withHealthTimeout(Promise.all([',
+            "database:'unavailable_or_schema_mismatch'",
+            "status:503",
+          ]
+          for (const snippet of required) {
+            if (!source.includes(snippet)) {
+              console.error(`Health query timeout boundary is missing: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          const timeoutMatch = source.match(/const HEALTH_QUERY_TIMEOUT_MS=(\d+)/)
+          const timeoutMs = timeoutMatch ? Number(timeoutMatch[1]) : NaN
+          if (!Number.isFinite(timeoutMs) || timeoutMs < 1000 || timeoutMs > 10000) {
+            console.error('Health database timeout must remain between 1s and 10s.')
+            process.exit(1)
+          }
+          const queryBlockStart = source.indexOf('await withHealthTimeout(Promise.all([')
+          const queryBlockEnd = source.indexOf(']))', queryBlockStart)
+          if (queryBlockStart < 0 || queryBlockEnd < queryBlockStart) {
+            console.error('Health database checks must remain wrapped by the timeout boundary.')
+            process.exit(1)
+          }
+          const queryBlock = source.slice(queryBlockStart, queryBlockEnd)
+          for (const requiredQuery of [
+            "supabase.from('products')",
+            "supabase.from('order_items')",
+            "supabase.from('payment_attempts')",
+            "supabase.rpc('server_india_seller_profile_ready')",
+            "supabase.rpc('server_runtime_schema_version')",
+          ]) {
+            if (!queryBlock.includes(requiredQuery)) {
+              console.error(`Timeout boundary does not cover required health query: ${requiredQuery}`)
+              process.exit(1)
+            }
+          }
+          console.log(`Health database checks fail closed within ${timeoutMs}ms.`)
+          NODE
