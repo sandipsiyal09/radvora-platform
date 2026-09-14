@@ -23,4 +23,14 @@ alter table public.payment_attempts
   add constraint payment_attempts_provider_check
   check (provider = 'razorpay');
 
+create or replace function public.server_runtime_schema_version()
+returns text
+language sql
+stable
+security invoker
+set search_path=public,pg_temp
+as $$ select '202609140051'::text; $$;
+revoke all on function public.server_runtime_schema_version() from public,anon,authenticated;
+grant execute on function public.server_runtime_schema_version() to service_role;
+
 commit;
