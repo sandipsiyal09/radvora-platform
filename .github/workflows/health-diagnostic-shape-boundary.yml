@@ -1,0 +1,212 @@
+name: RADVORA Health Diagnostic Shape Boundary
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Keep production health diagnostics bounded
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const source = fs.readFileSync('app/api/health/route.ts', 'utf8')
+
+          const expectedTopLevel = new Set([
+            'service',
+            'status',
+            'release',
+            'missingRuntimeConfig',
+            'checks',
+            'runtimeSchemaVersion',
+            'expectedRuntimeSchemaVersion',
+            'timestamp',
+          ])
+          const requiredTopLevel = new Set([
+            'service',
+            'status',
+            'release',
+            'missingRuntimeConfig',
+            'checks',
+            'expectedRuntimeSchemaVersion',
+            'timestamp',
+          ])
+          const expectedRelease = new Set(['commit', 'ref', 'environment'])
+          const expectedChecks = new Set([
+            'configuration',
+            'release_provenance',
+            'database',
+            'commerce_schema',
+            'commerce_activation',
+            'payment_session_schema',
+            'seller_profile',
+            'runtime_schema_version',
+            'canonical_url',
+            'india_payments',
+          ])
+
+          function matchingBrace(text, start) {
+            let depth = 0
+            let quote = null
+            let escaped = false
+            for (let i = start; i < text.length; i++) {
+              const ch = text[i]
+              if (quote) {
+                if (escaped) escaped = false
+                else if (ch === '\\') escaped = true
+                else if (ch === quote) quote = null
+                continue
+              }
+              if (ch === "'" || ch === '"' || ch === '`') {
+                quote = ch
+                continue
+              }
+              if (ch === '{') depth++
+              else if (ch === '}') {
+                depth--
+                if (depth === 0) return i
+              }
+            }
+            return -1
+          }
+
+          function topLevelKeys(objectText) {
+            if (!objectText.startsWith('{') || !objectText.endsWith('}')) throw new Error('not an object literal')
+            const keys = []
+            let depth = 0
+            let quote = null
+            let escaped = false
+            let expectKey = true
+            for (let i = 1; i < objectText.length - 1; i++) {
+              const ch = objectText[i]
+              if (quote) {
+                if (escaped) escaped = false
+                else if (ch === '\\') escaped = true
+                else if (ch === quote) quote = null
+                continue
+              }
+              if (ch === "'" || ch === '"' || ch === '`') {
+                quote = ch
+                continue
+              }
+              if (ch === '{' || ch === '[' || ch === '(') {
+                depth++
+                continue
+              }
+              if (ch === '}' || ch === ']' || ch === ')') {
+                depth--
+                continue
+              }
+              if (depth === 0 && expectKey) {
+                if (/\s|,/.test(ch)) continue
+                const remainder = objectText.slice(i)
+                const match = remainder.match(/^([A-Za-z_$][A-Za-z0-9_$]*)(\s*:)?/)
+                if (!match) throw new Error(`unable to parse bounded diagnostic key near: ${objectText.slice(i, i + 40)}`)
+                const after = remainder.slice(match[0].length).trimStart()
+                if (!match[2] && !after.startsWith(',') && !after.startsWith('}')) {
+                  throw new Error(`unreviewed shorthand/computed diagnostic property near: ${objectText.slice(i, i + 40)}`)
+                }
+                keys.push(match[1])
+                i += match[0].length - 1
+                expectKey = false
+                continue
+              }
+              if (depth === 0 && ch === ',') expectKey = true
+            }
+            return keys
+          }
+
+          function assertExact(actualKeys, expected, label) {
+            const actual = new Set(actualKeys)
+            const unknown = [...actual].filter(key => !expected.has(key))
+            const missing = [...expected].filter(key => !actual.has(key))
+            if (unknown.length || missing.length || actualKeys.length !== actual.size) {
+              console.error(`${label} shape drifted. unknown=${unknown.join(',') || 'none'} missing=${missing.join(',') || 'none'} duplicates=${actualKeys.length !== actual.size}`)
+              process.exit(1)
+            }
+          }
+
+          const releaseReturn = source.match(/return \{commit:commit\|\|'unknown',ref:ref\|\|'unknown',environment\}/)
+          if (!releaseReturn) {
+            console.error('Health release metadata must remain the reviewed commit/ref/environment shape.')
+            process.exit(1)
+          }
+          assertExact(topLevelKeys(releaseReturn[0].slice('return '.length)), expectedRelease, 'release metadata')
+
+          const marker = "return NextResponse.json({service:'radvora-platform'"
+          let cursor = 0
+          let responseCount = 0
+          while (true) {
+            const start = source.indexOf(marker, cursor)
+            if (start < 0) break
+            const objectStart = source.indexOf('{', start)
+            const objectEnd = matchingBrace(source, objectStart)
+            if (objectEnd < 0) {
+              console.error('Unable to parse health JSON response object.')
+              process.exit(1)
+            }
+            const objectText = source.slice(objectStart, objectEnd + 1)
+            if (!objectText.includes('expectedRuntimeSchemaVersion:EXPECTED_RUNTIME_SCHEMA_VERSION')) {
+              cursor = objectEnd + 1
+              continue
+            }
+
+            responseCount++
+            const keys = topLevelKeys(objectText)
+            const keySet = new Set(keys)
+            const unknownTopLevel = keys.filter(key => !expectedTopLevel.has(key))
+            const missingTopLevel = [...requiredTopLevel].filter(key => !keySet.has(key))
+            if (unknownTopLevel.length || missingTopLevel.length || keys.length !== keySet.size) {
+              console.error(`Health diagnostic top-level shape drifted. unknown=${unknownTopLevel.join(',') || 'none'} missing=${missingTopLevel.join(',') || 'none'} duplicates=${keys.length !== keySet.size}`)
+              process.exit(1)
+            }
+
+            const checksStartMarker = 'checks:{'
+            const checksMarkerIndex = objectText.indexOf(checksStartMarker)
+            if (checksMarkerIndex < 0) {
+              console.error('Health diagnostic response is missing the bounded checks object.')
+              process.exit(1)
+            }
+            const checksStart = objectText.indexOf('{', checksMarkerIndex)
+            const checksEnd = matchingBrace(objectText, checksStart)
+            if (checksEnd < 0) {
+              console.error('Unable to parse health checks object.')
+              process.exit(1)
+            }
+            assertExact(topLevelKeys(objectText.slice(checksStart, checksEnd + 1)), expectedChecks, 'health checks')
+            cursor = objectEnd + 1
+          }
+
+          if (responseCount !== 5) {
+            console.error(`Expected exactly five reviewed health diagnostic response variants; found ${responseCount}.`)
+            process.exit(1)
+          }
+
+          const forbiddenResponseMaterial = [
+            'SUPABASE_SERVICE_ROLE_KEY:',
+            'RAZORPAY_KEY_SECRET:',
+            'RAZORPAY_WEBHOOK_SECRET:',
+            'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:',
+            'NEXT_PUBLIC_SUPABASE_URL:',
+            'NEXT_PUBLIC_APP_URL:',
+          ]
+          for (const forbidden of forbiddenResponseMaterial) {
+            if (source.includes(forbidden)) {
+              console.error(`Health route must never serialize runtime configuration values: ${forbidden}`)
+              process.exit(1)
+            }
+          }
+
+          console.log('Health diagnostics remain bounded to reviewed top-level, release, and check-state fields with no runtime configuration values serialized.')
+          NODE
