@@ -3,27 +3,43 @@ import { createClient } from '../../../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 
 export const runtime='nodejs'
+export const maxDuration=10
 const MAX_BODY_BYTES=2048
+const PROVIDER_DEADLINE_MS=8000
 const UUID_PATTERN=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const RESPONSE_HEADERS={
+  'Cache-Control':'no-store',
+  'Pragma':'no-cache',
+  'X-Content-Type-Options':'nosniff',
+  'X-Frame-Options':'DENY',
+  'Referrer-Policy':'no-referrer',
+  'Cross-Origin-Resource-Policy':'same-origin',
+  'Permissions-Policy':'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+} as const
 
 type Body={reason?:string}
 type Params={params:Promise<{id:string}>}
 type ProviderRefund={id?:string;payment_id?:string;amount?:number;currency?:string;status?:string;notes?:Record<string,unknown>}
 
-function json(body:Record<string,unknown>,status=200){return NextResponse.json(body,{status,headers:{'Cache-Control':'no-store'}})}
-
+function json(body:Record<string,unknown>,status=200){return NextResponse.json(body,{status,headers:RESPONSE_HEADERS})}
+function isProductionRuntime(){return process.env.VERCEL_ENV==='production'||(process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV)}
+function isSafeProductionOrigin(url:URL){
+  const hostname=url.hostname.toLowerCase()
+  const isIpLiteral=/^(?:\d{1,3}\.){3}\d{1,3}$/.test(hostname)||hostname.includes(':')
+  return url.protocol==='https:'&&!url.username&&!url.password&&!isIpLiteral&&hostname!=='localhost'&&!hostname.endsWith('.')&&hostname.includes('.')&&(url.pathname==='/'||url.pathname==='')&&!url.search&&!url.hash&&(url.port===''||url.port==='443')
+}
 function canonicalOrigin(request:Request){
   const configured=process.env.NEXT_PUBLIC_APP_URL?.trim()
   if(configured){
     try{
       const url=new URL(configured)
+      if(isProductionRuntime())return isSafeProductionOrigin(url)?url.origin:null
       if(url.protocol==='https:'||url.hostname==='localhost')return url.origin
     }catch{
-      // Production refund operations must fail closed below rather than trusting request.url.
+      // Production refund operations must fail closed instead of trusting request.url.
     }
   }
-  if(process.env.VERCEL_ENV==='production')return null
-  if(process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV)return null
+  if(isProductionRuntime())return null
   try{
     const url=new URL(request.url)
     return url.protocol==='https:'||url.hostname==='localhost'?url.origin:null
@@ -33,12 +49,17 @@ function canonicalOrigin(request:Request){
 function boundary(request:Request,canonical:string){
   if(request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site') return json({error:'Cross-site refund requests are not allowed.'},403)
   const rawLength=request.headers.get('content-length')
-  if(rawLength&&Number(rawLength)>MAX_BODY_BYTES) return json({error:'Refund request is too large.'},413)
+  if(rawLength){
+    const declaredLength=Number(rawLength)
+    if(!Number.isSafeInteger(declaredLength)||declaredLength<0) return json({error:'Invalid refund request length.'},400)
+    if(declaredLength>MAX_BODY_BYTES) return json({error:'Refund request is too large.'},413)
+  }
   if(!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) return json({error:'Unsupported refund media type.'},415)
   const origin=request.headers.get('origin')
   if(!origin) return json({error:'Invalid refund request origin.'},403)
   try{
     const supplied=new URL(origin).origin
+    if(isProductionRuntime())return supplied===canonical?null:json({error:'Invalid refund request origin.'},403)
     const requestOrigin=new URL(request.url).origin
     if(supplied!==requestOrigin&&supplied!==canonical) return json({error:'Invalid refund request origin.'},403)
   }catch{return json({error:'Invalid refund request origin.'},403)}
@@ -76,10 +97,13 @@ export async function POST(request:Request,{params}:Params){
   const {id:orderId}=await params
   if(!UUID_PATTERN.test(orderId)) return json({error:'Order not found.'},404)
 
-  const rawBytes=await request.arrayBuffer()
+  let rawBytes:ArrayBuffer
+  try{rawBytes=await request.arrayBuffer()}catch{return json({error:'Unable to read refund request.'},400)}
   if(rawBytes.byteLength>MAX_BODY_BYTES) return json({error:'Refund request is too large.'},413)
-  let body:Body
-  try{body=JSON.parse(Buffer.from(rawBytes).toString('utf8')) as Body}catch{return json({error:'Invalid refund request.'},400)}
+  let parsed:unknown
+  try{parsed=JSON.parse(Buffer.from(rawBytes).toString('utf8'))}catch{return json({error:'Invalid refund request.'},400)}
+  if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)) return json({error:'Invalid refund request.'},400)
+  const body=parsed as Body
   const reason=typeof body.reason==='string'?body.reason.trim().slice(0,500):''
   if(reason.length<5) return json({error:'Enter a refund reason of at least 5 characters.'},400)
 
@@ -109,7 +133,7 @@ export async function POST(request:Request,{params}:Params){
     }).select('id,status,provider_refund_id,amount,currency,reason,submission_started_at').single()
     if(error||!data){
       if(error?.code==='23505') return json({error:'A refund is already being processed for this order.'},409)
-      console.error('refund_attempt_create_failed',error)
+      console.error('refund_attempt_create_failed')
       return json({error:'Unable to initialize the refund safely.'},500)
     }
     refundAttempt=data
@@ -118,10 +142,12 @@ export async function POST(request:Request,{params}:Params){
   const amountPaise=Math.round(Number(order.total)*100)
   if(!Number.isSafeInteger(amountPaise)||amountPaise<=0) return json({error:'Refund amount is invalid.'},409)
   const auth=Buffer.from(`${keyId}:${keySecret}`).toString('base64')
+  const providerAbort=new AbortController()
+  const providerTimeout=setTimeout(()=>providerAbort.abort(),PROVIDER_DEADLINE_MS)
 
   try{
     const listResponse=await fetch(`https://api.razorpay.com/v1/payments/${encodeURIComponent(payment.provider_payment_id)}/refunds?count=100`,{
-      headers:{Authorization:`Basic ${auth}`},cache:'no-store'
+      headers:{Authorization:`Basic ${auth}`},cache:'no-store',signal:providerAbort.signal
     })
     if(listResponse.ok){
       const listBody=await listResponse.json() as {items?:ProviderRefund[]}
@@ -136,7 +162,7 @@ export async function POST(request:Request,{params}:Params){
           p_refund_attempt_id:refundAttempt.id,p_provider_refund_id:matched.id||'',p_status:providerStatus,p_failure_code:null
         })
         if(reconcileError){
-          console.error('razorpay_existing_refund_reconcile_failed',reconcileError)
+          console.error('razorpay_existing_refund_reconcile_failed')
           return json({error:'An existing provider refund was found but local reconciliation is pending. Do not issue another refund.'},502)
         }
         return json({ok:true,orderId,refundAttemptId:refundAttempt.id,status:providerStatus,reconciled:true})
@@ -147,7 +173,7 @@ export async function POST(request:Request,{params}:Params){
 
     const {data:claimed,error:claimError}=await admin.rpc('claim_razorpay_refund_submission',{p_refund_attempt_id:refundAttempt.id})
     if(claimError){
-      console.error('razorpay_refund_claim_failed',claimError)
+      console.error('razorpay_refund_claim_failed')
       return json({error:'Unable to claim the refund request safely.'},500)
     }
     if(claimed!==true) return json({error:'This refund is already being submitted or processed. No second refund was sent.'},409)
@@ -156,7 +182,7 @@ export async function POST(request:Request,{params}:Params){
       method:'POST',
       headers:{Authorization:`Basic ${auth}`,'Content-Type':'application/json'},
       body:JSON.stringify({amount:amountPaise,notes:{radvora_order_id:orderId,refund_attempt_id:refundAttempt.id,reason:refundAttempt.reason}}),
-      cache:'no-store'
+      cache:'no-store',signal:providerAbort.signal
     })
     const providerBody=await providerResponse.json() as ProviderRefund
 
@@ -181,13 +207,15 @@ export async function POST(request:Request,{params}:Params){
       p_failure_code:null
     })
     if(finalizeError){
-      console.error('razorpay_refund_record_failed',finalizeError)
+      console.error('razorpay_refund_record_failed')
       return json({error:'Refund was accepted by the provider but local reconciliation is pending. Do not issue another refund.'},502)
     }
 
     return json({ok:true,orderId,refundAttemptId:refundAttempt.id,status:providerStatus})
-  }catch(error){
-    console.error('razorpay_refund_request_failed',error)
+  }catch{
+    console.error('razorpay_refund_request_failed')
     return json({error:'Refund status is uncertain because the provider could not be reached. Retry this same order later; the server will reconcile provider state before sending another request.'},502)
+  }finally{
+    clearTimeout(providerTimeout)
   }
 }

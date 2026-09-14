@@ -1,0 +1,97 @@
+name: RADVORA Admin Refund Boundary
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  admin-refund-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Guard privileged Razorpay refund runtime boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const routePath = 'app/api/admin/orders/[id]/refund/route.ts'
+          const source = fs.readFileSync(routePath, 'utf8')
+          const required = [
+            "export const runtime='nodejs'",
+            'export const maxDuration=10',
+            'const PROVIDER_DEADLINE_MS=8000',
+            "'Cache-Control':'no-store'",
+            "'Pragma':'no-cache'",
+            "'X-Content-Type-Options':'nosniff'",
+            "'X-Frame-Options':'DENY'",
+            "'Referrer-Policy':'no-referrer'",
+            "'Cross-Origin-Resource-Policy':'same-origin'",
+            "'Permissions-Policy':'camera=(), microphone=(), geolocation=(), payment=(), usb=()'",
+            "request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site'",
+            "if(!Number.isSafeInteger(declaredLength)||declaredLength<0)",
+            'if(declaredLength>MAX_BODY_BYTES)',
+            "if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))",
+            'NEXT_PUBLIC_APP_URL',
+            "process.env.VERCEL_ENV==='production'",
+            "process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV",
+            "url.protocol==='https:'&&!url.username&&!url.password",
+            "hostname!=='localhost'",
+            "!hostname.endsWith('.')",
+            "hostname.includes('.')",
+            "(url.pathname==='/'||url.pathname==='')",
+            '!url.search',
+            '!url.hash',
+            "(url.port===''||url.port==='443')",
+            'supabase.auth.getUser()',
+            "role!=='admin'&&role!=='founder'",
+            ".eq('provider','razorpay')",
+            'claim_razorpay_refund_submission',
+            'finalize_razorpay_refund',
+            'const providerAbort=new AbortController()',
+            'setTimeout(()=>providerAbort.abort(),PROVIDER_DEADLINE_MS)',
+            'signal:providerAbort.signal',
+            'clearTimeout(providerTimeout)',
+            "console.error('refund_attempt_create_failed')",
+            "console.error('razorpay_existing_refund_reconcile_failed')",
+            "console.error('razorpay_refund_claim_failed')",
+            "console.error('razorpay_refund_record_failed')",
+            "console.error('razorpay_refund_request_failed')",
+          ]
+          for (const snippet of required) {
+            if (!source.includes(snippet)) {
+              console.error(`Admin refund boundary is missing required control: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          const forbidden = [
+            "console.error('refund_attempt_create_failed',error)",
+            "console.error('razorpay_existing_refund_reconcile_failed',reconcileError)",
+            "console.error('razorpay_refund_claim_failed',claimError)",
+            "console.error('razorpay_refund_record_failed',finalizeError)",
+            "console.error('razorpay_refund_request_failed',error)",
+          ]
+          for (const snippet of forbidden) {
+            if (source.includes(snippet)) {
+              console.error(`Admin refund logging/runtime boundary regressed: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          const maxDuration = Number(source.match(/export const maxDuration\s*=\s*(\d+)/)?.[1] || 0)
+          const providerDeadline = Number(source.match(/PROVIDER_DEADLINE_MS\s*=\s*(\d+)/)?.[1] || 0)
+          if (maxDuration < 1 || maxDuration > 15) {
+            console.error(`Admin refund maxDuration must remain bounded to 1-15 seconds; found ${maxDuration || 'missing'}`)
+            process.exit(1)
+          }
+          if (providerDeadline < 1000 || providerDeadline >= maxDuration * 1000) {
+            console.error(`Razorpay refund deadline must be at least 1s and below maxDuration; found ${providerDeadline || 'missing'}ms`)
+            process.exit(1)
+          }
+          console.log('Privileged refunds require admin/founder auth, exact production origin, Razorpay-only provider state, bounded provider calls, safe request parsing/logging, and hardened responses.')
+          NODE
