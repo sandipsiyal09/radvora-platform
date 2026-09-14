@@ -26,8 +26,9 @@ jobs:
           const required = [
             "status:'method_not_allowed'",
             'status:405',
-            "Allow:'GET, HEAD'",
-            "headers:{...responseHeaders(),Allow:'GET, HEAD'}",
+            "Allow:'GET'",
+            "headers:{...responseHeaders(),Allow:'GET'}",
+            'export const HEAD=methodNotAllowed',
             'export const POST=methodNotAllowed',
             'export const PUT=methodNotAllowed',
             'export const PATCH=methodNotAllowed',
@@ -40,9 +41,9 @@ jobs:
               process.exit(1)
             }
           }
-          if (/Allow\s*:\s*['\"](?:[^'\"]*,\s*)?(POST|PUT|PATCH|DELETE|OPTIONS)/i.test(source)) {
-            console.error('Health endpoint must not advertise a state-changing method.')
+          if (/Allow\s*:\s*['\"][^'\"]*(HEAD|POST|PUT|PATCH|DELETE|OPTIONS)/i.test(source)) {
+            console.error('Health endpoint must advertise GET only.')
             process.exit(1)
           }
-          console.log('Health endpoint unsupported methods fail closed with hardened response headers.')
+          console.log('Health endpoint exposes GET only; HEAD and state-changing/negotiation methods fail closed with hardened response headers.')
           NODE
