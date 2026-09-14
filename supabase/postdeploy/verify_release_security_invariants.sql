@@ -109,7 +109,6 @@ payment_provider_constraint as (
     and c.contype = 'c'
     and c.conname = 'payment_attempts_provider_check'
     and pg_get_constraintdef(c.oid) ilike '%provider = ''razorpay''%'
-    and pg_get_constraintdef(c.oid) not ilike '%stripe%'
 ),
 payment_provider_rows as (
   select count(*) as non_razorpay_rows
