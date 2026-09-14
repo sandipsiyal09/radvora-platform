@@ -41,6 +41,10 @@ jobs:
 
           const routeRequired = [
             'MAX_BODY_BYTES=256*1024',
+            "request.headers.get('content-type')?.toLowerCase()||''",
+            "contentType.startsWith('application/json')",
+            "request.headers.get('x-razorpay-signature')",
+            "/^[0-9a-f]{64}$/i.test(signature)",
             "request.headers.get('x-razorpay-event-id')",
             "createHmac('sha256',secret).update(rawBuffer).digest('hex')",
             'timingSafeEqual(a,b)',
@@ -54,12 +58,16 @@ jobs:
             }
           }
 
+          const mediaTypeIndex = route.indexOf("contentType.startsWith('application/json')")
+          const signatureShapeIndex = route.indexOf('/^[0-9a-f]{64}$/i.test(signature)')
+          const bodyReadIndex = route.indexOf('request.arrayBuffer()')
           const hmacIndex = route.indexOf("createHmac('sha256',secret).update(rawBuffer).digest('hex')")
           const parseIndex = route.indexOf('JSON.parse(rawBuffer.toString')
-          if (hmacIndex < 0 || parseIndex < 0 || hmacIndex > parseIndex) {
-            console.error('Webhook raw-body HMAC verification must happen before JSON parsing.')
+          if (mediaTypeIndex < 0 || signatureShapeIndex < 0 || bodyReadIndex < 0 || hmacIndex < 0 || parseIndex < 0 ||
+              mediaTypeIndex > bodyReadIndex || signatureShapeIndex > bodyReadIndex || hmacIndex > parseIndex) {
+            console.error('Webhook route must reject invalid media/signature shape before body work and verify raw-body HMAC before JSON parsing.')
             process.exit(1)
           }
 
-          console.log('Razorpay webhook requires JSON, a SHA-256 hex signature shape, bounded raw bodies, raw-body HMAC verification, and event-id replay protection.')
+          console.log('Razorpay webhook enforces JSON and SHA-256 signature shape in both proxy and route, plus bounded raw-body HMAC verification and event-id replay protection.')
           NODE
