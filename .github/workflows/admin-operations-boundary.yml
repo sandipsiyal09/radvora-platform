@@ -1,0 +1,85 @@
+name: RADVORA Admin Operations Boundary
+
+on:
+  pull_request:
+    paths:
+      - 'app/api/admin/operations/transition/route.ts'
+      - '.github/workflows/admin-operations-boundary.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/api/admin/operations/transition/route.ts'
+      - '.github/workflows/admin-operations-boundary.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  admin-operations-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Guard privileged operations runtime boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const routePath = 'app/api/admin/operations/transition/route.ts'
+          const source = fs.readFileSync(routePath, 'utf8')
+          const required = [
+            "export const runtime='nodejs'",
+            'export const maxDuration=10',
+            "'Cache-Control':'no-store'",
+            "'Pragma':'no-cache'",
+            "'X-Content-Type-Options':'nosniff'",
+            "'X-Frame-Options':'DENY'",
+            "'Referrer-Policy':'no-referrer'",
+            "'Cross-Origin-Resource-Policy':'same-origin'",
+            "'Permissions-Policy':'camera=(), microphone=(), geolocation=(), payment=(), usb=()'",
+            "request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site'",
+            'NEXT_PUBLIC_APP_URL',
+            "process.env.VERCEL_ENV==='production'",
+            "process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV",
+            "url.protocol==='https:'&&!url.username&&!url.password",
+            "hostname!=='localhost'",
+            "!hostname.endsWith('.')",
+            "hostname.includes('.')",
+            "(url.pathname==='/'||url.pathname==='')",
+            '!url.search',
+            '!url.hash',
+            "(url.port===''||url.port==='443')",
+            '!Number.isSafeInteger(declaredLength)',
+            'declaredLength<0',
+            'request.arrayBuffer()',
+            "typeof parsed!=='object'||Array.isArray(parsed)",
+            'supabase.auth.getUser()',
+            "role!=='admin'&&role!=='founder'",
+            'server_transition_order_fulfillment',
+            'server_transition_support_ticket',
+            'server_transition_warranty_claim',
+            "console.error('server_fulfillment_transition_failed')",
+            "console.error('server_support_transition_failed')",
+            "console.error('server_warranty_transition_failed')",
+          ]
+          for (const snippet of required) {
+            if (!source.includes(snippet)) {
+              console.error(`Admin operations boundary is missing required control: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          if (source.includes("console.error('server_fulfillment_transition_failed',error)") ||
+              source.includes("console.error('server_support_transition_failed',error)") ||
+              source.includes("console.error('server_warranty_transition_failed',error)")) {
+            console.error('Privileged operations must not log raw caught database errors.')
+            process.exit(1)
+          }
+          const maxDuration = Number(source.match(/export const maxDuration\s*=\s*(\d+)/)?.[1] || 0)
+          if (maxDuration < 1 || maxDuration > 15) {
+            console.error(`Admin operations maxDuration must remain bounded to 1-15 seconds; found ${maxDuration || 'missing'}`)
+            process.exit(1)
+          }
+          console.log('Privileged operations require admin/founder auth, exact production origin, bounded validated JSON, hardened responses, safe logging, and governed transition RPCs.')
+          NODE
