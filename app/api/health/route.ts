@@ -104,10 +104,11 @@ export async function GET(request:Request){
 function methodNotAllowed(){
   return NextResponse.json(
     {service:'radvora-platform',status:'method_not_allowed'},
-    {status:405,headers:{...responseHeaders(),Allow:'GET, HEAD'}},
+    {status:405,headers:{...responseHeaders(),Allow:'GET'}},
   )
 }
 
+export const HEAD=methodNotAllowed
 export const POST=methodNotAllowed
 export const PUT=methodNotAllowed
 export const PATCH=methodNotAllowed
