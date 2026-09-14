@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '../../../lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+export const maxDuration = 10
 
 const SERIAL_PATTERN = /^[A-Z0-9][A-Z0-9-]{4,63}$/
 const WINDOW_MS = 10 * 60 * 1000
@@ -99,7 +101,18 @@ function invalidOrigin(request: NextRequest, canonical: string) {
 }
 
 function response(body: Record<string, unknown>, status: number) {
-  return NextResponse.json(body, { status, headers: { 'Cache-Control': 'no-store' } })
+  return NextResponse.json(body, {
+    status,
+    headers: {
+      'Cache-Control': 'no-store, max-age=0',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'X-Content-Type-Options': 'nosniff',
+      'Referrer-Policy': 'no-referrer',
+      'Cross-Origin-Resource-Policy': 'same-origin',
+      'X-Robots-Tag': 'noindex, nofollow, noarchive',
+    },
+  })
 }
 
 export async function POST(request: NextRequest) {
@@ -108,7 +121,15 @@ export async function POST(request: NextRequest) {
   if (invalidOrigin(request, expectedOrigin)) return response({ error: 'Invalid verification origin.' }, 403)
 
   const rawLength = request.headers.get('content-length')
-  if (rawLength && Number(rawLength) > MAX_BODY_BYTES) return response({ error: 'Verification request is too large.' }, 413)
+  if (rawLength) {
+    const declaredLength = Number(rawLength)
+    if (!Number.isFinite(declaredLength) || declaredLength < 0) {
+      return response({ error: 'Invalid request.' }, 400)
+    }
+    if (declaredLength > MAX_BODY_BYTES) {
+      return response({ error: 'Verification request is too large.' }, 413)
+    }
+  }
 
   if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) {
     return response({ error: 'Invalid request.' }, 415)
@@ -125,12 +146,16 @@ export async function POST(request: NextRequest) {
   }
   if (Buffer.byteLength(rawBody, 'utf8') > MAX_BODY_BYTES) return response({ error: 'Verification request is too large.' }, 413)
 
-  let body: Record<string, unknown>
+  let parsedBody: unknown
   try {
-    body = JSON.parse(rawBody)
+    parsedBody = JSON.parse(rawBody)
   } catch {
     return response({ error: 'Invalid request.' }, 400)
   }
+  if (!parsedBody || typeof parsedBody !== 'object' || Array.isArray(parsedBody)) {
+    return response({ error: 'Invalid request.' }, 400)
+  }
+  const body = parsedBody as Record<string, unknown>
 
   const serial = typeof body.serial === 'string' ? body.serial.trim().toUpperCase() : ''
   if (!SERIAL_PATTERN.test(serial)) return response({ error: 'Enter a valid RADVORA serial.' }, 400)
@@ -146,7 +171,8 @@ export async function POST(request: NextRequest) {
     if (error) throw error
     return response({ result: data ?? null }, 200)
   } catch (error) {
-    console.error('product_verification_failed', error)
+    const errorName = error instanceof Error ? error.name : 'unknown_error'
+    console.error('product_verification_failed', { component: 'product_verification', errorName })
     return response({ error: 'Verification is temporarily unavailable. Please try again shortly.' }, 500)
   }
 }

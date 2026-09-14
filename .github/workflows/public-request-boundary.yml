@@ -74,9 +74,25 @@ jobs:
               raise SystemExit('business lead anti-abuse controls regressed')
 
           verification = routes[1].read_text()
-          for needle in ['MAX_ATTEMPTS', 'isRateLimited', 'SERIAL_PATTERN']:
-              if needle not in verification:
-                  raise SystemExit(f'product verification anti-enumeration control regressed: {needle}')
+          verification_required = [
+              'MAX_ATTEMPTS',
+              'isRateLimited',
+              'SERIAL_PATTERN',
+              "export const runtime = 'nodejs'",
+              "export const maxDuration = 10",
+              "Number.isFinite(declaredLength)",
+              "Array.isArray(parsedBody)",
+              "'X-Content-Type-Options': 'nosniff'",
+              "'Referrer-Policy': 'no-referrer'",
+              "'Cross-Origin-Resource-Policy': 'same-origin'",
+              "'X-Robots-Tag': 'noindex, nofollow, noarchive'",
+              "console.error('product_verification_failed', { component: 'product_verification', errorName })",
+          ]
+          missing_verification = [needle for needle in verification_required if needle not in verification]
+          if missing_verification:
+              raise SystemExit(f'product verification hardened runtime/request boundary regressed: {missing_verification}')
+          if "console.error('product_verification_failed', error)" in verification:
+              raise SystemExit('product verification logging regressed to raw error-object output')
 
           print('Public request boundaries are guarded.')
           PY
