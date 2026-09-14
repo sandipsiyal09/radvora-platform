@@ -37,6 +37,10 @@ jobs:
             'customer_rpc_anon_execute_count = 0',
             'customer_rpc_missing_authenticated_execute_count = 0',
             'legacy_privileged_rpc_authenticated_execute_count = 0',
+            'razorpay_only_payment_provider_constraint_count = 1',
+            'non_razorpay_payment_attempt_count = 0',
+            "c.conname = 'payment_attempts_provider_check'",
+            "provider <> 'razorpay'",
             "'checkout_active_cart_india'",
             "'register_product_serial'",
             "'submit_support_ticket'",
@@ -67,5 +71,5 @@ jobs:
               process.exit(1)
             }
           }
-          console.log('Release security invariant verifier is present, fail-closed, and read-only.')
+          console.log('Release security invariant verifier is present, fail-closed, Razorpay-only, and read-only.')
           NODE
