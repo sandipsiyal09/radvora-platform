@@ -3,25 +3,42 @@ import { createClient } from '../../../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 
 export const runtime='nodejs'
+export const maxDuration=10
+const PROVIDER_DEADLINE_MS=8000
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const RESPONSE_HEADERS={
+  'Cache-Control':'no-store',
+  'Pragma':'no-cache',
+  'X-Content-Type-Options':'nosniff',
+  'X-Frame-Options':'DENY',
+  'Referrer-Policy':'no-referrer',
+  'Cross-Origin-Resource-Policy':'same-origin',
+  'Permissions-Policy':'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+} as const
 
 type Params={params:Promise<{id:string}>}
 type Link={id?:string;status?:string;amount?:number;amount_paid?:number;currency?:string;reference_id?:string;expire_by?:number;order_id?:string;short_url?:string;notes?:Record<string,unknown>}
 type Payment={id?:string;order_id?:string;amount?:number;currency?:string;status?:string}
 
-function json(body:Record<string,unknown>,status=200){return NextResponse.json(body,{status,headers:{'Cache-Control':'no-store'}})}
+function json(body:Record<string,unknown>,status=200){return NextResponse.json(body,{status,headers:RESPONSE_HEADERS})}
+function isProductionRuntime(){return process.env.VERCEL_ENV==='production'||(process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV)}
+function isSafeProductionOrigin(url:URL){
+  const hostname=url.hostname.toLowerCase()
+  const isIpLiteral=/^(?:\d{1,3}\.){3}\d{1,3}$/.test(hostname)||hostname.includes(':')
+  return url.protocol==='https:'&&!url.username&&!url.password&&!isIpLiteral&&hostname!=='localhost'&&!hostname.endsWith('.')&&hostname.includes('.')&&(url.pathname==='/'||url.pathname==='')&&!url.search&&!url.hash&&(url.port===''||url.port==='443')
+}
 function canonicalOrigin(request:Request){
   const configured=process.env.NEXT_PUBLIC_APP_URL?.trim()
   if(configured){
     try{
       const url=new URL(configured)
+      if(isProductionRuntime())return isSafeProductionOrigin(url)?url.origin:null
       if(url.protocol==='https:'||url.hostname==='localhost')return url.origin
     }catch{
-      // Production payment operations must fail closed below rather than trusting request.url.
+      // Production payment operations must fail closed rather than trusting request.url.
     }
   }
-  if(process.env.VERCEL_ENV==='production')return null
-  if(process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV)return null
+  if(isProductionRuntime())return null
   try{
     const url=new URL(request.url)
     return url.protocol==='https:'||url.hostname==='localhost'?url.origin:null
@@ -30,7 +47,21 @@ function canonicalOrigin(request:Request){
 function invalidOrigin(request:Request,canonical:string){
   if(request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site')return true
   const origin=request.headers.get('origin');if(!origin)return true
-  try{const supplied=new URL(origin).origin;const requestOrigin=new URL(request.url).origin;return supplied!==requestOrigin&&supplied!==canonical}catch{return true}
+  try{
+    const supplied=new URL(origin).origin
+    if(isProductionRuntime())return supplied!==canonical
+    const requestOrigin=new URL(request.url).origin
+    return supplied!==requestOrigin&&supplied!==canonical
+  }catch{return true}
+}
+async function providerFetch(url:string,auth:string){
+  const providerAbort=new AbortController()
+  const providerTimeout=setTimeout(()=>providerAbort.abort(),PROVIDER_DEADLINE_MS)
+  try{
+    return await fetch(url,{headers:{Authorization:`Basic ${auth}`},cache:'no-store',signal:providerAbort.signal})
+  }finally{
+    clearTimeout(providerTimeout)
+  }
 }
 
 export async function POST(request:Request,{params}:Params){
@@ -51,11 +82,11 @@ export async function POST(request:Request,{params}:Params){
   try{
     let link:Link|null=null
     if(attempt.provider_session_id){
-      const response=await fetch(`https://api.razorpay.com/v1/payment_links/${encodeURIComponent(attempt.provider_session_id)}`,{headers:{Authorization:`Basic ${auth}`},cache:'no-store'})
+      const response=await providerFetch(`https://api.razorpay.com/v1/payment_links/${encodeURIComponent(attempt.provider_session_id)}`,auth)
       if(!response.ok)throw new Error(`Payment Link fetch failed (${response.status})`)
       link=await response.json() as Link
     }else{
-      const response=await fetch(`https://api.razorpay.com/v1/payment_links/?reference_id=${encodeURIComponent(attempt.id)}`,{headers:{Authorization:`Basic ${auth}`},cache:'no-store'})
+      const response=await providerFetch(`https://api.razorpay.com/v1/payment_links/?reference_id=${encodeURIComponent(attempt.id)}`,auth)
       if(!response.ok)throw new Error(`Payment Link reference lookup failed (${response.status})`)
       const body=await response.json() as {payment_links?:Link[]};link=(body.payment_links||[]).find(item=>item.reference_id===attempt.id)||null
       if(!link)return json({ok:true,status:'not_found',detail:'No Razorpay Payment Link exists for this attempt reference. No payment or inventory state was changed.'})
@@ -80,7 +111,7 @@ export async function POST(request:Request,{params}:Params){
     }
     if(link.status==='paid'){
       if(link.amount_paid!==expectedPaise||!link.order_id)return json({error:'Paid Payment Link amount or provider order is invalid.'},409)
-      const paymentsResponse=await fetch(`https://api.razorpay.com/v1/orders/${encodeURIComponent(link.order_id)}/payments`,{headers:{Authorization:`Basic ${auth}`},cache:'no-store'})
+      const paymentsResponse=await providerFetch(`https://api.razorpay.com/v1/orders/${encodeURIComponent(link.order_id)}/payments`,auth)
       if(!paymentsResponse.ok)throw new Error(`Provider payments fetch failed (${paymentsResponse.status})`)
       const paymentsBody=await paymentsResponse.json() as {items?:Payment[]}
       const captured=(paymentsBody.items||[]).filter(payment=>payment.order_id===link!.order_id&&payment.status==='captured'&&payment.amount===expectedPaise&&String(payment.currency||'').toUpperCase()==='INR')
@@ -96,5 +127,8 @@ export async function POST(request:Request,{params}:Params){
       return json({ok:true,status:'paid',detail:'Provider-paid session reconciled against a unique captured payment.'})
     }
     return json({error:`Unsupported provider session status: ${String(link.status||'unknown')}`},409)
-  }catch(error){console.error('admin_payment_reconciliation_failed',error);return json({error:'Unable to reconcile the provider payment session safely.'},502)}
+  }catch{
+    console.error('admin_payment_reconciliation_failed')
+    return json({error:'Unable to reconcile the provider payment session safely.'},502)
+  }
 }
