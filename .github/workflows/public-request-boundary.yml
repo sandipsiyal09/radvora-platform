@@ -54,6 +54,22 @@ jobs:
                   raise SystemExit(f'{route}: production canonical origin regressed to request-host fallback')
 
           lead = routes[0].read_text()
+          lead_required = [
+              "export const runtime = 'nodejs'",
+              "export const maxDuration = 10",
+              "Number.isFinite(declaredLength)",
+              "Array.isArray(parsedBody)",
+              "'X-Content-Type-Options': 'nosniff'",
+              "'Referrer-Policy': 'no-referrer'",
+              "'Cross-Origin-Resource-Policy': 'same-origin'",
+              "'X-Robots-Tag': 'noindex, nofollow, noarchive'",
+              "console.error('business_lead_submission_failed', { component: 'leads', errorName })",
+          ]
+          missing_lead = [needle for needle in lead_required if needle not in lead]
+          if missing_lead:
+              raise SystemExit(f'business lead hardened runtime/response boundary regressed: {missing_lead}')
+          if "console.error('business_lead_submission_failed', error)" in lead:
+              raise SystemExit('business lead logging regressed to raw error-object output')
           if "clean(body.website, 200)" not in lead or "(count ?? 0) >= 3" not in lead:
               raise SystemExit('business lead anti-abuse controls regressed')
 
