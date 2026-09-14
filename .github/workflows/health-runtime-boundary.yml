@@ -1,0 +1,30 @@
+name: Health Runtime Boundary
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require Node.js runtime for privileged health route
+        shell: bash
+        run: |
+          set -euo pipefail
+          route='app/api/health/route.ts'
+          test -f "$route"
+          grep -Eq "^export const runtime=['\"]nodejs['\"]$" "$route" || {
+            echo 'Production /api/health must remain explicitly pinned to the Node.js runtime.' >&2
+            exit 1
+          }
+          if grep -Eq "^export const runtime=['\"]edge['\"]$" "$route"; then
+            echo 'Production /api/health must never run in the Edge runtime because it uses privileged server-only database access.' >&2
+            exit 1
+          fi
