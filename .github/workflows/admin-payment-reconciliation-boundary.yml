@@ -1,0 +1,84 @@
+name: RADVORA Admin Payment Reconciliation Boundary
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  admin-payment-reconciliation-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Guard privileged Razorpay reconciliation runtime boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const routePath = 'app/api/admin/payments/[id]/reconcile/route.ts'
+          const source = fs.readFileSync(routePath, 'utf8')
+          const required = [
+            "export const runtime='nodejs'",
+            'export const maxDuration=10',
+            'const PROVIDER_DEADLINE_MS=8000',
+            "'Cache-Control':'no-store'",
+            "'Pragma':'no-cache'",
+            "'X-Content-Type-Options':'nosniff'",
+            "'X-Frame-Options':'DENY'",
+            "'Referrer-Policy':'no-referrer'",
+            "'Cross-Origin-Resource-Policy':'same-origin'",
+            "'Permissions-Policy':'camera=(), microphone=(), geolocation=(), payment=(), usb=()'",
+            "request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site'",
+            'NEXT_PUBLIC_APP_URL',
+            "process.env.VERCEL_ENV==='production'",
+            "process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV",
+            "url.protocol==='https:'&&!url.username&&!url.password",
+            "hostname!=='localhost'",
+            "!hostname.endsWith('.')",
+            "hostname.includes('.')",
+            "(url.pathname==='/'||url.pathname==='')",
+            '!url.search',
+            '!url.hash',
+            "(url.port===''||url.port==='443')",
+            'supabase.auth.getUser()',
+            "role!=='admin'&&role!=='founder'",
+            ".eq('provider','razorpay')",
+            "attempt.currency!=='INR'",
+            "String(link.currency||'').toUpperCase()!=='INR'",
+            "payment.status==='captured'",
+            'finalize_razorpay_payment',
+            'close_razorpay_payment_link_attempt',
+            'const providerAbort=new AbortController()',
+            'setTimeout(()=>providerAbort.abort(),PROVIDER_DEADLINE_MS)',
+            'signal:providerAbort.signal',
+            'clearTimeout(providerTimeout)',
+            "console.error('admin_payment_reconciliation_failed')",
+          ]
+          for (const snippet of required) {
+            if (!source.includes(snippet)) {
+              console.error(`Admin payment reconciliation boundary is missing required control: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          if (source.includes("console.error('admin_payment_reconciliation_failed',error)")) {
+            console.error('Admin payment reconciliation must not log raw caught errors.')
+            process.exit(1)
+          }
+          const maxDuration = Number(source.match(/export const maxDuration\s*=\s*(\d+)/)?.[1] || 0)
+          const providerDeadline = Number(source.match(/PROVIDER_DEADLINE_MS\s*=\s*(\d+)/)?.[1] || 0)
+          if (maxDuration < 1 || maxDuration > 15) {
+            console.error(`Admin payment reconciliation maxDuration must remain bounded to 1-15 seconds; found ${maxDuration || 'missing'}`)
+            process.exit(1)
+          }
+          if (providerDeadline < 1000 || providerDeadline >= maxDuration * 1000) {
+            console.error(`Razorpay reconciliation deadline must be at least 1s and below maxDuration; found ${providerDeadline || 'missing'}ms`)
+            process.exit(1)
+          }
+          console.log('Privileged reconciliation requires admin/founder auth, exact production origin, Razorpay/INR provider proof, bounded provider calls, safe logging, and hardened responses.')
+          NODE
