@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '../../../lib/supabase/admin'
 
 export const dynamic='force-dynamic'
+export const runtime='nodejs'
 
 const EXPECTED_RUNTIME_SCHEMA_VERSION='202609110050'
 const HEALTH_QUERY_TIMEOUT_MS=8000
