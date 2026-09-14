@@ -3,61 +3,118 @@ import { createClient } from '../../../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 
 export const runtime='nodejs'
+export const maxDuration=10
 const MAX_BODY_BYTES=8192
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const RESPONSE_HEADERS={
+  'Cache-Control':'no-store',
+  'Pragma':'no-cache',
+  'X-Content-Type-Options':'nosniff',
+  'X-Frame-Options':'DENY',
+  'Referrer-Policy':'no-referrer',
+  'Cross-Origin-Resource-Policy':'same-origin',
+  'Permissions-Policy':'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+} as const
 
 type Params={params:Promise<{id:string}>}
 type Body={action?:'catalog'|'tax'|'inventory'|'commerce';name?:string;shortDescription?:string;description?:string;priceInr?:number|null;status?:string;hsnCode?:string;gstRate?:number;priceIncludesGst?:boolean;stockOnHand?:number;enabled?:boolean}
 
-function json(body:Record<string,unknown>,status=200){return NextResponse.json(body,{status,headers:{'Cache-Control':'no-store'}})}
-function invalidOrigin(request:Request){
-  if(request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site') return true
-  const origin=request.headers.get('origin');if(!origin)return true
-  try{const supplied=new URL(origin).origin;const requestOrigin=new URL(request.url).origin;const configured=process.env.NEXT_PUBLIC_APP_URL?new URL(process.env.NEXT_PUBLIC_APP_URL).origin:requestOrigin;return supplied!==requestOrigin&&supplied!==configured}catch{return true}
+function json(body:Record<string,unknown>,status=200){return NextResponse.json(body,{status,headers:RESPONSE_HEADERS})}
+function isProductionRuntime(){return process.env.VERCEL_ENV==='production'||(process.env.NODE_ENV==='production'&&!process.env.VERCEL_ENV)}
+function isSafeProductionOrigin(url:URL){
+  const hostname=url.hostname.toLowerCase()
+  const isIpLiteral=/^(?:\d{1,3}\.){3}\d{1,3}$/.test(hostname)||hostname.includes(':')
+  return url.protocol==='https:'&&!url.username&&!url.password&&!isIpLiteral&&hostname!=='localhost'&&!hostname.endsWith('.')&&hostname.includes('.')&&(url.pathname==='/'||url.pathname==='')&&!url.search&&!url.hash&&(url.port===''||url.port==='443')
+}
+function canonicalOrigin(request:Request){
+  const configured=process.env.NEXT_PUBLIC_APP_URL?.trim()
+  if(configured){
+    try{
+      const url=new URL(configured)
+      if(isProductionRuntime())return isSafeProductionOrigin(url)?url.origin:null
+      if(url.protocol==='https:'||url.hostname==='localhost')return url.origin
+    }catch{
+      // Privileged production catalog/tax/inventory/commerce writes must fail closed instead of trusting request.url.
+    }
+  }
+  if(isProductionRuntime())return null
+  try{
+    const url=new URL(request.url)
+    return url.protocol==='https:'||url.hostname==='localhost'?url.origin:null
+  }catch{return null}
+}
+function invalidOrigin(request:Request,canonical:string){
+  if(request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site')return true
+  const origin=request.headers.get('origin')
+  if(!origin)return true
+  try{
+    const supplied=new URL(origin).origin
+    if(isProductionRuntime())return supplied!==canonical
+    const requestOrigin=new URL(request.url).origin
+    return supplied!==requestOrigin&&supplied!==canonical
+  }catch{return true}
+}
+function boundary(request:Request,canonical:string){
+  const rawLength=request.headers.get('content-length')
+  if(rawLength){
+    const declaredLength=Number(rawLength)
+    if(!Number.isSafeInteger(declaredLength)||declaredLength<0)return json({error:'Invalid catalog control request length.'},400)
+    if(declaredLength>MAX_BODY_BYTES)return json({error:'Request is too large.'},413)
+  }
+  if(!request.headers.get('content-type')?.toLowerCase().startsWith('application/json'))return json({error:'Unsupported media type.'},415)
+  if(invalidOrigin(request,canonical))return json({error:'Invalid catalog control origin.'},403)
+  return null
 }
 
 export async function POST(request:Request,{params}:Params){
-  if(invalidOrigin(request)) return json({error:'Invalid catalog control origin.'},403)
-  const contentType=request.headers.get('content-type')||''
-  if(!contentType.toLowerCase().startsWith('application/json')) return json({error:'Unsupported media type.'},415)
+  const expectedOrigin=canonicalOrigin(request)
+  if(!expectedOrigin)return json({error:'Catalog administration is temporarily unavailable.'},503)
+  const requestError=boundary(request,expectedOrigin)
+  if(requestError)return requestError
+
   const {id}=await params
-  if(!UUID.test(id)) return json({error:'Invalid product identifier.'},400)
+  if(!UUID.test(id))return json({error:'Invalid product identifier.'},400)
   const supabase=await createClient();const {data:{user}}=await supabase.auth.getUser()
-  if(!user) return json({error:'Authentication required.'},401)
+  if(!user)return json({error:'Authentication required.'},401)
   const role=String(user.app_metadata?.role||'')
-  if(role!=='admin'&&role!=='founder') return json({error:'Admin access required.'},403)
-  let raw='';try{raw=await request.text()}catch{return json({error:'Invalid request.'},400)}
-  if(Buffer.byteLength(raw,'utf8')>MAX_BODY_BYTES) return json({error:'Request is too large.'},413)
-  let body:Body;try{body=JSON.parse(raw||'{}') as Body}catch{return json({error:'Invalid request.'},400)}
+  if(role!=='admin'&&role!=='founder')return json({error:'Admin access required.'},403)
+
+  let rawBytes:ArrayBuffer
+  try{rawBytes=await request.arrayBuffer()}catch{return json({error:'Unable to read catalog control request.'},400)}
+  if(rawBytes.byteLength>MAX_BODY_BYTES)return json({error:'Request is too large.'},413)
+  let parsed:unknown
+  try{parsed=JSON.parse(Buffer.from(rawBytes).toString('utf8'))}catch{return json({error:'Invalid request.'},400)}
+  if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))return json({error:'Invalid request.'},400)
+  const body=parsed as Body
   const admin=createAdminClient()
 
   if(body.action==='catalog'){
     const name=typeof body.name==='string'?body.name.trim():'';const shortDescription=typeof body.shortDescription==='string'?body.shortDescription:'';const description=typeof body.description==='string'?body.description:'';const status=typeof body.status==='string'?body.status:'';const priceInr=body.priceInr===null?null:typeof body.priceInr==='number'?body.priceInr:NaN
-    if(!name||name.length>200||shortDescription.length>500||description.length>5000||!['draft','active','archived'].includes(status)||priceInr!==null&&(!Number.isFinite(priceInr)||priceInr<0)) return json({error:'Invalid catalog values.'},400)
+    if(!name||name.length>200||shortDescription.length>500||description.length>5000||!['draft','active','archived'].includes(status)||priceInr!==null&&(!Number.isFinite(priceInr)||priceInr<0))return json({error:'Invalid catalog values.'},400)
     const {error}=await admin.rpc('server_update_product_catalog',{p_actor_id:user.id,p_actor_role:role,p_product_id:id,p_name:name,p_short_description:shortDescription,p_description:description,p_price_inr:priceInr,p_status:status})
-    if(error){console.error('server_catalog_update_failed',error);return json({error:'Unable to save the catalog record.'},409)}
+    if(error){console.error('server_catalog_update_failed');return json({error:'Unable to save the catalog record.'},409)}
     return json({ok:true,status:'saved'})
   }
 
   if(body.action==='tax'){
     const hsnCode=typeof body.hsnCode==='string'?body.hsnCode.trim():'';const gstRate=typeof body.gstRate==='number'?body.gstRate:NaN
-    if(!/^[0-9]{4,8}$/.test(hsnCode)||!Number.isFinite(gstRate)||gstRate<0||gstRate>100||typeof body.priceIncludesGst!=='boolean') return json({error:'Invalid India tax configuration.'},400)
+    if(!/^[0-9]{4,8}$/.test(hsnCode)||!Number.isFinite(gstRate)||gstRate<0||gstRate>100||typeof body.priceIncludesGst!=='boolean')return json({error:'Invalid India tax configuration.'},400)
     const {error}=await admin.rpc('server_set_product_india_tax_config',{p_actor_id:user.id,p_actor_role:role,p_product_id:id,p_hsn_code:hsnCode,p_gst_rate:gstRate,p_price_includes_gst:body.priceIncludesGst})
-    if(error){console.error('server_product_tax_config_failed',error);return json({error:'Unable to save the India tax configuration.'},409)}
+    if(error){console.error('server_product_tax_config_failed');return json({error:'Unable to save the India tax configuration.'},409)}
     return json({ok:true,status:'tax_saved'})
   }
 
   if(body.action==='inventory'){
     const stock=typeof body.stockOnHand==='number'?body.stockOnHand:NaN
-    if(!Number.isSafeInteger(stock)||stock<0||stock>100000000) return json({error:'Invalid stock quantity.'},400)
+    if(!Number.isSafeInteger(stock)||stock<0||stock>100000000)return json({error:'Invalid stock quantity.'},400)
     const {error}=await admin.rpc('server_set_product_inventory',{p_actor_id:user.id,p_actor_role:role,p_product_id:id,p_stock_on_hand:stock})
-    if(error){console.error('server_product_inventory_failed',error);return json({error:'Unable to save stock. Stock on hand cannot be below already reserved inventory.'},409)}
+    if(error){console.error('server_product_inventory_failed');return json({error:'Unable to save stock. Stock on hand cannot be below already reserved inventory.'},409)}
     return json({ok:true,status:'inventory_saved'})
   }
 
   if(body.action==='commerce'&&typeof body.enabled==='boolean'){
     const {error}=await admin.rpc('server_set_product_commerce_enabled',{p_actor_id:user.id,p_actor_role:role,p_product_id:id,p_enabled:body.enabled})
-    if(error){console.error('server_product_commerce_toggle_failed',error);return json({error:body.enabled?'Product is not ready for India commerce. Confirm active status, positive INR pricing, GST/HSN configuration and available governed stock.':'Unable to disable India commerce.'},409)}
+    if(error){console.error('server_product_commerce_toggle_failed');return json({error:body.enabled?'Product is not ready for India commerce. Confirm active status, positive INR pricing, GST/HSN configuration and available governed stock.':'Unable to disable India commerce.'},409)}
     return json({ok:true,status:body.enabled?'enabled':'disabled'})
   }
   return json({error:'Invalid catalog action.'},400)
