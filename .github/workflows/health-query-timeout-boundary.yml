@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Verify health database checks are time-bounded and fail closed
+      - name: Verify health database checks are time-bounded, abortable and fail closed
         shell: bash
         run: |
           set -euo pipefail
@@ -25,14 +25,14 @@ jobs:
           const source = fs.readFileSync(path, 'utf8')
           const required = [
             'const HEALTH_QUERY_TIMEOUT_MS=8000',
-            'async function withHealthTimeout<T>(operation:PromiseLike<T>):Promise<T>',
-            "new Error('health_query_timeout')",
-            'timeout=setTimeout(',
-            'HEALTH_QUERY_TIMEOUT_MS',
-            'if(timeout) clearTimeout(timeout)',
-            'await withHealthTimeout(Promise.all([',
+            'async function withHealthTimeout<T>(operation:(signal:AbortSignal)=>Promise<T>):Promise<T>',
+            'const controller=new AbortController()',
+            'setTimeout(()=>controller.abort(),HEALTH_QUERY_TIMEOUT_MS)',
+            'return await operation(controller.signal)',
+            'clearTimeout(timeout)',
+            'await withHealthTimeout(signal=>Promise.all([',
             "database:'unavailable_or_schema_mismatch'",
-            "status:503",
+            'status:503',
           ]
           for (const snippet of required) {
             if (!source.includes(snippet)) {
@@ -40,16 +40,20 @@ jobs:
               process.exit(1)
             }
           }
+          if (source.includes('Promise.race([')) {
+            console.error('Health timeout must abort in-flight Supabase requests instead of only racing them.')
+            process.exit(1)
+          }
           const timeoutMatch = source.match(/const HEALTH_QUERY_TIMEOUT_MS=(\d+)/)
           const timeoutMs = timeoutMatch ? Number(timeoutMatch[1]) : NaN
           if (!Number.isFinite(timeoutMs) || timeoutMs < 1000 || timeoutMs > 10000) {
             console.error('Health database timeout must remain between 1s and 10s.')
             process.exit(1)
           }
-          const queryBlockStart = source.indexOf('await withHealthTimeout(Promise.all([')
+          const queryBlockStart = source.indexOf('await withHealthTimeout(signal=>Promise.all([')
           const queryBlockEnd = source.indexOf(']))', queryBlockStart)
           if (queryBlockStart < 0 || queryBlockEnd < queryBlockStart) {
-            console.error('Health database checks must remain wrapped by the timeout boundary.')
+            console.error('Health database checks must remain wrapped by the abortable timeout boundary.')
             process.exit(1)
           }
           const queryBlock = source.slice(queryBlockStart, queryBlockEnd)
@@ -65,5 +69,10 @@ jobs:
               process.exit(1)
             }
           }
-          console.log(`Health database checks fail closed within ${timeoutMs}ms.`)
+          const abortSignalUses = queryBlock.match(/\.abortSignal\(signal\)/g) || []
+          if (abortSignalUses.length !== 5) {
+            console.error(`Expected all 5 health Supabase requests to share the abort signal; found ${abortSignalUses.length}.`)
+            process.exit(1)
+          }
+          console.log(`Health database checks abort and fail closed within ${timeoutMs}ms.`)
           NODE
