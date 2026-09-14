@@ -188,8 +188,8 @@ jobs:
             cursor = objectEnd + 1
           }
 
-          if (responseCount !== 4) {
-            console.error(`Expected exactly four reviewed health diagnostic response variants; found ${responseCount}.`)
+          if (responseCount !== 5) {
+            console.error(`Expected exactly five reviewed health diagnostic response variants; found ${responseCount}.`)
             process.exit(1)
           }
 
