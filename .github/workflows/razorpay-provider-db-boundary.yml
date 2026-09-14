@@ -15,40 +15,60 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Verify Razorpay-only payment attempt provider constraint
+      - name: Verify Razorpay-only provider constraints
         shell: bash
         run: |
           set -euo pipefail
           node - <<'NODE'
           const fs = require('fs')
-          const migrationPath = 'supabase/migrations/202609140051_constrain_payment_attempts_to_razorpay.sql'
+          const paymentMigrationPath = 'supabase/migrations/202609140051_constrain_payment_attempts_to_razorpay.sql'
+          const ledgerMigrationPath = 'supabase/migrations/202609140052_constrain_payment_event_and_order_providers_to_razorpay.sql'
           const invariantPath = 'supabase/postdeploy/verify_release_security_invariants.sql'
-          for (const path of [migrationPath, invariantPath]) {
+          for (const path of [paymentMigrationPath, ledgerMigrationPath, invariantPath]) {
             if (!fs.existsSync(path)) {
               console.error(`Missing Razorpay provider boundary file: ${path}`)
               process.exit(1)
             }
           }
-          const migration = fs.readFileSync(migrationPath, 'utf8')
+          const paymentMigration = fs.readFileSync(paymentMigrationPath, 'utf8')
+          const ledgerMigration = fs.readFileSync(ledgerMigrationPath, 'utf8')
           const invariant = fs.readFileSync(invariantPath, 'utf8')
-          const requiredMigration = [
+          const requiredPaymentMigration = [
             "where provider <> 'razorpay'",
-            "raise exception 'Cannot enforce Razorpay-only payment attempts while non-Razorpay rows exist'",
             'drop constraint if exists payment_attempts_provider_check',
             "check (provider = 'razorpay')",
           ]
-          for (const snippet of requiredMigration) {
-            if (!migration.includes(snippet)) {
-              console.error(`Razorpay-only provider migration is missing: ${snippet}`)
+          for (const snippet of requiredPaymentMigration) {
+            if (!paymentMigration.includes(snippet)) {
+              console.error(`Payment-attempt provider migration is missing: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          const requiredLedgerMigration = [
+            "from public.payment_webhook_events where provider <> 'razorpay'",
+            "payment_provider is not null and payment_provider <> 'razorpay'",
+            'drop constraint if exists payment_webhook_events_provider_check',
+            "check (provider = 'razorpay')",
+            'drop constraint if exists orders_payment_provider_check',
+            "check (payment_provider is null or payment_provider = 'razorpay')",
+            "select '202609140052'::text",
+          ]
+          for (const snippet of requiredLedgerMigration) {
+            if (!ledgerMigration.includes(snippet)) {
+              console.error(`Provider-ledger migration is missing: ${snippet}`)
               process.exit(1)
             }
           }
           const requiredInvariant = [
             "c.conname = 'payment_attempts_provider_check'",
-            "pg_get_constraintdef(c.oid) ilike '%provider = ''razorpay''%'",
-            "where provider <> 'razorpay'",
+            "c.conname = 'payment_webhook_events_provider_check'",
+            "c.conname = 'orders_payment_provider_check'",
             'razorpay_only_payment_provider_constraint_count = 1',
+            'razorpay_only_webhook_provider_constraint_count = 1',
+            'razorpay_only_order_provider_constraint_count = 1',
             'non_razorpay_payment_attempt_count = 0',
+            'non_razorpay_webhook_event_count = 0',
+            'non_razorpay_order_provider_count = 0',
           ]
           for (const snippet of requiredInvariant) {
             if (!invariant.includes(snippet)) {
@@ -56,5 +76,5 @@ jobs:
               process.exit(1)
             }
           }
-          console.log('Razorpay-only payment attempt provider boundary is pinned in migration and release verification.')
+          console.log('Razorpay-only payment, webhook and order provider boundaries are pinned in migrations and release verification.')
           NODE
