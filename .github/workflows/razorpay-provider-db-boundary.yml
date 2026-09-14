@@ -1,0 +1,60 @@
+name: RADVORA Razorpay Provider DB Boundary
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  guard-razorpay-provider-db-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Razorpay-only payment attempt provider constraint
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const migrationPath = 'supabase/migrations/202609140051_constrain_payment_attempts_to_razorpay.sql'
+          const invariantPath = 'supabase/postdeploy/verify_release_security_invariants.sql'
+          for (const path of [migrationPath, invariantPath]) {
+            if (!fs.existsSync(path)) {
+              console.error(`Missing Razorpay provider boundary file: ${path}`)
+              process.exit(1)
+            }
+          }
+          const migration = fs.readFileSync(migrationPath, 'utf8')
+          const invariant = fs.readFileSync(invariantPath, 'utf8')
+          const requiredMigration = [
+            "where provider <> 'razorpay'",
+            "raise exception 'Cannot enforce Razorpay-only payment attempts while non-Razorpay rows exist'",
+            'drop constraint if exists payment_attempts_provider_check',
+            "check (provider = 'razorpay')",
+          ]
+          for (const snippet of requiredMigration) {
+            if (!migration.includes(snippet)) {
+              console.error(`Razorpay-only provider migration is missing: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          const requiredInvariant = [
+            "c.conname = 'payment_attempts_provider_check'",
+            "pg_get_constraintdef(c.oid) ilike '%provider = ''razorpay''%'",
+            "where provider <> 'razorpay'",
+            'razorpay_only_payment_provider_constraint_count = 1',
+            'non_razorpay_payment_attempt_count = 0',
+          ]
+          for (const snippet of requiredInvariant) {
+            if (!invariant.includes(snippet)) {
+              console.error(`Release invariant is missing Razorpay-only provider evidence: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          console.log('Razorpay-only payment attempt provider boundary is pinned in migration and release verification.')
+          NODE
