@@ -42,8 +42,18 @@ function canonicalOrigin(request:Request){
     return url.protocol==='https:'||url.hostname==='localhost'?url.origin:null
   }catch{return null}
 }
+function invalidOrigin(request:Request,canonical:string){
+  if(request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site')return true
+  const origin=request.headers.get('origin')
+  if(!origin)return true
+  try{
+    const supplied=new URL(origin).origin
+    if(isProductionRuntime())return supplied!==canonical
+    const requestOrigin=new URL(request.url).origin
+    return supplied!==requestOrigin&&supplied!==canonical
+  }catch{return true}
+}
 function boundary(request:Request,canonical:string){
-  if(request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site')return json({error:'Cross-site Operations requests are not allowed.'},403)
   const rawLength=request.headers.get('content-length')
   if(rawLength){
     const declaredLength=Number(rawLength)
@@ -51,14 +61,7 @@ function boundary(request:Request,canonical:string){
     if(declaredLength>MAX_BODY_BYTES)return json({error:'Request is too large.'},413)
   }
   if(!request.headers.get('content-type')?.toLowerCase().startsWith('application/json'))return json({error:'Unsupported media type.'},415)
-  const origin=request.headers.get('origin')
-  if(!origin)return json({error:'Invalid Operations request origin.'},403)
-  try{
-    const supplied=new URL(origin).origin
-    if(isProductionRuntime())return supplied===canonical?null:json({error:'Invalid Operations request origin.'},403)
-    const requestOrigin=new URL(request.url).origin
-    if(supplied!==requestOrigin&&supplied!==canonical)return json({error:'Invalid Operations request origin.'},403)
-  }catch{return json({error:'Invalid Operations request origin.'},403)}
+  if(invalidOrigin(request,canonical))return json({error:'Invalid Operations request origin.'},403)
   return null
 }
 
