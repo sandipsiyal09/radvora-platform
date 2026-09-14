@@ -29,7 +29,7 @@ jobs:
           const sql = fs.readFileSync(path, 'utf8')
           const required = [
             "public.server_runtime_schema_version()",
-            "runtime_schema_version = '202609110050'",
+            "runtime_schema_version = '202609140051'",
             'privileged_policy_count = 25',
             'privileged_policies_with_aal2 = 25',
             'authenticated_direct_sensitive_write_grants = 0',
