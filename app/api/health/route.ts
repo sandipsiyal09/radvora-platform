@@ -4,6 +4,7 @@ import { createAdminClient } from '../../../lib/supabase/admin'
 export const dynamic='force-dynamic'
 
 const EXPECTED_RUNTIME_SCHEMA_VERSION='202609110050'
+const HEALTH_QUERY_TIMEOUT_MS=8000
 const requiredRuntimeConfig=['NEXT_PUBLIC_SUPABASE_URL','NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY','SUPABASE_SERVICE_ROLE_KEY'] as const
 function responseHeaders(){return {'Cache-Control':'no-store, max-age=0','Pragma':'no-cache','Expires':'0','X-Content-Type-Options':'nosniff','X-Robots-Tag':'noindex, nofollow, noarchive','Referrer-Policy':'no-referrer','Cross-Origin-Resource-Policy':'same-origin','X-Frame-Options':'DENY','Content-Security-Policy':"default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"}}
 function releaseMetadata(){
@@ -33,6 +34,19 @@ function canonicalProductionUrlReady(value:string|undefined,requestUrl:string){
     return canonicalOriginReady&&request.origin===url.origin&&request.pathname==='/api/health'
   }catch{return false}
 }
+async function withHealthTimeout<T>(operation:PromiseLike<T>):Promise<T>{
+  let timeout:ReturnType<typeof setTimeout>|undefined
+  try{
+    return await Promise.race([
+      Promise.resolve(operation),
+      new Promise<never>((_,reject)=>{
+        timeout=setTimeout(()=>reject(new Error('health_query_timeout')),HEALTH_QUERY_TIMEOUT_MS)
+      }),
+    ])
+  }finally{
+    if(timeout) clearTimeout(timeout)
+  }
+}
 
 export async function GET(request:Request){
   const timestamp=new Date().toISOString()
@@ -58,13 +72,13 @@ export async function GET(request:Request){
 
   try{
     const supabase=createAdminClient()
-    const [{data:commerceEnabledProducts,count:commerceEnabledProductCount,error:productError},{error:itemError},{error:paymentError},{data:sellerReady,error:sellerError},{data:schemaVersion,error:schemaVersionError}]=await Promise.all([
+    const [{data:commerceEnabledProducts,count:commerceEnabledProductCount,error:productError},{error:itemError},{error:paymentError},{data:sellerReady,error:sellerError},{data:schemaVersion,error:schemaVersionError}]=await withHealthTimeout(Promise.all([
       supabase.from('products').select('id,status,price_inr,currency,commerce_enabled,hsn_code,gst_rate,price_inr_includes_gst,stock_on_hand,stock_reserved',{count:'exact'}).eq('commerce_enabled',true).limit(1000),
       supabase.from('order_items').select('id,line_subtotal,tax_amount,hsn_code,gst_rate,price_includes_gst,inventory_reserved_quantity',{count:'exact',head:true}).limit(1),
       supabase.from('payment_attempts').select('id,provider_session_id,provider_session_url,provider_session_expires_at',{count:'exact',head:true}).limit(1),
       supabase.rpc('server_india_seller_profile_ready'),
       supabase.rpc('server_runtime_schema_version')
-    ])
+    ]))
     if(productError||itemError||paymentError||sellerError||schemaVersionError) throw productError||itemError||paymentError||sellerError||schemaVersionError
     const runtimeSchemaVersion=String(schemaVersion||'')
     if(runtimeSchemaVersion!==EXPECTED_RUNTIME_SCHEMA_VERSION) throw new Error(`Runtime schema version mismatch: expected ${EXPECTED_RUNTIME_SCHEMA_VERSION}`)
