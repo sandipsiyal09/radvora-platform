@@ -34,17 +34,13 @@ function canonicalProductionUrlReady(value:string|undefined,requestUrl:string){
     return canonicalOriginReady&&request.origin===url.origin&&request.pathname==='/api/health'
   }catch{return false}
 }
-async function withHealthTimeout<T>(operation:PromiseLike<T>):Promise<T>{
-  let timeout:ReturnType<typeof setTimeout>|undefined
+async function withHealthTimeout<T>(operation:(signal:AbortSignal)=>Promise<T>):Promise<T>{
+  const controller=new AbortController()
+  const timeout=setTimeout(()=>controller.abort(),HEALTH_QUERY_TIMEOUT_MS)
   try{
-    return await Promise.race([
-      Promise.resolve(operation),
-      new Promise<never>((_,reject)=>{
-        timeout=setTimeout(()=>reject(new Error('health_query_timeout')),HEALTH_QUERY_TIMEOUT_MS)
-      }),
-    ])
+    return await operation(controller.signal)
   }finally{
-    if(timeout) clearTimeout(timeout)
+    clearTimeout(timeout)
   }
 }
 
@@ -72,12 +68,12 @@ export async function GET(request:Request){
 
   try{
     const supabase=createAdminClient()
-    const [{data:commerceEnabledProducts,count:commerceEnabledProductCount,error:productError},{error:itemError},{error:paymentError},{data:sellerReady,error:sellerError},{data:schemaVersion,error:schemaVersionError}]=await withHealthTimeout(Promise.all([
-      supabase.from('products').select('id,status,price_inr,currency,commerce_enabled,hsn_code,gst_rate,price_inr_includes_gst,stock_on_hand,stock_reserved',{count:'exact'}).eq('commerce_enabled',true).limit(1000),
-      supabase.from('order_items').select('id,line_subtotal,tax_amount,hsn_code,gst_rate,price_includes_gst,inventory_reserved_quantity',{count:'exact',head:true}).limit(1),
-      supabase.from('payment_attempts').select('id,provider_session_id,provider_session_url,provider_session_expires_at',{count:'exact',head:true}).limit(1),
-      supabase.rpc('server_india_seller_profile_ready'),
-      supabase.rpc('server_runtime_schema_version')
+    const [{data:commerceEnabledProducts,count:commerceEnabledProductCount,error:productError},{error:itemError},{error:paymentError},{data:sellerReady,error:sellerError},{data:schemaVersion,error:schemaVersionError}]=await withHealthTimeout(signal=>Promise.all([
+      supabase.from('products').select('id,status,price_inr,currency,commerce_enabled,hsn_code,gst_rate,price_inr_includes_gst,stock_on_hand,stock_reserved',{count:'exact'}).eq('commerce_enabled',true).limit(1000).abortSignal(signal),
+      supabase.from('order_items').select('id,line_subtotal,tax_amount,hsn_code,gst_rate,price_includes_gst,inventory_reserved_quantity',{count:'exact',head:true}).limit(1).abortSignal(signal),
+      supabase.from('payment_attempts').select('id,provider_session_id,provider_session_url,provider_session_expires_at',{count:'exact',head:true}).limit(1).abortSignal(signal),
+      supabase.rpc('server_india_seller_profile_ready').abortSignal(signal),
+      supabase.rpc('server_runtime_schema_version').abortSignal(signal)
     ]))
     if(productError||itemError||paymentError||sellerError||schemaVersionError) throw productError||itemError||paymentError||sellerError||schemaVersionError
     const runtimeSchemaVersion=String(schemaVersion||'')
