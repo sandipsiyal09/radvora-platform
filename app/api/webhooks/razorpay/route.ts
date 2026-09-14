@@ -114,8 +114,10 @@ async function processRefund(admin:AdminClient,eventId:string,eventType:string,r
 
 export async function POST(request:Request){
   const secret=process.env.RAZORPAY_WEBHOOK_SECRET?.trim();if(!secret)return json({error:'Webhook is not configured.'},503)
+  const contentType=request.headers.get('content-type')?.toLowerCase()||''
+  if(!contentType.startsWith('application/json'))return json({error:'Unsupported webhook media type.'},415)
   const signature=request.headers.get('x-razorpay-signature')?.trim()||'';const eventId=request.headers.get('x-razorpay-event-id')?.trim()||''
-  if(!signature||!eventId||eventId.length>200)return json({error:'Invalid webhook request.'},400)
+  if(!/^[0-9a-f]{64}$/i.test(signature)||!eventId||eventId.length>200)return json({error:'Invalid webhook request.'},400)
   const rawLength=request.headers.get('content-length');if(rawLength&&Number(rawLength)>MAX_BODY_BYTES)return json({error:'Webhook payload is too large.'},413)
   const rawBytes=await request.arrayBuffer();if(rawBytes.byteLength>MAX_BODY_BYTES)return json({error:'Webhook payload is too large.'},413)
   const rawBuffer=Buffer.from(rawBytes);const expected=createHmac('sha256',secret).update(rawBuffer).digest('hex');if(!safeEqualHex(expected,signature))return json({error:'Invalid webhook signature.'},400)
