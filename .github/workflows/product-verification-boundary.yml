@@ -1,0 +1,76 @@
+name: RADVORA Product Verification Boundary
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  product-verification-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify public product verification boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const path = 'app/api/product-verification/route.ts'
+          const source = fs.readFileSync(path, 'utf8')
+          const compact = source.replace(/\s+/g, '')
+          const required = [
+            "exportconstruntime='nodejs'",
+            'exportconstmaxDuration=10',
+            'constMAX_BODY_BYTES=1024',
+            'constMAX_ATTEMPTS=20',
+            'constWINDOW_MS=10*60*1000',
+            "request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site'",
+            "request.headers.get('content-type')?.toLowerCase().startsWith('application/json')",
+            'NEXT_PUBLIC_APP_URL',
+            "process.env.VERCEL_ENV==='production'",
+            'functionisSafeProductionOrigin(url:URL)',
+            "url.protocol==='https:'",
+            '!url.username&&!url.password',
+            "hostname!=='localhost'",
+            "!hostname.endsWith('.')",
+            "hostname.includes('.')",
+            "(url.pathname==='/'||url.pathname==='')",
+            '!url.search&&!url.hash',
+            "(url.port===''||url.port==='443')",
+            'if(isProductionRuntime())returnnull',
+            'if(isProductionRuntime())returnsupplied!==canonical',
+            "if(!expectedOrigin)returnresponse({error:'Verificationistemporarilyunavailable.'},503)",
+            'Buffer.byteLength(rawBody',
+            "if(!parsedBody||typeofparsedBody!=='object'||Array.isArray(parsedBody))",
+            "constSERIAL_PATTERN=/^[A-Z0-9][A-Z0-9-]{4,63}$/",
+            ".from('public_product_verification')",
+            ".select('serial_number,batch_code,manufactured_at,status,product_name,product_slug,sku')",
+            "console.error('product_verification_failed',{component:'product_verification',errorName})",
+            "'Cache-Control':'no-store,max-age=0'",
+            "'X-Robots-Tag':'noindex,nofollow,noarchive'",
+          ]
+          for (const snippet of required) {
+            if (!compact.includes(snippet)) {
+              console.error(`Product verification boundary is missing required control: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          const forbidden = [
+            "process.env.NEXT_PUBLIC_APP_URL||request.nextUrl.origin",
+            'select(*)',
+            "console.error('product_verification_failed',error)",
+          ]
+          for (const snippet of forbidden) {
+            if (compact.includes(snippet.replace(/\s+/g, ''))) {
+              console.error(`Product verification boundary contains forbidden pattern: ${snippet}`)
+              process.exit(1)
+            }
+          }
+          console.log('Product verification remains origin-bound, bounded, rate-limited, minimally disclosed, and fail-closed in production.')
+          NODE
