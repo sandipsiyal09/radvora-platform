@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import ui from './home-experience.module.css'
 
 type Finish = {
@@ -24,11 +24,11 @@ const finishes: Finish[] = [
 ]
 
 const productFamilies = [
-  { key: 'phone', name: 'ShieldTag Signature', use: 'For smartphones', line: 'Slim. Precise. Device-native.', href: '/products/shieldtag-pro' },
-  { key: 'tablet', name: 'ShieldTag Pro', use: 'For tablets', line: 'Balanced for larger surfaces.', href: '/products/shieldtag-pro' },
-  { key: 'laptop', name: 'ShieldTag Executive', use: 'For laptops', line: 'A refined hardware-style plaque.', href: '/products/shieldtag-pro' },
-  { key: 'earbuds', name: 'ShieldTag Mini', use: 'For accessories', line: 'Small device. Same identity.', href: '/products/shieldtag-pro' },
-  { key: 'power', name: 'ShieldTag Utility', use: 'For everyday tech', line: 'Flexible by design.', href: '/products/shieldtag-pro' },
+  { key: 'phone', name: 'ShieldTag Signature', use: 'For smartphones', line: 'Slim. Precise. Device-native.' },
+  { key: 'tablet', name: 'ShieldTag Pro', use: 'For tablets', line: 'Balanced for larger surfaces.' },
+  { key: 'laptop', name: 'ShieldTag Executive', use: 'For laptops', line: 'A refined hardware-style plaque.' },
+  { key: 'earbuds', name: 'ShieldTag Mini', use: 'For accessories', line: 'Small device. Same identity.' },
+  { key: 'power', name: 'ShieldTag Utility', use: 'For everyday tech', line: 'Flexible by design.' },
 ]
 
 const steps = [
@@ -48,13 +48,15 @@ function Mark({ small = false }: { small?: boolean }) {
 }
 
 function ShieldTag({ finish, compact = false }: { finish: Finish; compact?: boolean }) {
+  const style = {
+    '--tag-base': finish.base,
+    '--tag-edge': finish.edge,
+    '--tag-accent': finish.accent,
+    '--tag-text': finish.text,
+  } as CSSProperties
+
   return (
-    <span className={`${ui.shieldTag} ${compact ? ui.shieldCompact : ''}`} style={{
-      '--tag-base': finish.base,
-      '--tag-edge': finish.edge,
-      '--tag-accent': finish.accent,
-      '--tag-text': finish.text,
-    } as React.CSSProperties}>
+    <span className={`${ui.shieldTag} ${compact ? ui.shieldCompact : ''}`} style={style}>
       <span className={ui.tagShine}/>
       <Mark small={compact}/>
       <span className={ui.tagWords}><b>RADVORA</b><small>SHIELDTAG</small></span>
@@ -63,12 +65,20 @@ function ShieldTag({ finish, compact = false }: { finish: Finish; compact?: bool
   )
 }
 
-function Device({ type, finish, hero = false }: { type: string; finish: Finish; hero?: boolean }) {
+function Device({ type, finish }: { type: string; finish: Finish }) {
+  const classMap: Record<string, string> = {
+    phone: ui.device_phone,
+    tablet: ui.device_tablet,
+    laptop: ui.device_laptop,
+    earbuds: ui.device_earbuds,
+    power: ui.device_power,
+  }
+
   return (
-    <span className={`${ui.device} ${ui[`device_${type}` as keyof typeof ui] || ''} ${hero ? ui.deviceHero : ''}`} data-device={type}>
+    <span className={`${ui.device} ${classMap[type] || ''}`} data-device={type}>
       <span className={ui.deviceFace}>
         <span className={ui.deviceDetail}/>
-        {type === 'phone' && <><span className={ui.camera a}/><span className={ui.cameraB}/><span className={ui.cameraC}/></>}
+        {type === 'phone' && <><span className={ui.camera}/><span className={ui.cameraB}/><span className={ui.cameraC}/></>}
         {type === 'tablet' && <span className={ui.cameraSolo}/>} 
         {type === 'laptop' && <span className={ui.laptopHinge}/>} 
         {type === 'earbuds' && <span className={ui.earbudLid}/>} 
@@ -146,12 +156,12 @@ export default function HomeExperience() {
             </div>
 
             <div className={ui.heroStage} aria-label="RADVORA ShieldTag shown on multiple device types">
-              <div className={ui.wave waveA}/><div className={`${ui.wave} ${ui.waveB}`}/>
-              <div className={`${ui.heroDevice} ${ui.heroPhone}`}><Device type="phone" finish={finishes[0]} hero/></div>
-              <div className={`${ui.heroDevice} ${ui.heroTablet}`}><Device type="tablet" finish={finishes[1]} hero/></div>
-              <div className={`${ui.heroDevice} ${ui.heroLaptop}`}><Device type="laptop" finish={finishes[2]} hero/></div>
-              <div className={`${ui.heroDevice} ${ui.heroEarbuds}`}><Device type="earbuds" finish={finishes[3]} hero/></div>
-              <div className={`${ui.heroDevice} ${ui.heroPower}`}><Device type="power" finish={finishes[4]} hero/></div>
+              <div className={ui.wave}/><div className={`${ui.wave} ${ui.waveB}`}/>
+              <div className={`${ui.heroDevice} ${ui.heroPhone}`}><Device type="phone" finish={finishes[0]}/></div>
+              <div className={`${ui.heroDevice} ${ui.heroTablet}`}><Device type="tablet" finish={finishes[1]}/></div>
+              <div className={`${ui.heroDevice} ${ui.heroLaptop}`}><Device type="laptop" finish={finishes[2]}/></div>
+              <div className={`${ui.heroDevice} ${ui.heroEarbuds}`}><Device type="earbuds" finish={finishes[3]}/></div>
+              <div className={`${ui.heroDevice} ${ui.heroPower}`}><Device type="power" finish={finishes[4]}/></div>
               <div className={ui.heroStatement}><b>More than a sticker.</b><span>Designed to look like it belongs.</span></div>
             </div>
           </div>
@@ -196,7 +206,7 @@ export default function HomeExperience() {
               <div className={ui.finishGrid}>
                 {finishes.map((item, index) => (
                   <button key={item.name} className={selectedFinish === index ? ui.finishActive : ''} onClick={() => setSelectedFinish(index)} aria-label={`Preview ${item.name}`}>
-                    <i style={{'--swatch': item.tone, '--edge': item.edge} as React.CSSProperties}/><span>{item.name}</span>
+                    <i style={{'--swatch': item.tone, '--edge': item.edge} as CSSProperties}/><span>{item.name}</span>
                   </button>
                 ))}
               </div>
@@ -204,7 +214,7 @@ export default function HomeExperience() {
             </div>
             <div className={ui.matchVisual}>
               <span className={ui.previewLabel}>{selectedFamily.name} · {finish.name}</span>
-              <div className={ui.previewDevice}><Device type={selectedDevice} finish={finish} hero/></div>
+              <div className={ui.previewDevice}><Device type={selectedDevice} finish={finish}/></div>
               <div className={ui.previewTag}><ShieldTag finish={finish}/><b>{finish.name}</b><span>Preview finish</span></div>
             </div>
           </div>
@@ -213,8 +223,7 @@ export default function HomeExperience() {
         <section id="how-it-works" className={ui.installSection}>
           <div className={ui.shell}>
             <div className={ui.sectionHeadingCompact}>
-              <span>INSTALLATION FILM</span>
-              <h2>Attach in seconds.</h2>
+              <div><span>INSTALLATION FILM</span><h2>Attach in seconds.</h2></div>
               <p>Peel. Align. Press. Ready.</p>
             </div>
             <div className={ui.installGrid}>
