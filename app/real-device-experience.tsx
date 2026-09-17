@@ -25,7 +25,7 @@ const devices:DeviceExample[]=[
   {id:'vivo',brand:'vivo',name:'V50',category:'Smartphone',image:'https://asia-exstatic-vivofs.vivo.com/PSee2l50xoirPK7y/Picture_library/1741854041252/zip/img/pc2.jpg',source:'https://www.vivo.com/en/products/picture/v50',tagClass:'tagVivo',fit:'cover',tone:'blue'},
   {id:'ipad',brand:'Apple',name:'iPad Air',category:'Tablet',image:'https://www.apple.com/v/ipad-air/ah/images/overview/two-sizes/gallery-toggle/spin_reverse_endframe__crvqft16efue_large.png',source:'https://www.apple.com/in/ipad-air/',tagClass:'tagIpad',fit:'contain',tone:'blue'},
   {id:'macbook',brand:'Apple',name:'MacBook Air',category:'Laptop',image:'https://www.apple.com/v/macbook-air/specs/b/images/specs/13-inch/mba_13_size1__eyfditb7ixea_large.jpg',source:'https://www.apple.com/in/macbook-air/specs/',tagClass:'tagMac',fit:'contain',tone:'silver'},
-  {id:'airpods',brand:'Apple',name:'AirPods Pro',category:'Accessory',image:'https://www.apple.com/newsroom/images/2025/09/introducing-airpods-pro-3-the-ultimate-audio-experience/article/Apple-AirPods-Pro-3-hero-250909_inline.jpg.large.jpg',source:'https://www.apple.com/in/newsroom/2025/09/airpods-pro-3-introduce-the-ultimate-audio-experience/',tagClass:'tagPods',fit:'contain',tone:'white'}
+  {id:'airpods',brand:'Apple',name:'AirPods Pro 3',category:'Accessory',image:'https://www.apple.com/v/airpods-pro/r/images/specs/airpods__eqrzs6rwhu2q_large.jpg',source:'https://www.apple.com/in/airpods-pro/specs/',tagClass:'tagPods',fit:'contain',tone:'white'}
 ]
 
 const families:Family[]=[
