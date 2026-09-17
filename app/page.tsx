@@ -1,5 +1,5 @@
-import ShieldTagLaunch from './shieldtag-launch'
+import RealDeviceExperience from './real-device-experience'
 
 export default function Home() {
-  return <ShieldTagLaunch />
+  return <RealDeviceExperience />
 }
