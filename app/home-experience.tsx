@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import ImmersiveExperience from './immersive-experience'
+import DeviceShieldShowcase from './device-shield-showcase'
 import ui from './home-experience.module.css'
 
 const nav = [
@@ -120,6 +121,7 @@ export default function HomeExperience(){
       </section>
 
       <TransitionStrip/>
+      <DeviceShieldShowcase/>
       <ImmersiveExperience/>
 
       <section className={`${ui.shell} ${ui.compatSection}`}>
