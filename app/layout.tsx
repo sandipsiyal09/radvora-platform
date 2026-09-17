@@ -5,26 +5,26 @@ const siteUrl=process.env.NEXT_PUBLIC_APP_URL||'https://radvora-platform.vercel.
 
 export const metadata: Metadata = {
   metadataBase:new URL(siteUrl),
-  title:{default:'RADVORA Technologies — Technology you can measure',template:'%s | RADVORA Technologies'},
-  description:'Premium RF-focused accessories and digital-wellness technology built around measurable engineering and transparent testing.',
-  applicationName:'RADVORA Technologies',
+  title:{default:'RADVORA ShieldTag — One Shield. Every Device.',template:'%s | RADVORA'},
+  description:'RADVORA ShieldTag is a premium device identity badge system designed for smartphones, tablets, laptops and selected technology accessories.',
+  applicationName:'RADVORA',
   openGraph:{
     type:'website',
-    siteName:'RADVORA Technologies',
-    title:'RADVORA Technologies — Technology you can measure',
-    description:'RF-focused accessories and digital-wellness technology built around measurable engineering and transparent testing.'
+    siteName:'RADVORA',
+    title:'RADVORA ShieldTag — One Shield. Every Device.',
+    description:'Premium device identity designed to look native to the technology you already own.'
   },
-  twitter:{card:'summary_large_image',title:'RADVORA Technologies',description:'Technology you can measure.'},
+  twitter:{card:'summary_large_image',title:'RADVORA ShieldTag',description:'One Shield. Every Device.'},
   robots:{index:true,follow:true}
 }
 
 const organizationSchema={
   '@context':'https://schema.org',
   '@type':'Organization',
-  name:'RADVORA Technologies',
+  name:'RADVORA',
   url:siteUrl,
-  slogan:'Technology you can measure.',
-  description:'Consumer technology company developing RF-focused accessories and digital-wellness products with evidence-gated product claims.'
+  slogan:'One Shield. Every Device.',
+  description:'Consumer technology brand developing premium device identity products with compatibility and product claims kept explicit and evidence-controlled.'
 }
 
 export default function RootLayout({children}:{children:React.ReactNode}){
