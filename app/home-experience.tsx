@@ -1,146 +1,299 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import ImmersiveExperience from './immersive-experience'
-import DeviceShieldShowcase from './device-shield-showcase'
+import { useEffect, useMemo, useState } from 'react'
 import ui from './home-experience.module.css'
 
-const nav = [
-  ['Products','/products'],['Science','/research'],['Labs','/labs'],['Business','/business'],['About','/about'],['Account','/account'],
+type Finish = {
+  name: string
+  base: string
+  edge: string
+  accent: string
+  text: string
+  tone: string
+}
+
+const finishes: Finish[] = [
+  { name: 'Obsidian Black', base: '#080b10', edge: '#66717d', accent: '#50e8ff', text: '#f7fbff', tone: '#151a20' },
+  { name: 'Titanium Silver', base: '#aeb8c2', edge: '#f4f7fa', accent: '#bfefff', text: '#111820', tone: '#c6cdd4' },
+  { name: 'Graphite', base: '#30363d', edge: '#818b95', accent: '#65d7ef', text: '#f8fbff', tone: '#414850' },
+  { name: 'Arctic White', base: '#f2f5f7', edge: '#ffffff', accent: '#7fe7f2', text: '#111820', tone: '#e8ecef' },
+  { name: 'Midnight Blue', base: '#102743', edge: '#587ca6', accent: '#58b8ff', text: '#f8fbff', tone: '#173755' },
+  { name: 'Rose Gold', base: '#9d655e', edge: '#dcb1a5', accent: '#ffd0c7', text: '#fff9f6', tone: '#b47a72' },
+  { name: 'Forest Green', base: '#183a30', edge: '#628f81', accent: '#69e9c9', text: '#f2fff9', tone: '#245044' },
+  { name: 'Champagne Gold', base: '#b89b6b', edge: '#ead9b5', accent: '#ffe7af', text: '#1b160e', tone: '#c9ad79' },
 ]
 
-const ecosystemNodes = [
-  { x: 50, y: 50, label: 'RADVORA', core: true },
-  { x: 17, y: 24, label: 'PHONE' },
-  { x: 82, y: 19, label: 'TABLET' },
-  { x: 88, y: 66, label: 'LAPTOP' },
-  { x: 62, y: 86, label: 'ACCESSORY' },
-  { x: 15, y: 71, label: 'DEVICE' },
+const productFamilies = [
+  { key: 'phone', name: 'ShieldTag Signature', use: 'For smartphones', line: 'Slim. Precise. Device-native.', href: '/products/shieldtag-pro' },
+  { key: 'tablet', name: 'ShieldTag Pro', use: 'For tablets', line: 'Balanced for larger surfaces.', href: '/products/shieldtag-pro' },
+  { key: 'laptop', name: 'ShieldTag Executive', use: 'For laptops', line: 'A refined hardware-style plaque.', href: '/products/shieldtag-pro' },
+  { key: 'earbuds', name: 'ShieldTag Mini', use: 'For accessories', line: 'Small device. Same identity.', href: '/products/shieldtag-pro' },
+  { key: 'power', name: 'ShieldTag Utility', use: 'For everyday tech', line: 'Flexible by design.', href: '/products/shieldtag-pro' },
 ]
 
-function HeroProduct() {
-  const model = useRef<HTMLDivElement>(null)
-  const drag = useRef(false)
-  const rotation = useRef({x:-9,y:-20})
+const steps = [
+  ['Clean', 'Prepare a clean, dry compatible surface.'],
+  ['Peel', 'Lift ShieldTag carefully from its backing.'],
+  ['Align', 'Position it clear of cameras, ports, vents and controls.'],
+  ['Press', 'Apply even pressure across the badge.'],
+  ['Ready', 'Check the edges and enjoy the finished look.'],
+]
 
-  const apply = () => {
-    if (model.current) model.current.style.transform = `rotateX(${rotation.current.x}deg) rotateY(${rotation.current.y}deg)`
-  }
-
-  useEffect(() => apply(), [])
-
+function Mark({ small = false }: { small?: boolean }) {
   return (
-    <div className={ui.heroProduct} onPointerMove={(event) => {
-      if (drag.current) {
-        rotation.current.y += event.movementX * .3
-        rotation.current.x = Math.max(-26,Math.min(26,rotation.current.x-event.movementY*.18))
-      } else {
-        const rect=event.currentTarget.getBoundingClientRect()
-        rotation.current.y=((event.clientX-rect.left)/rect.width-.5)*26
-        rotation.current.x=-7-((event.clientY-rect.top)/rect.height-.5)*14
-      }
-      apply()
-    }} onPointerLeave={()=>{drag.current=false;rotation.current={x:-9,y:-20};apply()}}>
-      <div className={ui.heroSphere}/>
-      <div className={`${ui.heroOrbit} ${ui.orbitA}`}/><div className={`${ui.heroOrbit} ${ui.orbitB}`}/><div className={`${ui.heroOrbit} ${ui.orbitC}`}/>
-      <div ref={model} className={ui.heroDisc} onPointerDown={(event)=>{event.currentTarget.setPointerCapture(event.pointerId);drag.current=true}} onPointerUp={()=>{drag.current=false}}>
-        <div className={ui.heroDiscBack}/><div className={ui.heroDiscMid}/><div className={ui.heroDiscFront}><div className={ui.heroGlyph}>A</div><b>RADVORA</b><span>SHIELDTAG PRO</span><i/></div>
-      </div>
-      <div className={`${ui.floatingTag} ${ui.tagOne}`}><span>01</span><b>VERIFIED IDENTITY</b><small>Server-backed serial context</small></div>
-      <div className={`${ui.floatingTag} ${ui.tagTwo}`}><span>02</span><b>EVIDENCE-GATED</b><small>Human approval before claims</small></div>
-      <div className={`${ui.floatingTag} ${ui.tagThree}`}><span>03</span><b>STATUS-AWARE</b><small>Compatibility stays explicit</small></div>
-      <div className={ui.heroHint}>MOVE · DRAG · INSPECT</div>
-    </div>
+    <span className={`${ui.mark} ${small ? ui.markSmall : ''}`} aria-hidden="true">
+      <svg viewBox="0 0 64 64"><path d="M10 9h43L39 24H24l-5 6h25L27 50l-7-8 8-9H13L7 26l15-17Z" fill="currentColor"/><path d="M31 24h14L34 36l-8-8 5-4Z" fill="currentColor" opacity=".48"/></svg>
+    </span>
   )
 }
 
-function CompatibilityMap() {
-  return <div className={ui.compatibilityMap}>
-    <svg viewBox="0 0 100 100" role="img" aria-label="Illustrative device compatibility ecosystem">
-      <defs><linearGradient id="compatLine" x1="0" x2="1"><stop offset="0" stopColor="#697cff"/><stop offset="1" stopColor="#7cebdd"/></linearGradient></defs>
-      <circle cx="50" cy="50" r="30" className={ui.compatRing}/><circle cx="50" cy="50" r="42" className={`${ui.compatRing} ${ui.compatOuter}`}/>
-      {ecosystemNodes.slice(1).map(n=><line key={n.label} x1="50" y1="50" x2={n.x} y2={n.y} className={ui.compatLine}/>)}
-      {ecosystemNodes.map(n=><g key={n.label} className={n.core?ui.compatCore:ui.compatNode}><circle cx={n.x} cy={n.y} r={n.core?7:3.3}/><text x={n.x} y={n.y+(n.core?12:7)} textAnchor="middle">{n.label}</text></g>)}
-    </svg>
-    <div className={ui.compatLegend}><span><i/>Reviewed relationship</span><span><i/>Unknown remains unknown</span></div>
-  </div>
+function ShieldTag({ finish, compact = false }: { finish: Finish; compact?: boolean }) {
+  return (
+    <span className={`${ui.shieldTag} ${compact ? ui.shieldCompact : ''}`} style={{
+      '--tag-base': finish.base,
+      '--tag-edge': finish.edge,
+      '--tag-accent': finish.accent,
+      '--tag-text': finish.text,
+    } as React.CSSProperties}>
+      <span className={ui.tagShine}/>
+      <Mark small={compact}/>
+      <span className={ui.tagWords}><b>RADVORA</b><small>SHIELDTAG</small></span>
+      <i/>
+    </span>
+  )
 }
 
-function TransitionStrip(){
-  const labels=['SERIALIZED VERIFICATION','EVIDENCE BEFORE MARKETING','INTERACTIVE PRODUCT DEPTH','COMPATIBILITY WITH CONTEXT','HUMAN APPROVAL GATES','TRACEABLE SUPPORT']
-  return <div className={ui.transitionStrip} aria-hidden="true"><div>{[...labels,...labels].map((label,index)=><span key={`${label}-${index}`}><i/>{label}</span>)}</div></div>
+function Device({ type, finish, hero = false }: { type: string; finish: Finish; hero?: boolean }) {
+  return (
+    <span className={`${ui.device} ${ui[`device_${type}` as keyof typeof ui] || ''} ${hero ? ui.deviceHero : ''}`} data-device={type}>
+      <span className={ui.deviceFace}>
+        <span className={ui.deviceDetail}/>
+        {type === 'phone' && <><span className={ui.camera a}/><span className={ui.cameraB}/><span className={ui.cameraC}/></>}
+        {type === 'tablet' && <span className={ui.cameraSolo}/>} 
+        {type === 'laptop' && <span className={ui.laptopHinge}/>} 
+        {type === 'earbuds' && <span className={ui.earbudLid}/>} 
+        {type === 'power' && <span className={ui.powerPort}/>} 
+        <ShieldTag finish={finish} compact={type === 'earbuds' || type === 'power'} />
+      </span>
+      {type === 'laptop' && <span className={ui.laptopBase}/>} 
+      <span className={ui.deviceShadow}/>
+    </span>
+  )
 }
 
-export default function HomeExperience(){
-  const [menu,setMenu]=useState(false)
-  const [loaded,setLoaded]=useState(false)
+export default function HomeExperience() {
+  const [menu, setMenu] = useState(false)
+  const [selectedFinish, setSelectedFinish] = useState(0)
+  const [selectedDevice, setSelectedDevice] = useState('phone')
+  const [filmStep, setFilmStep] = useState(0)
+  const [filmPlaying, setFilmPlaying] = useState(true)
+  const finish = finishes[selectedFinish]
 
-  useEffect(()=>{
-    const root=document.documentElement
-    let target=window.scrollY
-    let current=target
-    let raf=0
-    const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const move=(event:PointerEvent)=>{
-      root.style.setProperty('--hx',`${event.clientX}px`)
-      root.style.setProperty('--hy',`${event.clientY}px`)
-      root.style.setProperty('--pnx',`${event.clientX/window.innerWidth-.5}`)
-      root.style.setProperty('--pny',`${event.clientY/window.innerHeight-.5}`)
+  useEffect(() => {
+    if (!filmPlaying) return
+    const timer = window.setInterval(() => setFilmStep(step => (step + 1) % steps.length), 1800)
+    return () => window.clearInterval(timer)
+  }, [filmPlaying])
+
+  useEffect(() => {
+    const root = document.documentElement
+    const onMove = (event: PointerEvent) => {
+      root.style.setProperty('--px', `${event.clientX / window.innerWidth - 0.5}`)
+      root.style.setProperty('--py', `${event.clientY / window.innerHeight - 0.5}`)
     }
-    const scroll=()=>{target=window.scrollY;root.style.setProperty('--scrollProgress',`${Math.min(1,target/Math.max(1,document.documentElement.scrollHeight-window.innerHeight))}`)}
-    const animate=()=>{current+= (target-current)*.085;root.style.setProperty('--smoothScroll',`${current}`);raf=requestAnimationFrame(animate)}
-    window.addEventListener('pointermove',move,{passive:true});window.addEventListener('scroll',scroll,{passive:true});scroll();if(!reduced) raf=requestAnimationFrame(animate)
-    const timer=window.setTimeout(()=>setLoaded(true),120)
-    return()=>{window.clearTimeout(timer);cancelAnimationFrame(raf);window.removeEventListener('pointermove',move);window.removeEventListener('scroll',scroll)}
-  },[])
+    window.addEventListener('pointermove', onMove, { passive: true })
+    return () => window.removeEventListener('pointermove', onMove)
+  }, [])
 
-  return <div className={`${ui.page} ${loaded?ui.loaded:''}`}>
-    <div className={ui.entryCurtain}><div><span>RADVORA</span><i/></div></div>
-    <div className={ui.progressRail}><i/></div>
-    <div className={ui.cursorGlow}/><div className={ui.ambientOne}/><div className={ui.ambientTwo}/><div className={ui.depthGrid}/>
+  const selectedFamily = useMemo(() => productFamilies.find(item => item.key === selectedDevice) || productFamilies[0], [selectedDevice])
 
-    <header className={ui.nav}><div className={`${ui.shell} ${ui.navInner}`}>
-      <a href="/" className={ui.brand}><b>RADVORA</b><span>TECHNOLOGIES</span></a>
-      <nav className={`${ui.links} ${menu?ui.linksOpen:''}`}>{nav.map(([label,href])=><a key={label} href={href} onClick={()=>setMenu(false)}>{label}</a>)}</nav>
-      <div className={ui.navCtas}><a href="/verify" className={ui.textCta}>VERIFY PRODUCT</a><a href="/products/shieldtag-pro" className={ui.mainCta}>EXPLORE SHIELDTAG <span>↗</span></a></div>
-      <button className={ui.menu} onClick={()=>setMenu(v=>!v)} aria-label="Toggle navigation">☰</button>
-    </div></header>
-
-    <main>
-      <section className={`${ui.shell} ${ui.hero}`}>
-        <div className={ui.heroCopy}>
-          <div className={ui.eyebrow}><span/>RADVORA · FUTURE PRODUCT SYSTEM</div>
-          <h1>Technology You Can <em>Measure.</em></h1>
-          <h2>Built with evidence. Presented with precision.</h2>
-          <p>Premium RF-focused accessories and digital-wellness technology presented through spatial interaction, transparent evidence states, serialized verification and explicit compatibility context.</p>
-          <div className={ui.heroActions}><a href="/products/shieldtag-pro" className={ui.heroPrimary}>Enter ShieldTag <span>→</span></a><a href="/research" className={ui.heroSecondary}>See the evidence model ↗</a></div>
-          <div className={ui.heroTrust}><div><i/>Serialized verification</div><div><i/>Evidence-gated claims</div><div><i/>Compatibility clarity</div></div>
+  return (
+    <div className={ui.page}>
+      <header className={ui.header}>
+        <div className={ui.shell}>
+          <a href="/" className={ui.brand}><b>RADVORA</b><span>SHIELDTAG</span></a>
+          <nav className={`${ui.nav} ${menu ? ui.navOpen : ''}`}>
+            <a href="#products" onClick={() => setMenu(false)}>Products</a>
+            <a href="#how-it-works" onClick={() => setMenu(false)}>How it works</a>
+            <a href="/compatibility" onClick={() => setMenu(false)}>Compatibility</a>
+            <a href="/about" onClick={() => setMenu(false)}>About</a>
+            <a href="/support" onClick={() => setMenu(false)}>Support</a>
+          </nav>
+          <div className={ui.headerActions}>
+            <a href="/verify" className={ui.linkButton}>Verify</a>
+            <a href="/products/shieldtag-pro" className={ui.primarySmall}>Find your match <span>→</span></a>
+            <button className={ui.menuButton} onClick={() => setMenu(v => !v)} aria-label="Toggle navigation">☰</button>
+          </div>
         </div>
-        <div className={ui.heroVisual}><div className={ui.visualLabel}><span>INTERACTIVE SPATIAL OBJECT</span><b>01 / HERO</b></div><HeroProduct/></div>
-        <div className={ui.scrollPrompt}><span>SCROLL TO ENTER</span><i/></div>
-      </section>
+      </header>
 
-      <TransitionStrip/>
-      <DeviceShieldShowcase/>
-      <ImmersiveExperience/>
+      <main>
+        <section className={ui.hero}>
+          <div className={`${ui.shell} ${ui.heroGrid}`}>
+            <div className={ui.heroCopy}>
+              <span className={ui.kicker}>PREMIUM DEVICE IDENTITY</span>
+              <h1>One Shield.<br/><em>Every Device.</em></h1>
+              <p>RADVORA ShieldTag is a premium identity badge system designed to feel native to the technology you already own.</p>
+              <div className={ui.heroActions}>
+                <a href="#products" className={ui.primary}>Explore ShieldTag <span>→</span></a>
+                <a href="#how-it-works" className={ui.secondary}><span className={ui.play}>▶</span> Watch how it works</a>
+              </div>
+              <div className={ui.heroProof}>
+                <span><i/>Colour matched</span>
+                <span><i/>Device-specific proportions</span>
+                <span><i/>Premium visual finish</span>
+              </div>
+            </div>
 
-      <section className={`${ui.shell} ${ui.compatSection}`}>
-        <div className={ui.compatCopy}><span>DEVICE ECOSYSTEM / 06</span><h2>Compatibility should be visible, not buried in fine print.</h2><p>The ecosystem view connects product and device categories visually while preserving the actual compatibility state in the underlying product records.</p><div><a href="/compatibility">Check compatibility →</a><a href="/products">Browse products →</a></div></div>
-        <div className={ui.compatVisual}><div className={ui.panelTop}><span>RELATIONSHIP NETWORK</span><b>ILLUSTRATIVE VIEW</b></div><CompatibilityMap/></div>
-      </section>
+            <div className={ui.heroStage} aria-label="RADVORA ShieldTag shown on multiple device types">
+              <div className={ui.wave waveA}/><div className={`${ui.wave} ${ui.waveB}`}/>
+              <div className={`${ui.heroDevice} ${ui.heroPhone}`}><Device type="phone" finish={finishes[0]} hero/></div>
+              <div className={`${ui.heroDevice} ${ui.heroTablet}`}><Device type="tablet" finish={finishes[1]} hero/></div>
+              <div className={`${ui.heroDevice} ${ui.heroLaptop}`}><Device type="laptop" finish={finishes[2]} hero/></div>
+              <div className={`${ui.heroDevice} ${ui.heroEarbuds}`}><Device type="earbuds" finish={finishes[3]} hero/></div>
+              <div className={`${ui.heroDevice} ${ui.heroPower}`}><Device type="power" finish={finishes[4]} hero/></div>
+              <div className={ui.heroStatement}><b>More than a sticker.</b><span>Designed to look like it belongs.</span></div>
+            </div>
+          </div>
+        </section>
 
-      <section className={ui.finalScene}>
-        <div className={ui.finalRings}><i/><i/><i/><i/></div><div className={ui.finalLight}/>
-        <div className={`${ui.shell} ${ui.finalInner}`}><span>RADVORA / INDIA-FIRST EXPERIENCE</span><h2>Advanced enough to feel futuristic. Controlled enough to remain credible.</h2><p>Explore products, verification, compatibility, research and business programs through one immersive system.</p><div><a href="/products" className={ui.heroPrimary}>Explore products →</a><a href="/business" className={ui.heroSecondary}>Business enquiries</a></div></div>
-      </section>
-    </main>
+        <section className={ui.valueStrip}>
+          <div className={ui.shell}>
+            <span><Mark small/> Precision-cut identity</span>
+            <span><Mark small/> Device-matched finishes</span>
+            <span><Mark small/> Simple application</span>
+            <span><Mark small/> Compatibility-first guidance</span>
+          </div>
+        </section>
 
-    <footer className={ui.footer}><div className={`${ui.shell} ${ui.footerGrid}`}>
-      <div><a href="/" className={ui.brand}><b>RADVORA</b><span>TECHNOLOGIES</span></a><p>Technology you can measure.</p></div>
-      <div><b>Product</b><a href="/products">Products</a><a href="/verify">Verify</a><a href="/compatibility">Compatibility</a><a href="/installation">Installation</a></div>
-      <div><b>Company</b><a href="/about">About</a><a href="/research">Research</a><a href="/labs">Labs</a><a href="/business">Business</a></div>
-      <div><b>Customer</b><a href="/account">Account</a><a href="/support">Support</a><a href="/warranty">Warranty</a><a href="/cart">Cart</a></div>
-      <div><b>Legal</b><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/returns">Returns</a><a href="/shipping">Shipping</a></div>
-    </div></footer>
-  </div>
+        <section id="products" className={ui.productsSection}>
+          <div className={ui.shell}>
+            <div className={ui.sectionHeading}>
+              <span>THE SHIELDTAG FAMILY</span>
+              <h2>Designed for the device,<br/>not copied across it.</h2>
+              <p>Each ShieldTag format has its own proportion and visual character, from compact phone badges to executive laptop plaques.</p>
+            </div>
+            <div className={ui.familyGrid}>
+              {productFamilies.map((item, index) => (
+                <button key={item.key} className={`${ui.familyCard} ${selectedDevice === item.key ? ui.familyActive : ''}`} onClick={() => setSelectedDevice(item.key)}>
+                  <div className={ui.familyVisual}><Device type={item.key} finish={finishes[index % finishes.length]}/></div>
+                  <span>{item.use}</span>
+                  <h3>{item.name}</h3>
+                  <p>{item.line}</p>
+                  <i>Explore →</i>
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className={ui.matchSection}>
+          <div className={`${ui.shell} ${ui.matchGrid}`}>
+            <div className={ui.matchCopy}>
+              <span>FIND YOUR MATCH</span>
+              <h2>Blend in.<br/>Stand out.<br/>Make it yours.</h2>
+              <p>Choose a finish that complements your device or creates a deliberate contrast. The preview updates instantly.</p>
+              <div className={ui.finishGrid}>
+                {finishes.map((item, index) => (
+                  <button key={item.name} className={selectedFinish === index ? ui.finishActive : ''} onClick={() => setSelectedFinish(index)} aria-label={`Preview ${item.name}`}>
+                    <i style={{'--swatch': item.tone, '--edge': item.edge} as React.CSSProperties}/><span>{item.name}</span>
+                  </button>
+                ))}
+              </div>
+              <small>Visual finish previews only. Sellable colours remain subject to approved catalogue configuration.</small>
+            </div>
+            <div className={ui.matchVisual}>
+              <span className={ui.previewLabel}>{selectedFamily.name} · {finish.name}</span>
+              <div className={ui.previewDevice}><Device type={selectedDevice} finish={finish} hero/></div>
+              <div className={ui.previewTag}><ShieldTag finish={finish}/><b>{finish.name}</b><span>Preview finish</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="how-it-works" className={ui.installSection}>
+          <div className={ui.shell}>
+            <div className={ui.sectionHeadingCompact}>
+              <span>INSTALLATION FILM</span>
+              <h2>Attach in seconds.</h2>
+              <p>Peel. Align. Press. Ready.</p>
+            </div>
+            <div className={ui.installGrid}>
+              <div className={ui.film} data-step={filmStep}>
+                <div className={ui.filmTop}><span>RADVORA / APPLICATION GUIDE</span><b>00:0{filmStep + 1} / 00:05</b></div>
+                <div className={ui.filmScene}>
+                  <div className={ui.filmPhone}><span className={ui.filmCamera}/></div>
+                  <div className={ui.filmCloth}/>
+                  <div className={ui.filmBacking}>PEEL</div>
+                  <div className={ui.filmTag}><ShieldTag finish={finishes[0]}/></div>
+                  <div className={ui.filmPress}><i/><i/><i/></div>
+                  <div className={ui.filmDone}>✓</div>
+                </div>
+                <div className={ui.filmCaption}><b>{steps[filmStep][0]}</b><p>{steps[filmStep][1]}</p></div>
+                <button className={ui.filmControl} onClick={() => setFilmPlaying(v => !v)}>{filmPlaying ? 'Pause' : 'Play'} demo <span>{filmPlaying ? 'Ⅱ' : '▶'}</span></button>
+              </div>
+              <div className={ui.stepList}>
+                {steps.map((step, index) => (
+                  <button key={step[0]} className={filmStep === index ? ui.stepActive : ''} onClick={() => { setFilmStep(index); setFilmPlaying(false) }}>
+                    <span>{String(index + 1).padStart(2, '0')}</span><div><b>{step[0]}</b><p>{step[1]}</p></div><i>→</i>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className={ui.assuranceSection}>
+          <div className={`${ui.shell} ${ui.assuranceGrid}`}>
+            <article className={ui.materialCard}>
+              <span>PRODUCT LANGUAGE</span>
+              <h2>Premium by design.<br/>Precise by intent.</h2>
+              <p>The visual system uses restrained metallic finishes, refined edges and minimal branding so ShieldTag reads as part of the device—not decoration added afterwards.</p>
+              <div className={ui.materialRows}>
+                <span><b>01</b> Thin layered construction</span>
+                <span><b>02</b> Controlled reflectivity</span>
+                <span><b>03</b> Device-specific sizing</span>
+                <span><b>04</b> Clean RADVORA hierarchy</span>
+              </div>
+            </article>
+            <article className={ui.validationCard}>
+              <span>WATER / DURABILITY STATUS</span>
+              <h3>No exaggerated claims.</h3>
+              <p>RADVORA will publish a water-resistance, scratch, adhesion or removal claim only after the final production version has completed the relevant validation.</p>
+              <strong>PERFORMANCE SPECIFICATION UNDER VALIDATION</strong>
+              <small>Until an approved rating is published, avoid immersion and prolonged water exposure.</small>
+            </article>
+          </div>
+        </section>
+
+        <section className={ui.faqSection}>
+          <div className={`${ui.shell} ${ui.faqGrid}`}>
+            <div className={ui.faqIntro}><span>BEFORE YOU BUY</span><h2>Questions answered up front.</h2><p>Clear product guidance should be part of the premium experience, not hidden after purchase.</p><a href="/support">Visit support →</a></div>
+            <div className={ui.faqs}>
+              <details open><summary>Where should I attach ShieldTag?</summary><p>Use a clean, dry, smooth compatible surface and keep the tag clear of cameras, ports, vents, hinges, buttons, charging contacts and other functional areas.</p></details>
+              <details><summary>Is ShieldTag waterproof?</summary><p>No specific waterproof or water-resistance rating is being published until validated testing supports it. Avoid immersion until an approved specification appears.</p></details>
+              <details><summary>Can I remove and reapply it?</summary><p>Removal, residue and reapplication characteristics depend on the final adhesive specification. Approved guidance will be published with the production product.</p></details>
+              <details><summary>Which devices are supported?</summary><p>The family is being designed for smartphones, tablets, laptops and selected accessories. Exact support should be confirmed through the approved compatibility guide.</p></details>
+            </div>
+          </div>
+        </section>
+
+        <section className={ui.finalSection}>
+          <div className={`${ui.shell} ${ui.finalCard}`}>
+            <div><span>RADVORA SHIELDTAG</span><h2>Your device should look better with it.</h2><p>Premium identity. Device-matched finishes. A product system designed around the technology you live with.</p></div>
+            <div className={ui.finalActions}><a href="/products/shieldtag-pro" className={ui.primary}>Explore ShieldTag <span>→</span></a><a href="/compatibility" className={ui.secondary}>Check compatibility</a></div>
+          </div>
+        </section>
+      </main>
+
+      <footer className={ui.footer}>
+        <div className={`${ui.shell} ${ui.footerGrid}`}>
+          <div><a href="/" className={ui.brand}><b>RADVORA</b><span>SHIELDTAG</span></a><p>One Shield. Every Device.</p></div>
+          <div><b>Product</b><a href="/products">Products</a><a href="/products/shieldtag-pro">ShieldTag</a><a href="/compatibility">Compatibility</a><a href="/installation">Installation</a></div>
+          <div><b>Company</b><a href="/about">About</a><a href="/research">Research</a><a href="/business">Business</a><a href="/contact">Contact</a></div>
+          <div><b>Support</b><a href="/support">Help</a><a href="/verify">Verify</a><a href="/warranty">Warranty</a><a href="/account">Account</a></div>
+          <div><b>Legal</b><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/returns">Returns</a><a href="/shipping">Shipping</a></div>
+        </div>
+      </footer>
+    </div>
+  )
 }
