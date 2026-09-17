@@ -1,5 +1,5 @@
-import HomeExperience from './home-experience'
+import ShieldTagLaunch from './shieldtag-launch'
 
 export default function Home() {
-  return <HomeExperience />
+  return <ShieldTagLaunch />
 }
