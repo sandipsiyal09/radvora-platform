@@ -1,3 +1,4 @@
+:global(html){scroll-behavior:smooth}
 .page{
   --bg:#05070a;--panel:#0b1016;--panel2:#10171e;--line:rgba(255,255,255,.08);
   --text:#f4f7f9;--muted:#84939f;--cyan:#6be4fb;
@@ -62,29 +63,59 @@
 .heroProof span:before{content:"";width:4px;height:4px;border-radius:50%;background:var(--cyan)}
 
 .waveStage{
-  display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:13px;padding:16px;
-  border:1px solid var(--line);border-radius:34px;
-  background:radial-gradient(circle at 55% 25%,rgba(82,173,216,.1),transparent 34%),
-             linear-gradient(145deg,#101720,#070b10 68%,#030507);
-  box-shadow:inset 0 1px rgba(255,255,255,.035),0 42px 90px rgba(0,0,0,.32)
+  position:relative;height:650px;overflow:hidden;perspective:1600px;transform-style:preserve-3d;
+  border:1px solid var(--line);border-radius:36px;
+  background:radial-gradient(circle at 50% 42%,rgba(84,189,230,.13),transparent 34%),
+             radial-gradient(circle at 16% 20%,rgba(99,91,170,.11),transparent 28%),
+             linear-gradient(145deg,#101720,#060a0f 70%,#020406);
+  box-shadow:inset 0 1px rgba(255,255,255,.04),0 48px 100px rgba(0,0,0,.34)
 }
-.waveBeam,.waveBeamAlt,.waveHalo,.waveCaption{display:none}
-.waveItem{min-width:0}
-.wave1,.wave2,.wave3,.wave4{grid-column:span 3}
-.wave5{grid-column:span 3}.wave6{grid-column:span 5}.wave7,.wave8{grid-column:span 2}
+.waveAtmosphere{
+  position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(circle at 50% 50%,rgba(80,232,255,.08),transparent 36%),
+    linear-gradient(115deg,transparent 24%,rgba(255,255,255,.025) 47%,transparent 66%);
+  mix-blend-mode:screen
+}
+.waveBeam,.waveBeamAlt{
+  display:block;position:absolute;left:-10%;width:120%;height:44%;top:31%;
+  border:1px solid rgba(104,226,255,.34);border-radius:50%;
+  transform:rotate(-7deg) rotateX(68deg);filter:drop-shadow(0 0 18px rgba(80,232,255,.24));pointer-events:none
+}
+.waveBeamAlt{
+  top:39%;height:36%;border-color:rgba(255,255,255,.12);transform:rotate(5deg) rotateX(72deg);opacity:.7
+}
+.waveHalo{
+  display:block;position:absolute;left:50%;top:48%;width:44%;aspect-ratio:1;transform:translate(-50%,-50%);
+  border-radius:50%;background:radial-gradient(circle,rgba(80,232,255,.11),transparent 64%);filter:blur(10px);pointer-events:none
+}
+.waveItem{
+  position:absolute;left:50%;top:50%;width:190px;transform-style:preserve-3d;will-change:transform;
+  transform:translate3d(calc(-50% + var(--wave-x)),calc(-50% + var(--wave-y)),var(--wave-z))
+            rotateY(var(--wave-ry)) rotateZ(var(--wave-rz)) scale(var(--wave-scale));
+  transition:transform .14s linear,filter .28s ease,opacity .28s ease;
+  animation:waveArrive .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--wave-delay)
+}
 .waveCard{
-  height:100%;min-height:410px;overflow:hidden;border-radius:24px;border:1px solid rgba(255,255,255,.085);
-  background:linear-gradient(180deg,#111820,#080d12);box-shadow:0 16px 40px rgba(0,0,0,.2);
+  width:190px;overflow:hidden;border-radius:24px;border:1px solid rgba(255,255,255,.09);
+  background:linear-gradient(180deg,rgba(17,24,32,.96),rgba(7,12,17,.98));
+  box-shadow:0 24px 54px rgba(0,0,0,.32);backdrop-filter:blur(14px);
   transition:transform .28s ease,border-color .28s ease,box-shadow .28s ease
 }
-.waveItem:hover .waveCard{transform:translateY(-4px);border-color:rgba(107,228,251,.22);box-shadow:0 24px 52px rgba(0,0,0,.28)}
-.waveCard .deviceVisual{height:330px;border:0;border-radius:0}
-.wave5 .deviceVisual,.wave6 .deviceVisual{height:350px}
-.wave7 .deviceVisual,.wave8 .deviceVisual{height:300px}
-.waveMeta{display:grid;gap:3px;padding:14px 16px 16px}
-.waveMeta b{font-size:11px;color:#edf3f6}
-.waveMeta span{font-size:9px;color:#8998a4}
-.waveMeta small{font-size:7px;letter-spacing:.1em;color:#66dff7;text-transform:uppercase;opacity:.86}
+.waveItem:hover .waveCard{transform:translateY(-5px) scale(1.015);border-color:rgba(107,228,251,.26);box-shadow:0 34px 72px rgba(0,0,0,.4)}
+.waveCard .deviceVisual{height:275px;border:0;border-radius:0}
+.waveMeta{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding:13px 14px 15px}
+.waveMeta>div{display:grid;gap:2px}
+.waveMeta b{font-size:10.5px;color:#edf3f6}
+.waveMeta span{font-size:8.5px;color:#8998a4}
+.waveMeta small{max-width:92px;font-size:6.8px;line-height:1.35;letter-spacing:.08em;color:#66dff7;text-transform:uppercase;text-align:right}
+.waveCaption{
+  display:grid;position:absolute;right:22px;bottom:18px;gap:4px;text-align:right;z-index:400;
+  padding:10px 12px;border-radius:13px;background:rgba(4,8,12,.56);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(12px)
+}
+.waveCaption span{font-size:7px;letter-spacing:.18em;color:#69e1f7}
+.waveCaption b{font-size:9px;color:#9aabb7;font-weight:600}
+.waveItem .tag{animation:badgeSeat .72s cubic-bezier(.16,.8,.24,1) both;animation-delay:calc(var(--wave-delay) + 220ms)}
 
 .deviceVisual{
   position:relative;height:320px;overflow:hidden;border-radius:26px;border:1px solid rgba(255,255,255,.08);
@@ -148,10 +179,11 @@
 .tagMini{width:92px;height:56px}
 .tagRim{
   position:absolute;inset:0;clip-path:inherit;
-  background:linear-gradient(135deg,var(--tag-edge),#f0f4f6 32%,#39414a 76%,var(--tag-edge))
+  background:linear-gradient(135deg,var(--tag-edge),#f0f4f6 32%,#39414a 76%,var(--tag-edge));transition:background .42s ease
 }
 .tagFace{
   position:absolute;inset:3px;clip-path:inherit;background:var(--tag-base);color:var(--tag-text);
+  transition:background .42s ease,color .3s ease;
   display:grid;grid-template-columns:23px 1fr;gap:7px;align-items:center;padding:0 10px;overflow:hidden;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.19)
 }
@@ -216,8 +248,12 @@
 .finishMeta p{margin:0;color:#7f8e9b;font-size:10.5px;line-height:1.6}
 .finishStage{
   position:relative;min-height:600px;padding:30px;border-radius:32px;border:1px solid var(--line);
-  background:radial-gradient(circle at 48% 38%,rgba(73,174,218,.12),transparent 38%),linear-gradient(145deg,#111922,#06090d);
-  overflow:hidden
+  background:linear-gradient(145deg,#111922,#06090d);overflow:hidden;isolation:isolate
+}
+.finishStage:before{
+  content:"";position:absolute;inset:-20%;z-index:0;pointer-events:none;
+  background:radial-gradient(circle at 52% 40%,color-mix(in srgb,var(--finish-scene) 32%,transparent),transparent 38%);
+  filter:blur(8px);transition:background .45s ease
 }
 .finishDevice{position:relative;z-index:2;width:min(620px,82%);margin:0 auto}
 .finishDevice .deviceVisual{height:425px}
@@ -247,8 +283,15 @@
 .matcherControls select{
   width:100%;border:1px solid rgba(255,255,255,.1);background:#091017;color:#eaf3f7;border-radius:11px;padding:11px
 }
+.matcherControls select:disabled{color:#aeb9c1;background:#0c1218;border-style:dashed;cursor:not-allowed}
 .matcherStatus b{font-size:12px;color:#c9f3fc}.matcherStatus p{margin:0;color:#7b8995;font-size:9.5px}
-.matcherPreview{position:relative;padding:28px;display:grid;place-items:center;overflow:hidden}
+.matcherPreview{position:relative;padding:28px;display:grid;place-items:center;overflow:hidden;isolation:isolate}
+.matcherPreview:before{
+  content:"";position:absolute;inset:-24%;z-index:0;pointer-events:none;
+  background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--matcher-glow) 28%,transparent),transparent 40%);
+  filter:blur(10px);transition:background .4s ease
+}
+.matcherPreview>.deviceVisual{position:relative;z-index:2}
 .matcherPreview .deviceVisual{width:min(670px,94%);height:465px}
 .matcherBadge{
   position:absolute;left:26px;bottom:24px;padding:13px 15px;border-radius:14px;
@@ -336,6 +379,8 @@
 .videoCopy>span{font-size:7px;letter-spacing:.13em;color:#64dff7}
 .videoCopy h3{margin:6px 0;font-size:15px}.videoCopy p{margin:0;color:#798894;font-size:9.5px;line-height:1.55}
 .videoActive{border-color:rgba(80,232,255,.28);box-shadow:0 16px 42px rgba(0,0,0,.2)}
+.videoCard .deviceVisual{transition:transform .36s cubic-bezier(.2,.8,.2,1)}
+.videoActive .deviceVisual{transform:scale(1.035)}
 
 .materialGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
 .materialGrid article{min-height:225px;border:1px solid var(--line);border-radius:22px;padding:22px;background:linear-gradient(180deg,#10161d,#080c10)}
@@ -382,12 +427,15 @@
 
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes scan{0%,100%{top:8%;opacity:.18}50%{top:88%;opacity:.52}}
+@keyframes waveArrive{from{opacity:0;filter:blur(8px);translate:0 24px}to{opacity:1;filter:blur(0);translate:0 0}}
+@keyframes badgeSeat{0%{opacity:0;filter:blur(5px)}55%{opacity:.55}100%{opacity:1;filter:blur(0)}}
+.sectionReveal{opacity:0;transform:translateY(28px);transition:opacity .72s ease,transform .72s cubic-bezier(.2,.8,.2,1)}
+.sectionVisible{opacity:1;transform:none}
 
 @media(max-width:1280px){
   .hero{grid-template-columns:1fr;padding-top:52px}
   .heroCopy{max-width:850px}
-  .waveStage{grid-template-columns:repeat(6,minmax(0,1fr))}
-  .wave1,.wave2,.wave3,.wave4,.wave5,.wave6,.wave7,.wave8{grid-column:span 3}
+  .waveStage{height:620px}
   .familyGrid{grid-template-columns:repeat(2,1fr)}
   .familyCard:last-child{grid-column:span 2}
   .videoGrid{grid-template-columns:repeat(3,1fr)}
@@ -409,14 +457,17 @@
   .heroCopy>p{font-size:13px}
   .heroProof{gap:10px 14px;margin-bottom:30px}.heroProof span{white-space:normal}
   .waveStage{
-    display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:11px;padding:8px 5px 17px;
-    border:0;border-radius:0;background:transparent;box-shadow:none;scrollbar-width:none
+    display:flex;height:auto;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;gap:11px;padding:8px 5px 17px;
+    border:0;border-radius:0;background:transparent;box-shadow:none;scrollbar-width:none;perspective:none
   }
   .waveStage::-webkit-scrollbar,.videoGrid::-webkit-scrollbar{display:none}
-  .waveItem{min-width:82vw;scroll-snap-align:center}
-  .waveCard{min-height:420px}
-  .waveCard .deviceVisual,.wave5 .deviceVisual,.wave6 .deviceVisual{height:335px}
-  .wave7 .deviceVisual,.wave8 .deviceVisual{height:320px}
+  .waveAtmosphere,.waveBeam,.waveBeamAlt,.waveHalo,.waveCaption{display:none}
+  .waveItem{
+    position:relative;left:auto;top:auto;min-width:82vw;width:82vw;scroll-snap-align:center;
+    transform:none!important;animation:none;z-index:auto!important
+  }
+  .waveCard{width:100%;min-height:420px}
+  .waveCard .deviceVisual{height:335px}
 
   .ecoGrid,.galleryGrid,.familyGrid,.materialGrid,.compatCards{grid-template-columns:1fr}
   .familyCard:last-child{grid-column:auto}
@@ -446,7 +497,10 @@
   .tagPower{left:50%;bottom:22%;transform:translateX(-50%) scale(.60)}
 }
 @media(prefers-reduced-motion:reduce){
-  .finishLight,.videoScan{animation:none!important}
+  :global(html){scroll-behavior:auto}
+  .finishLight,.videoScan,.waveItem,.waveItem .tag{animation:none!important}
+  .waveItem{transition:none!important}
+  .sectionReveal{opacity:1!important;transform:none!important}
   .page *{scroll-behavior:auto!important;transition-duration:.01ms!important}
 }
 
