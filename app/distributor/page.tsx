@@ -1,15 +1,13 @@
 import BusinessLeadForm from '../business/lead-form'
+import { PublicShell } from '../public-shell'
+import ui from '../public-brand.module.css'
 
-export const metadata={title:'Distributor Program',description:'Apply to become a RADVORA distribution partner.'}
+export const metadata={title:'Distributor Program',description:'Apply to become a RADVORA ShieldTag distribution partner.'}
 
 export default function DistributorPage(){
-  return <main className="page-wrap"><div className="shell">
-    <section className="page-head"><span className="kicker">RADVORA DISTRIBUTOR PROGRAM</span><h1>Scale RADVORA responsibly.</h1><p>For regional and national distribution partners seeking structured product authentication, channel support and evidence-controlled marketing.</p></section>
-    <div className="admin-grid">
-      <section className="panel"><span className="kicker">CHANNEL</span><h2>Territory planning</h2><p className="empty-state">Distribution discussions can be qualified by geography, channel, expected volume and operational readiness.</p></section>
-      <section className="panel"><span className="kicker">CONTROL</span><h2>Traceable inventory</h2><p className="empty-state">Serialized products and registration workflows support downstream authenticity and customer-care processes.</p></section>
-      <section className="panel"><span className="kicker">GOVERNANCE</span><h2>Approved communication</h2><p className="empty-state">Channel claims stay constrained to evidence that has passed RADVORA scientific and compliance review.</p></section>
-    </div>
-    <BusinessLeadForm source="distributor-page" title="Apply for distribution partnership"/>
-  </div></main>
+  return <PublicShell><main className={ui.main}>
+    <section className={ui.hero}><div className={ui.heroCopy}><span className={ui.kicker}>DISTRIBUTOR PROGRAM</span><h1>Scale the system.<br/><em>Keep the story consistent.</em></h1><p>Regional and national distribution discussions focus on the ShieldTag family, device mix, inventory traceability, partner education and controlled product communication.</p></div><aside className={ui.heroAside}><span>CHANNEL DISCIPLINE</span><strong>Scale without dilution.</strong><p>Premium positioning depends on consistent product family, finish and compatibility guidance at every channel touchpoint.</p></aside></section>
+    <section className={ui.section}><div className={ui.grid3}><article className={ui.supportCard}><span>TERRITORY</span><h3>Market planning</h3><p>Qualify geography, channels, expected volume, device categories and operational readiness.</p></article><article className={ui.supportCard}><span>TRACEABILITY</span><h3>Inventory & authenticity</h3><p>Where serialization is issued, downstream product records can support authenticity and service workflows.</p></article><article className={ui.supportCard}><span>GOVERNANCE</span><h3>Approved communication</h3><p>Channel material stays aligned with current product positioning, compatibility records and validated claims.</p></article></div></section>
+    <section className={ui.section}><BusinessLeadForm source="distributor-page" title="Apply for distribution partnership"/></section>
+  </main></PublicShell>
 }

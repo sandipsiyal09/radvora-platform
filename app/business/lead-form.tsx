@@ -54,7 +54,7 @@ export default function BusinessLeadForm({source='business-page',title='Corporat
     <input id={`${idPrefix}-phone`} className="field" name="phone" maxLength={40} autoComplete="tel" inputMode="tel" placeholder="Phone (optional)"/>
     <label className="field-label" htmlFor={`${idPrefix}-notes`}>{isPrivacy?'Privacy request details':'Enquiry details'}</label>
     <textarea id={`${idPrefix}-notes`} className="field" name="notes" rows={5} maxLength={3000} required={isPrivacy} placeholder={isPrivacy?'Describe your privacy question or request. Do not include passwords, card data or authentication secrets.':'Tell us about quantities, channels, use case or partnership interest'}/>
-    <button className="pill light" disabled={busy}>{busy?'Submitting…':isPrivacy?'Submit privacy request →':'Submit enquiry →'}</button>
+    <button className="pill light" type="submit" disabled={busy}>{busy?'Submitting…':isPrivacy?'Submit privacy request →':'Submit enquiry →'}</button>
     {message?<p className="status-message" role="status" aria-live="polite">{message}</p>:null}
   </form>
 }

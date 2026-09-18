@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { PublicShell } from '../public-shell'
 
 export const metadata: Metadata = {
   title: 'Shipping Policy',
@@ -16,5 +17,5 @@ const sections = [
 ]
 
 export default function ShippingPage(){
-  return <main className="page-shell"><div className="content-card prose-card"><p className="eyebrow">RADVORA TECHNOLOGIES · INDIA</p><h1>Shipping Policy</h1><p>Last updated: 11 September 2026</p><p>This policy explains the current RADVORA shipping and delivery process for consumer orders within India. Product-specific or commercial-order terms may also apply where disclosed before purchase.</p>{sections.map(([title, body])=><section key={title}><h2>{title}</h2><p>{body}</p></section>)}</div></main>
+  return <PublicShell><main className="page-shell"><div className="content-card prose-card"><p className="eyebrow">RADVORA TECHNOLOGIES · INDIA</p><h1>Shipping Policy</h1><p>Last updated: 11 September 2026</p><p>This policy explains the current RADVORA shipping and delivery process for consumer orders within India. Product-specific or commercial-order terms may also apply where disclosed before purchase.</p>{sections.map(([title, body])=><section key={title}><h2>{title}</h2><p>{body}</p></section>)}</div></main></PublicShell>
 }

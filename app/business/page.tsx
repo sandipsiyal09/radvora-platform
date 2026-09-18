@@ -1,15 +1,13 @@
 import BusinessLeadForm from './lead-form'
+import { PublicShell } from '../public-shell'
+import ui from '../public-brand.module.css'
 
-export const metadata={title:'Business | RADVORA Technologies',description:'Corporate wellness, retail, distribution and OEM enquiries for RADVORA products.'}
+export const metadata={title:'Business | RADVORA',description:'Corporate, retail, distribution and OEM enquiries for RADVORA ShieldTag.'}
 
 export default function BusinessPage(){
-  return <main className="page-wrap"><div className="shell">
-    <section className="page-head"><span className="kicker">RADVORA BUSINESS</span><h1>Build safer, better-documented device wellness programs.</h1><p>For corporate procurement, retail partnerships, distribution and OEM discussions. Product and scientific claims remain evidence-gated.</p></section>
-    <div className="admin-grid">
-      <section className="panel"><span className="kicker">CORPORATE</span><h2>Employee & enterprise programs</h2><p className="empty-state">Bulk deployment, onboarding, compatibility guidance and product registration workflows.</p></section>
-      <section className="panel"><span className="kicker">CHANNEL</span><h2>Retail & distribution</h2><p className="empty-state">Structured partner onboarding, product education, authenticity verification and approved marketing assets.</p></section>
-      <section className="panel"><span className="kicker">OEM</span><h2>Integration discussions</h2><p className="empty-state">Product design, packaging and technology collaboration subject to documented validation and commercial review.</p></section>
-    </div>
-    <BusinessLeadForm/>
-  </div></main>
+  return <PublicShell><main className={ui.main}>
+    <section className={ui.hero}><div className={ui.heroCopy}><span className={ui.kicker}>RADVORA BUSINESS</span><h1>Deploy one identity<br/><em>across more devices.</em></h1><p>For corporate programs, retail partnerships, distribution and OEM conversations around ShieldTag, device compatibility, product authentication and approved rollout materials.</p></div><aside className={ui.heroAside}><span>BUSINESS FIT</span><strong>Structured, traceable deployment.</strong><p>Business discussions can cover device mix, ShieldTag family, finish direction, volume, authentication and deployment support without overstating compatibility or performance.</p></aside></section>
+    <section className={ui.section}><div className={ui.grid3}><article className={ui.supportCard}><span>CORPORATE</span><h3>Device identity programs</h3><p>Plan mixed phone, tablet, laptop and accessory deployments with device-aware formats and clear compatibility workflows.</p></article><article className={ui.supportCard}><span>CHANNEL</span><h3>Retail & distribution</h3><p>Use approved product education, visual assets, authenticity workflows and controlled compatibility guidance.</p></article><article className={ui.supportCard}><span>OEM / COLLABORATION</span><h3>Integration discussions</h3><p>Explore product, packaging and device-integration concepts subject to engineering, validation and commercial review.</p></article></div></section>
+    <section className={ui.section}><BusinessLeadForm/></section>
+  </main></PublicShell>
 }

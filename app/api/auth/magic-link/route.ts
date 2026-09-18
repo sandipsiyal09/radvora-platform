@@ -85,7 +85,10 @@ export async function POST(request:Request){
   const {error}=await supabase.auth.signInWithOtp({email,options:{emailRedirectTo:callbackUrl}})
   if(error){
     const errorName=error instanceof Error?error.name:'auth_error'
-    console.error('passwordless_login_request_failed',{component:'auth_magic_link',errorName})
+    const errorStatus='status' in error&&typeof error.status==='number'?error.status:null
+    const errorCode='code' in error&&typeof error.code==='string'?error.code:null
+    console.error('passwordless_login_request_failed',{component:'auth_magic_link',errorName,errorStatus,errorCode})
+    if(errorStatus===429)return json({error:'Too many sign-in attempts. Please wait a few minutes and try again.'},429)
     return json({error:'Unable to send the sign-in link right now. Please try again shortly.'},503)
   }
 

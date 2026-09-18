@@ -1,43 +1,34 @@
 import type { Metadata } from 'next'
-import './product.css'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '../../../lib/supabase/server'
 import AddToCartButton from '../add-to-cart-button'
+import { PublicShell } from '../../public-shell'
+import ui from '../../public-brand.module.css'
 
-export const dynamic = 'force-dynamic'
+export const dynamic='force-dynamic'
 
 export const metadata:Metadata={
   title:'ShieldTag Pro',
-  description:'ShieldTag Pro by RADVORA Technologies with serialized authenticity and evidence-controlled product information.',
-  alternates:{canonical:'/products/shieldtag-pro'},
-  openGraph:{title:'ShieldTag Pro | RADVORA Technologies',description:'Flagship RADVORA product with serialized authenticity and evidence-controlled claims.',url:'/products/shieldtag-pro'}
+  description:'RADVORA ShieldTag Pro is the tablet-proportioned member of the ShieldTag device identity family.',
+  alternates:{canonical:'/products/shieldtag-pro'}
 }
 
-export default async function ShieldTagProPage() {
-  const supabase = await createClient()
-  const { data: product } = await supabase.from('products').select('id,name,slug,sku,short_description,description,status,price_inr,currency,commerce_enabled,stock_on_hand,stock_reserved').eq('slug','shieldtag-pro').eq('status','active').maybeSingle()
-  if(!product) notFound()
-
-  const [{count:publishedClaims},{count:publishedTests}]=await Promise.all([
-    supabase.from('claims').select('*',{count:'exact',head:true}).eq('product_id',product.id).eq('status','published').neq('category','health'),
-    supabase.from('rf_tests').select('*',{count:'exact',head:true}).eq('product_id',product.id).eq('status','published')
-  ])
+export default async function ShieldTagProPage(){
+  const supabase=await createClient()
+  const {data:product}=await supabase.from('products').select('id,name,slug,sku,status,price_inr,currency,commerce_enabled,stock_on_hand,stock_reserved').eq('slug','shieldtag-pro').eq('status','active').maybeSingle()
+  if(!product)notFound()
   const availableStock=product.stock_on_hand===null?null:Math.max(0,Number(product.stock_on_hand)-Number(product.stock_reserved||0))
   const indiaPurchasable=product.commerce_enabled===true&&Boolean(product.price_inr)&&product.currency==='INR'&&availableStock!==null&&availableStock>0
 
-  return (
-    <main className="page-wrap"><div className="shell"><section className="product-detail-grid">
-      <div className="product-visual glass"><div className="product-orbit product-orbit-a"/><div className="product-orbit product-orbit-b"/><div className="product-disc-large"><span className="product-a">A</span><strong>RADVORA</strong><small>SHIELDTAG PRO</small></div><span className="visual-note">Interactive 3D product presentation</span></div>
-      <div className="product-copy">
-        <p className="kicker">FLAGSHIP PRODUCT</p><h1>{product.name}</h1><p className="product-lead">{product.short_description||'RADVORA RF-focused smartphone accessory with serialized authenticity and evidence-controlled product information.'}</p>
-        <div className="product-status-grid"><div className="glass"><span>Published RF tests</span><b>{publishedTests??0}</b></div><div className="glass"><span>Published non-health claims</span><b>{publishedClaims??0}</b></div><div className="glass"><span>Authentication</span><b>Serialized</b></div><div className="glass"><span>Claims model</span><b>Evidence-gated</b></div></div>
-        {product.price_inr?<p className="product-price">{new Intl.NumberFormat('en-IN',{style:'currency',currency:product.currency||'INR'}).format(Number(product.price_inr))}</p>:null}
-        {availableStock!==null?<p className="empty-state">Availability: {availableStock>0?'In stock':'Out of stock'}</p>:null}
-        {indiaPurchasable?<AddToCartButton productId={product.id}/>:<p className="empty-state">{availableStock===0?'ShieldTag Pro is currently out of stock.':'India consumer purchasing is not enabled for this product yet.'}</p>}
-        <div className="actions"><Link className="pill ghost" href="/verify">Verify a product →</Link><Link className="pill ghost" href="/labs">View RADVORA Labs ↗</Link></div>
-        <div className="product-note glass"><strong>Evidence before marketing.</strong><p>Numerical RF-performance claims are shown only when the corresponding evidence has passed the required scientific and compliance review.</p></div>
-      </div>
-    </section></div></main>
-  )
+  return <PublicShell><main className={ui.main}>
+    <section className={ui.hero}>
+      <div className={ui.heroCopy}><span className={ui.kicker}>SHIELDTAG PRO</span><h1>Proportioned<br/><em>for tablets.</em></h1><p>ShieldTag Pro is the larger-format member of the RADVORA identity system, designed to look visually balanced on approved tablet backs and compatible cases.</p><div className={ui.actions}><Link className={ui.primary} href="/#matcher">Preview on a tablet →</Link><Link className={ui.secondary} href="/compatibility">Check exact compatibility</Link></div></div>
+      <aside className={ui.heroAside}><span>PRODUCT FAMILY</span><strong>Tablet · Pro format</strong><p>Visual examples can show colour and placement direction. Exact model fit remains separately verified.</p><ul><li><span>Authentication</span><b>Serialized where issued</b></li><li><span>Compatibility</span><b>Model-specific</b></li><li><span>Claims</span><b>Evidence-controlled</b></li></ul></aside>
+    </section>
+
+    <section className={ui.section}><div className={ui.grid3}><article className={ui.panel}><span className={ui.kicker}>PROPORTION</span><h3>Made larger for tablet surfaces.</h3><p>The Pro format is visually scaled for tablet backs rather than reusing the smaller smartphone badge unchanged.</p></article><article className={ui.panel}><span className={ui.kicker}>PLACEMENT</span><h3>Keep functional zones clear.</h3><p>Approved placement should avoid cameras, buttons, charging contacts and other hardware that needs to remain unobstructed.</p></article><article className={ui.panel}><span className={ui.kicker}>FINISH</span><h3>Match or contrast.</h3><p>Use the finish studio to preview a close device match or a deliberately contrasting ShieldTag direction.</p></article></div></section>
+
+    <section className={ui.section}><div className={ui.grid2}><article className={ui.compatPanel}><span className={ui.kicker}>COMMERCIAL STATUS</span><h3>{indiaPurchasable?'Available for purchase':'Purchasing is not enabled yet.'}</h3>{product.price_inr?<p><strong>{new Intl.NumberFormat('en-IN',{style:'currency',currency:product.currency||'INR'}).format(Number(product.price_inr))}</strong></p>:<p>Final public pricing will appear only when the approved sellable catalogue is enabled.</p>}{availableStock!==null&&<p>Recorded availability: {availableStock>0?'In stock':'Out of stock'}.</p>}{indiaPurchasable?<AddToCartButton productId={product.id}/>:<div className={ui.notice}>India checkout remains unavailable until all required commerce, seller, tax, inventory and payment prerequisites are satisfied.</div>}</article><article className={ui.compatPanel}><span className={ui.kicker}>BEFORE YOU APPLY</span><h3>Confirm the exact tablet.</h3><p>Seeing a tablet in the visual matcher is not a compatibility result. Use the checker for the manufacturer and exact model, then follow the approved installation guidance.</p><div className={ui.actions}><Link className={ui.secondary} href="/compatibility">Compatibility →</Link><Link className={ui.secondary} href="/installation">Installation →</Link></div></article></div></section>
+  </main></PublicShell>
 }
