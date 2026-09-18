@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { PublicShell } from '../public-shell'
 import ui from '../public-brand.module.css'
 
+export const metadata={title:'Support',description:'Get RADVORA ShieldTag support for compatibility, installation, verification, warranty and registered-product questions.',alternates:{canonical:'/support'}}
+
 const faqs=[
   ['Which ShieldTag family should I choose?','Start with device class: Signature for smartphones, Pro for tablets, Executive for laptops, Mini for compact accessories and Utility for other supported technology contexts. Exact model fit still requires compatibility confirmation.'],
   ['Why can I see a device in the visual matcher but not a compatibility result?','The visual matcher demonstrates styling and finish direction. Compatibility is a separate evidence-controlled record, so an unreviewed model remains “not yet reviewed.”'],
