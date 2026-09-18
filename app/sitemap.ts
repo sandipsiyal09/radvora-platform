@@ -5,17 +5,10 @@ export default function sitemap():MetadataRoute.Sitemap{
   const routes=[
     '',
     '/products',
-    '/products/shieldtag-core',
-    '/products/shieldtag-elite',
     '/products/shieldtag-pro',
-    '/products/family-pack',
-    '/products/safestand',
-    '/products/rf-case',
-    '/labs',
-    '/research',
     '/compatibility',
-    '/verify',
     '/installation',
+    '/verify',
     '/warranty',
     '/support',
     '/about',
@@ -29,7 +22,7 @@ export default function sitemap():MetadataRoute.Sitemap{
     '/distributor'
   ]
   return routes.map(path=>({
-    url:`${base}${path}`,
+    url:base+path,
     lastModified:new Date(),
     changeFrequency:path===''?'weekly':'monthly',
     priority:path===''?1:path==='/products'?0.9:0.7
