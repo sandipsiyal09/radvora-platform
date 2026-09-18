@@ -60,11 +60,11 @@ function Tag({finish,label='SHIELDTAG',mini=false}:{finish:Finish;label?:string;
   return <div className={`${ui.tag} ${mini?ui.tagMini:''}`} style={style}><div className={ui.tagRim}/><div className={ui.tagFace}><Logo/><span><b>RADVORA</b><small>{label}</small></span><i/></div></div>
 }
 
-function DeviceVisual({device,finish,label='SHIELDTAG',priority=false,interactive=false,useDeviceFinish=true}:{device:DeviceExample;finish?:Finish;label?:string;priority?:boolean;interactive?:boolean;useDeviceFinish?:boolean}){
+function DeviceVisual({device,finish,label='SHIELDTAG',priority=false,interactive=false,useDeviceFinish=true,showTag=true}:{device:DeviceExample;finish?:Finish;label?:string;priority?:boolean;interactive?:boolean;useDeviceFinish?:boolean;showTag?:boolean}){
   const appliedFinish=useDeviceFinish?device.syncFinish:(finish??device.syncFinish)
   return <div className={`${ui.deviceVisual} ${ui[`device_${device.id}`]} ${ui[`tone_${device.tone}`]} ${interactive?ui.deviceInteractive:''}`}>
     <div className={ui.deviceImageFrame}><img src={device.image} alt={`${device.brand} ${device.name} rear view with RADVORA ShieldTag placement preview`} loading={priority?'eager':'lazy'} decoding="async" className={device.fit==='cover'?ui.imageCover:ui.imageContain}/></div>
-    <div className={`${ui.tagAnchor} ${ui[device.tagClass]}`}><Tag finish={appliedFinish} label={label} mini={device.category==='Accessory'}/></div>
+    {showTag&&<div className={`${ui.tagAnchor} ${ui[device.tagClass]}`}><Tag finish={appliedFinish} label={label} mini={device.category==='Accessory'}/></div>}
     <div className={ui.deviceGloss}/>
   </div>
 }
@@ -100,9 +100,10 @@ function FinishStudio({finishId,setFinishId}:{finishId:string;setFinishId:(id:st
 function DeviceMatcher({finishId,setFinishId}:{finishId:string;setFinishId:(id:string)=>void}){
   const [brand,setBrand]=useState('Apple')
   const [category,setCategory]=useState('Smartphone')
-  const match=useMemo(()=>devices.find(d=>d.brand===brand&&d.category===category)??devices.find(d=>d.brand===brand)??devices[0],[brand,category])
   const finish=finishes.find(f=>f.id===finishId)??finishes[0]
-  const availableBrands=[...new Set(devices.map(d=>d.brand))]
+  const availableBrands=useMemo(()=>[...new Set(devices.filter(d=>d.category===category).map(d=>d.brand))],[category])
+  useEffect(()=>{if(!availableBrands.includes(brand))setBrand(availableBrands[0]??'Apple')},[category,availableBrands,brand])
+  const match=useMemo(()=>devices.find(d=>d.brand===brand&&d.category===category)??devices.find(d=>d.category===category)??devices[0],[brand,category])
   return <section className={ui.matcherSection} id="matcher"><div className={ui.matcherPanel}><div className={ui.matcherIntro}><span>FIND YOUR MATCH</span><h2>Preview before you decide.</h2><p>Choose a device context and finish. Exact model compatibility stays fail-closed until an approved device guide confirms it.</p></div><div className={ui.matcherControls}><label><span>01 Device category</span><select value={category} onChange={e=>setCategory(e.target.value)}><option>Smartphone</option><option>Tablet</option><option>Laptop</option><option>Accessory</option></select></label><label><span>02 Brand example</span><select value={brand} onChange={e=>setBrand(e.target.value)}>{availableBrands.map(b=><option key={b}>{b}</option>)}</select></label><label><span>03 ShieldTag finish</span><select value={finishId} onChange={e=>setFinishId(e.target.value)}>{finishes.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}</select></label><div className={ui.matcherStatus}><span>04 Compatibility status</span><b>Check model compatibility before purchase</b><p>Exact fit remains model-specific even when a visual preview is available.</p></div></div></div><div className={ui.matcherPreview}><DeviceVisual device={match} finish={finish} label={category==='Laptop'?'EXECUTIVE':category==='Tablet'?'PRO':category==='Accessory'?'MINI':'SIGNATURE'} interactive useDeviceFinish={false}/><div className={ui.matcherBadge}><span>PREVIEW</span><b>{match.brand} · {match.name}</b><small>{finish.name}</small></div></div></section>
 }
 
@@ -113,7 +114,7 @@ function ApplicationGallery({finish}:{finish:Finish}){
 function BeforeAfter({finish}:{finish:Finish}){
   const [reveal,setReveal]=useState(54)
   const d=devices[0]
-  return <section className={ui.beforeSection}><div className={ui.beforeCopy}><span>BEFORE / AFTER</span><h2>One device.<br/><em>One considered detail.</em></h2><p>Drag the control to compare the same real-device example before and after the RADVORA badge is added.</p></div><div className={ui.compare} style={{'--reveal':`${reveal}%`} as CSSProperties}><div className={ui.compareBase}><img src={d.image} alt="iPhone example before adding RADVORA ShieldTag"/></div><div className={ui.compareOverlay}><img src={d.image} alt="iPhone example with RADVORA ShieldTag preview"/><div className={`${ui.tagAnchor} ${ui[d.tagClass]}`}><Tag finish={d.syncFinish} label="SIGNATURE"/></div></div><div className={ui.compareLabels}><span>Before ShieldTag</span><span>With RADVORA</span></div><input aria-label="Compare device before and after ShieldTag" type="range" min="8" max="92" value={reveal} onChange={e=>setReveal(Number(e.target.value))}/><div className={ui.compareHandle}/></div></section>
+  return <section className={ui.beforeSection}><div className={ui.beforeCopy}><span>BEFORE / AFTER</span><h2>One device.<br/><em>One considered detail.</em></h2><p>Drag the control to compare the same rear-view device before and after its colour-matched RADVORA badge is applied.</p></div><div className={ui.compare} style={{'--reveal':`${reveal}%`} as CSSProperties}><div className={ui.compareBase}><DeviceVisual device={d} label="SIGNATURE" showTag={false}/></div><div className={ui.compareOverlay}><DeviceVisual device={d} label="SIGNATURE"/></div><div className={ui.compareLabels}><span>Before ShieldTag</span><span>With RADVORA</span></div><input aria-label="Compare device before and after ShieldTag" type="range" min="8" max="92" value={reveal} onChange={e=>setReveal(Number(e.target.value))}/><div className={ui.compareHandle}/></div></section>
 }
 
 function Installation({finish}:{finish:Finish}){
