@@ -104,7 +104,7 @@ function HeroWave({finish}:{finish:Finish}){
       const center=(wave.length-1)/2
       const offset=index-center
       const normalized=offset/center
-      const x=offset*142-(progress-.5)*130
+      const x=offset*105-(progress-.5)*92
       const y=Math.sin(index*.82)*64+Math.sin(progress*Math.PI*2+index*.48)*10
       const z=Math.cos(normalized*Math.PI/2)*150-Math.abs(offset)*14
       const ry=normalized*-18+(progress-.5)*10
