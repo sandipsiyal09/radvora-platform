@@ -34,7 +34,9 @@ export default function CompatibilityPage(){
   async function check(e:FormEvent){
     e.preventDefault()
     if(!manufacturer.trim()||!model.trim())return
-    setLoading(true);setChecked(false);setResult(null)
+    setLoading(true)
+    setChecked(false)
+    setResult(null)
     const supabase=createClient()
     const {data}=await supabase.from('device_compatibility')
       .select('manufacturer,device_family,device_model,region_variant,compatibility_status,installation_note,evidence_note')
@@ -42,7 +44,8 @@ export default function CompatibilityPage(){
       .ilike('device_model',model.trim())
       .maybeSingle()
     setResult((data as Compatibility|null)??null)
-    setChecked(true);setLoading(false)
+    setChecked(true)
+    setLoading(false)
   }
 
   return <PublicShell><main className={ui.main}>
@@ -52,7 +55,7 @@ export default function CompatibilityPage(){
     </section>
 
     <section className={ui.section}><div className={ui.grid2}>
-      <form className={[ui.compatPanel,ui.compatForm].join(' ')} onSubmit={check}>
+      <form className={`${ui.compatPanel} ${ui.compatForm}`} onSubmit={check}>
         <span className={ui.kicker}>FIND YOUR DEVICE</span>
         <label className={ui.label}>DEVICE CATEGORY<select className={ui.select} value={category} onChange={e=>{setCategory(e.target.value);setChecked(false);setResult(null)}}><option>Smartphone</option><option>Tablet</option><option>Laptop</option><option>Accessory</option></select></label>
         <div className={ui.fieldRow}><label className={ui.label}>MANUFACTURER<input className={ui.input} value={manufacturer} onChange={e=>setManufacturer(e.target.value)} placeholder={category==='Laptop'?'Apple, Dell, HP, Samsung, ASUS…':'Apple, Samsung, OPPO, vivo…'}/></label><label className={ui.label}>EXACT MODEL<input className={ui.input} value={model} onChange={e=>setModel(e.target.value)} placeholder={category==='Laptop'?'e.g. MacBook Air':'e.g. iPhone 17'}/></label></div>
@@ -62,7 +65,7 @@ export default function CompatibilityPage(){
 
       <aside className={ui.compatPanel}>
         <span className={ui.status}>{!checked?'AWAITING DEVICE':result?result.compatibility_status.replace('_',' ').toUpperCase():'NOT YET REVIEWED'}</span>
-        <h3>{!checked?'Compatibility status':result?result.manufacturer+' '+result.device_model:'No published record for this exact device.'}</h3>
+        <h3>{!checked?'Compatibility status':result?`${result.manufacturer} ${result.device_model}`:'No published record for this exact device.'}</h3>
         {!checked&&<p>Choose the category, manufacturer and exact model. The database result—not the visual matcher—controls compatibility status.</p>}
         {checked&&!result&&<p>RADVORA has not published a reviewed compatibility record for this exact device yet. This is deliberately not treated as either compatible or incompatible.</p>}
         {result&&<div className={ui.resultGrid}><div><span>STATUS</span><b>{result.compatibility_status}</b></div><div><span>DEVICE FAMILY</span><b>{result.device_family||category}</b></div><div><span>REGION / VARIANT</span><b>{result.region_variant||'General'}</b></div><div><span>INSTALLATION</span><b>{result.installation_note||'Use approved guidance'}</b></div></div>}
