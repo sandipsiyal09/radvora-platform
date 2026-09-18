@@ -12,6 +12,7 @@ export function PublicShell({children}:{children:ReactNode}){
       <Link href="/#shieldlab" className={ui.cta}>Build yours</Link>
     </header>
     {children}
+    <nav className={ui.mobileDock} aria-label="Mobile quick actions"><Link href="/#shieldlab">Build yours</Link><Link href="/account">My RADVORA</Link></nav>
     <footer className={ui.footer}>
       <Link href="/" className={ui.brand} aria-label="RADVORA home"><Mark/><span><b>RADVORA</b><small>SHIELDTAG</small></span></Link>
       <nav aria-label="Footer"><Link href="/products">Products</Link><Link href="/compatibility">Compatibility</Link><Link href="/account">My RADVORA</Link><Link href="/research">Research</Link><Link href="/labs">Labs</Link><Link href="/verify">Verify</Link><Link href="/warranty">Warranty</Link><Link href="/contact">Contact</Link><Link href="/business">Business</Link><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link></nav>
