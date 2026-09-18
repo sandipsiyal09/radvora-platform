@@ -582,10 +582,16 @@
   .tagBuds{left:50%;bottom:18%;transform:translateX(-50%) scale(.52)}
   .tagPower{left:50%;bottom:22%;transform:translateX(-50%) scale(.60)}
 }
+@media(max-width:520px){
+  .journeyRail{grid-template-columns:1fr}
+  .journeyRail a{min-height:92px}
+}
 @media(prefers-reduced-motion:reduce){
   :global(html){scroll-behavior:auto}
   .finishLight,.videoScan,.waveItem,.waveItem .tag{animation:none!important}
-  .waveAtmosphere,.waveBeam,.waveBeamAlt{transform:none!important;transition:none!important}
+  .waveAtmosphere{transform:none!important;transition:none!important}
+  .waveBeam{transform:rotate(-7deg) rotateX(68deg)!important;transition:none!important}
+  .waveBeamAlt{transform:rotate(5deg) rotateX(72deg)!important;transition:none!important}
   .waveItem{transition:none!important}
   .sectionReveal{opacity:1!important;transform:none!important}
   .page *{scroll-behavior:auto!important;transition-duration:.01ms!important}
