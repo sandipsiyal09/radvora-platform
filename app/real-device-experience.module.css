@@ -114,6 +114,9 @@
   position:absolute;z-index:8;left:62%;bottom:24%;
   transform:translateX(-50%) scale(.72);filter:drop-shadow(0 9px 14px rgba(0,0,0,.18))
 }
+.category_tablet .tagAnchor{left:52%;bottom:29%;transform:translateX(-50%) scale(.68)}
+.category_laptop .tagAnchor{left:50%;bottom:23%;transform:translateX(-50%) scale(.82)}
+.category_accessory .tagAnchor{left:50%;bottom:19%;transform:translateX(-50%) scale(.52)}
 .tag{
   position:relative;width:134px;height:80px;
   clip-path:polygon(11% 0,89% 0,100% 15%,100% 85%,89% 100%,11% 100%,0 85%,0 15%)
