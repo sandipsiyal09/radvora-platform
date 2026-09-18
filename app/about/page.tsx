@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { PublicShell } from '../public-shell'
 import ui from '../public-brand.module.css'
 
+export const metadata={title:'About RADVORA',description:'Learn how RADVORA is building ShieldTag as a premium, device-aware identity system with compatibility and product claims kept explicit.',alternates:{canonical:'/about'}}
+
 export default function AboutPage(){
   return <PublicShell><main className={ui.main}>
     <section className={ui.hero}><div className={ui.heroCopy}><span className={ui.kicker}>ABOUT RADVORA</span><h1>Identity designed<br/><em>like hardware.</em></h1><p>RADVORA is building ShieldTag as a premium device identity system: one recognisable visual language adapted across phones, tablets, laptops and selected technology accessories.</p><div className={ui.actions}><Link className={ui.primary} href="/products">Explore ShieldTag →</Link><Link className={ui.secondary} href="/#matcher">Find Your Match</Link></div></div><aside className={ui.heroAside}><span>THE IDEA</span><strong>It should look like it belongs there.</strong><p>The product is positioned around proportion, finish, personalisation, identity and verification potential—not exaggerated protection claims.</p></aside></section>
