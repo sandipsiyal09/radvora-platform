@@ -100,3 +100,81 @@
   .ecoInfo{min-height:0}
   .heroProof span{white-space:normal}
 }
+
+
+/* visual QA calibration from inspected manufacturer assets */
+.device_iphone .deviceImageFrame{inset:12px!important}
+.device_iphone .deviceImageFrame img{
+  object-fit:cover!important;
+  object-position:70% 50%!important;
+  transform:none!important;
+}
+.device_iphone .tagIphone{
+  left:64%!important;
+  bottom:29%!important;
+  transform:translateX(-50%) scale(.67)!important;
+}
+
+.device_ipad .deviceImageFrame{inset:12px!important}
+.device_ipad .deviceImageFrame img{
+  object-fit:cover!important;
+  object-position:100% 50%!important;
+  transform:none!important;
+}
+.device_ipad .tagIpad{
+  left:52%!important;
+  bottom:34%!important;
+  transform:translateX(-50%) scale(.68)!important;
+}
+
+.device_oppo .deviceImageFrame{
+  top:12px!important;
+  bottom:12px!important;
+  left:22%!important;
+  right:22%!important;
+}
+.device_oppo .deviceImageFrame img{
+  object-fit:cover!important;
+  object-position:34% 50%!important;
+  transform:none!important;
+}
+.device_oppo .tagOppo{
+  left:50%!important;
+  bottom:22%!important;
+  transform:translateX(-50%) scale(.61)!important;
+}
+
+.device_vivo .deviceImageFrame{inset:12px!important}
+.device_vivo .deviceImageFrame img{
+  object-fit:contain!important;
+  object-position:center!important;
+  transform:none!important;
+}
+.device_vivo .tagVivo{
+  left:50%!important;
+  bottom:19%!important;
+  transform:translateX(-50%) scale(.61)!important;
+}
+
+.device_macbook .tagMac{
+  left:50%!important;
+  bottom:24%!important;
+  transform:translateX(-50%) scale(.82)!important;
+}
+
+/* the badge should read as bonded to the hardware surface, not a floating label */
+.tagAnchor:after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:54%;
+  width:72%;
+  height:56%;
+  transform:translate(-50%,-50%);
+  border-radius:42%;
+  background:rgba(0,0,0,.24);
+  filter:blur(10px);
+  z-index:-1;
+  opacity:.45;
+}
+.device_ipad .tagAnchor:after,.device_macbook .tagAnchor:after{width:78%;height:52%;opacity:.34}
