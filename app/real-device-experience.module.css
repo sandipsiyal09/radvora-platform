@@ -52,3 +52,30 @@
   .tagIpad{bottom:16%!important;transform:translateX(-50%) scale(.78)!important}
   .tagMac{bottom:13%!important;transform:translateX(-50%) scale(.82)!important}
 }
+
+
+/* manufacturer asset calibration: crop each official image to a single, legible product surface */
+.device_iphone .deviceImageFrame img{object-fit:contain!important;object-position:center!important}
+.device_galaxy .deviceImageFrame img{object-fit:contain!important;object-position:center!important}
+.device_oppo .deviceImageFrame{inset:10px 12px!important}
+.device_oppo .deviceImageFrame img{object-fit:cover!important;object-position:28% 50%!important}
+.device_vivo .deviceImageFrame{inset:10px!important}
+.device_vivo .deviceImageFrame img{object-fit:cover!important;object-position:46% 50%!important}
+.device_ipad .deviceImageFrame img{object-fit:contain!important;object-position:center!important}
+.device_macbook .deviceImageFrame img{object-fit:contain!important;object-position:center!important}
+.device_airpods .deviceImageFrame img,.device_powerbank .deviceImageFrame img{object-fit:contain!important;object-position:center!important}
+
+/* final tag mount calibration against the visible rear panel */
+.device_iphone .tagIphone{left:50%!important;bottom:20%!important;transform:translateX(-50%) scale(.72)!important}
+.device_galaxy .tagGalaxy{left:50%!important;bottom:20%!important;transform:translateX(-50%) scale(.72)!important}
+.device_oppo .tagOppo{left:34%!important;bottom:18%!important;transform:translateX(-50%) scale(.62)!important}
+.device_vivo .tagVivo{left:45%!important;bottom:17%!important;transform:translateX(-50%) scale(.60)!important}
+.device_ipad .tagIpad{left:61%!important;bottom:17%!important;transform:translateX(-50%) scale(.84)!important}
+.device_macbook .tagMac{left:50%!important;bottom:17%!important;transform:translateX(-50%) scale(.92)!important}
+.device_airpods .tagPods{left:50%!important;bottom:20%!important;transform:translateX(-50%) scale(.60)!important}
+.device_powerbank .tagPower{left:50%!important;bottom:22%!important;transform:translateX(-50%) scale(.68)!important}
+
+/* premium composition polish */
+.waveCard,.ecoCard,.familyCard,.galleryCard{box-shadow:0 18px 50px rgba(0,0,0,.18)}
+.waveCard .deviceVisual,.ecoVisual .deviceVisual,.galleryCard .deviceVisual,.familyVisual .deviceVisual{background:radial-gradient(circle at 50% 32%,#ffffff 0,#f2f4f6 58%,#e5e9ed 100%)!important}
+.waveMeta small{opacity:.82}
