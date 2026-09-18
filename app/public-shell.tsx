@@ -8,13 +8,13 @@ export function PublicShell({children}:{children:ReactNode}){
   return <div className={ui.page}>
     <header className={ui.nav}>
       <Link href="/" className={ui.brand}><Mark/><span><b>RADVORA</b><small>SHIELDTAG</small></span></Link>
-      <nav><Link href="/products">Products</Link><Link href="/compatibility">Compatibility</Link><Link href="/installation">Installation</Link><Link href="/about">About</Link><Link href="/support">Support</Link></nav>
+      <nav aria-label="Primary"><Link href="/products">Products</Link><Link href="/compatibility">Compatibility</Link><Link href="/installation">Installation</Link><Link href="/about">About</Link><Link href="/support">Support</Link></nav>
       <Link href="/#matcher" className={ui.cta}>Find Your Match <span>→</span></Link>
     </header>
     {children}
     <footer className={ui.footer}>
       <Link href="/" className={ui.brand}><Mark/><span><b>RADVORA</b><small>ONE SHIELD. EVERY DEVICE.</small></span></Link>
-      <div><Link href="/products">Products</Link><Link href="/compatibility">Compatibility</Link><Link href="/support">Support</Link><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link></div>
+      <nav aria-label="Footer"><Link href="/products">Products</Link><Link href="/compatibility">Compatibility</Link><Link href="/research">Research</Link><Link href="/labs">Labs</Link><Link href="/verify">Verify</Link><Link href="/warranty">Warranty</Link><Link href="/contact">Contact</Link><Link href="/business">Business</Link><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link></nav>
       <p>Device examples and manufacturer names are used to explain styling context and compatibility workflow. No manufacturer affiliation or endorsement is implied.</p>
     </footer>
   </div>
