@@ -1,52 +1,42 @@
-'use client'
+import type { Metadata } from 'next'
+import { PublicShell } from '../public-shell'
+import ui from '../public-brand.module.css'
+import LoginForm from './login-form'
 
-import { FormEvent, useState } from 'react'
+export const metadata:Metadata={
+  title:'Sign in',
+  description:'Sign in securely to your RADVORA account to manage orders, registered products, warranty and support.',
+  alternates:{canonical:'/login'}
+}
 
-export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [message, setMessage] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  async function handleLogin(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const normalizedEmail=email.trim().toLowerCase()
-    if(!normalizedEmail||normalizedEmail.length>254){setMessage('Enter a valid email address.');return}
-    setLoading(true)
-    setMessage('')
-
-    try {
-      const response=await fetch('/api/auth/magic-link',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({email:normalizedEmail}),
-      })
-      const result=await response.json().catch(()=>({})) as {message?:string;error?:string}
-      if(!response.ok){
-        setMessage(result.error||'Unable to send the sign-in link right now. Please try again shortly.')
-        return
-      }
-      setMessage(result.message||'Check your email for the secure sign-in link.')
-    } catch(error) {
-      console.error('passwordless_login_request_failed',error)
-      setMessage('Unable to send the sign-in link right now. Please try again shortly.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <main className="page-shell auth-shell">
-      <section className="glass-card auth-card">
-        <p className="eyebrow">RADVORA ACCOUNT</p>
-        <h1>Welcome back.</h1>
-        <p className="muted">Sign in to manage registered products, warranty, orders and support.</p>
-        <form onSubmit={handleLogin} className="auth-form">
-          <label htmlFor="email">Email address</label>
-          <input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value.slice(0,254))} maxLength={254} autoComplete="email" required placeholder="you@example.com" />
-          <button className="primary-button" type="submit" disabled={loading}>{loading ? 'Sending…' : 'Send secure sign-in link'}</button>
-        </form>
-        {message ? <p className="status-message" role="status">{message}</p> : null}
-      </section>
-    </main>
-  )
+export default function LoginPage(){
+  return <PublicShell><main className={ui.main}>
+    <section className={ui.hero}>
+      <div className={ui.heroCopy}>
+        <span className={ui.kicker}>MY RADVORA</span>
+        <h1>Your products.<br/><em>Your record.</em></h1>
+        <p>Sign in with a secure email link to manage orders, registered products, warranty and support without creating another password.</p>
+      </div>
+      <aside className={ui.heroAside}>
+        <span>SECURE ACCESS</span>
+        <strong>Passwordless sign-in.</strong>
+        <p>RADVORA sends a short-lived sign-in link to your email. Account access remains separate from product verification and compatibility status.</p>
+      </aside>
+    </section>
+    <section className={ui.section}>
+      <div className={ui.grid2}>
+        <article className={ui.compatPanel}>
+          <span className={ui.kicker}>SIGN IN</span>
+          <h3>Continue to your account.</h3>
+          <LoginForm/>
+        </article>
+        <article className={ui.compatPanel}>
+          <span className={ui.kicker}>WHAT YOU CAN MANAGE</span>
+          <h3>One place for the ownership journey.</h3>
+          <p>Track governed orders, register supported serialized products, review warranty activity and keep customer-care history connected to your account.</p>
+          <div className={ui.notice}>A RADVORA account does not create or alter a compatibility result. Device fit remains controlled by the reviewed compatibility registry.</div>
+        </article>
+      </div>
+    </section>
+  </main></PublicShell>
 }
