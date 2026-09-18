@@ -449,3 +449,17 @@
   .finishLight,.videoScan{animation:none!important}
   .page *{scroll-behavior:auto!important;transition-duration:.01ms!important}
 }
+
+
+.deviceImageFailed{background:linear-gradient(145deg,#eef1f4,#dfe4e8)}
+.deviceFallback{
+  width:72%;height:72%;display:grid;place-items:center;align-content:center;gap:12px;text-align:center;
+  border:1px solid rgba(7,16,23,.10);border-radius:24px;
+  background:radial-gradient(circle at 50% 25%,rgba(255,255,255,.95),rgba(228,233,237,.92));
+  color:#17212a
+}
+.deviceFallback svg{width:52px;opacity:.72}
+.deviceFallback span{display:grid;gap:4px}
+.deviceFallback b{font-size:13px;letter-spacing:.16em}
+.deviceFallback small{font-size:8px;letter-spacing:.14em;color:#687784;text-transform:uppercase}
+.deviceImageFailed .tagAnchor{opacity:.9}
