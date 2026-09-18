@@ -1,5 +1,5 @@
 import './globals.css'
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 
 const siteUrl=process.env.NEXT_PUBLIC_APP_URL||'https://radvora-platform.vercel.app'
 
@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title:{default:'RADVORA ShieldTag — One Shield. Every Device.',template:'%s | RADVORA'},
   description:'RADVORA ShieldTag is a premium device identity badge system designed for smartphones, tablets, laptops and selected technology accessories.',
   applicationName:'RADVORA',
+  appleWebApp:{capable:true,title:'RADVORA',statusBarStyle:'black-translucent'},
   openGraph:{
     type:'website',
     siteName:'RADVORA',
@@ -17,6 +18,8 @@ export const metadata: Metadata = {
   twitter:{card:'summary_large_image',title:'RADVORA ShieldTag',description:'One Shield. Every Device.'},
   robots:{index:true,follow:true}
 }
+
+export const viewport:Viewport={themeColor:'#050607',colorScheme:'dark'}
 
 const organizationSchema={
   '@context':'https://schema.org',
