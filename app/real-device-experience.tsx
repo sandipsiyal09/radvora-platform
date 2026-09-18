@@ -2,6 +2,7 @@
 
 import { CSSProperties, useEffect, useMemo, useState } from 'react'
 import ui from './real-device-experience.module.css'
+import ProductInterestForm from './product-interest-form'
 
 type Finish={id:string;name:string;base:string;edge:string;accent:string;text:string}
 type DeviceCategory='Smartphone'|'Tablet'|'Laptop'|'Accessory'
@@ -127,6 +128,7 @@ function ShieldLab(){
       <div className={ui.finishGrid} aria-label="Finish selector">{finishes.map(item=><button type="button" key={item.id} aria-pressed={finishId===item.id} onClick={()=>setFinishId(item.id)}><i style={{'--swatch':item.base,'--edge':item.edge} as CSSProperties}/><span>{item.name}</span></button>)}</div>
       <div className={ui.labActions}><button type="button" onClick={saveBuild}>Save build</button><button type="button" onClick={shareBuild}>Share build</button><a href="/compatibility">Verify fit →</a></div>
       <p className={ui.labStatus} role="status" aria-live="polite">{message||'Your device and finish are encoded in the page link.'}</p>
+      <ProductInterestForm source="shieldlab-interest" context={`${selected.brand} ${selected.name} · ${finish.name}`} compact/>
     </div>
   </section>
 }
