@@ -73,6 +73,20 @@ jobs:
           if "clean(body.website, 200)" not in lead or "(count ?? 0) >= 3" not in lead:
               raise SystemExit('business lead anti-abuse controls regressed')
 
+          consumer_interest_required = [
+              "'shieldlab-interest'",
+              "'product-interest'",
+              "consumerInterest",
+              "'consumer_interest'",
+              "const context = clean(body.context, 240)",
+              "Availability interest",
+              "consumerInterest ? null : phone || null",
+              "consumerInterest ? null : company || null",
+          ]
+          missing_consumer_interest = [needle for needle in consumer_interest_required if needle not in lead]
+          if missing_consumer_interest:
+              raise SystemExit(f'consumer availability-interest boundary regressed: {missing_consumer_interest}')
+
           verification = routes[1].read_text()
           verification_required = [
               'MAX_ATTEMPTS',
