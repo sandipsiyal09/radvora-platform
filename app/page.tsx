@@ -9,6 +9,11 @@ export const metadata: Metadata = {
     url:'/',
     title:'RADVORA ShieldTag — Make the Device Yours',
     description:'Open ShieldLab, choose a device and finish, save or share the exact build, then verify model fit.'
+  },
+  twitter:{
+    card:'summary_large_image',
+    title:'RADVORA ShieldTag — Make the Device Yours',
+    description:'Open ShieldLab, choose a device and finish, save or share the exact build, then verify model fit.'
   }
 }
 
