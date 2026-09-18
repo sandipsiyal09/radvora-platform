@@ -61,9 +61,10 @@ function Tag({finish,label='SHIELDTAG',mini=false}:{finish:Finish;label?:string;
 }
 
 function DeviceVisual({device,finish,label='SHIELDTAG',priority=false,interactive=false,useDeviceFinish=true,showTag=true}:{device:DeviceExample;finish?:Finish;label?:string;priority?:boolean;interactive?:boolean;useDeviceFinish?:boolean;showTag?:boolean}){
+  const [imageFailed,setImageFailed]=useState(false)
   const appliedFinish=useDeviceFinish?device.syncFinish:(finish??device.syncFinish)
-  return <div className={`${ui.deviceVisual} ${ui[`device_${device.id}`]} ${ui[`tone_${device.tone}`]} ${interactive?ui.deviceInteractive:''}`}>
-    <div className={ui.deviceImageFrame}><img src={device.image} alt={`${device.brand} ${device.name} rear view with RADVORA ShieldTag placement preview`} loading={priority?'eager':'lazy'} decoding="async" className={device.fit==='cover'?ui.imageCover:ui.imageContain}/></div>
+  return <div className={`${ui.deviceVisual} ${ui[`device_${device.id}`]} ${ui[`tone_${device.tone}`]} ${interactive?ui.deviceInteractive:''} ${imageFailed?ui.deviceImageFailed:''}`}>
+    <div className={ui.deviceImageFrame}>{!imageFailed?<img src={device.image} alt={`${device.brand} ${device.name} rear view with RADVORA ShieldTag placement preview`} loading={priority?'eager':'lazy'} decoding="async" className={device.fit==='cover'?ui.imageCover:ui.imageContain} onError={()=>setImageFailed(true)}/>:<div className={ui.deviceFallback} role="img" aria-label={`${device.brand} ${device.name} image temporarily unavailable`}><Logo/><span><b>{device.brand}</b><small>{device.category}</small></span></div>}</div>
     {showTag&&<div className={`${ui.tagAnchor} ${ui[device.tagClass]}`}><Tag finish={appliedFinish} label={label} mini={device.category==='Accessory'}/></div>}
     <div className={ui.deviceGloss}/>
   </div>
