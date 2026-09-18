@@ -22,6 +22,10 @@ const familyByCategory:Record<string,string>={
   Accessory:'ShieldTag Mini / Utility'
 }
 
+function literalIlike(value:string){
+  return value.trim().replace(/[\\%_]/g,'\\$&')
+}
+
 export default function CompatibilityPage(){
   const [category,setCategory]=useState('Smartphone')
   const [manufacturer,setManufacturer]=useState('')
@@ -33,15 +37,17 @@ export default function CompatibilityPage(){
 
   async function check(e:FormEvent){
     e.preventDefault()
-    if(!manufacturer.trim()||!model.trim())return
+    const manufacturerPattern=literalIlike(manufacturer)
+    const modelPattern=literalIlike(model)
+    if(!manufacturerPattern||!modelPattern)return
     setLoading(true)
     setChecked(false)
     setResult(null)
     const supabase=createClient()
     const {data}=await supabase.from('device_compatibility')
       .select('manufacturer,device_family,device_model,region_variant,compatibility_status,installation_note,evidence_note')
-      .ilike('manufacturer',manufacturer.trim())
-      .ilike('device_model',model.trim())
+      .ilike('manufacturer',manufacturerPattern)
+      .ilike('device_model',modelPattern)
       .maybeSingle()
     setResult((data as Compatibility|null)??null)
     setChecked(true)
@@ -58,7 +64,7 @@ export default function CompatibilityPage(){
       <form className={`${ui.compatPanel} ${ui.compatForm}`} onSubmit={check}>
         <span className={ui.kicker}>FIND YOUR DEVICE</span>
         <label className={ui.label}>DEVICE CATEGORY<select className={ui.select} value={category} onChange={e=>{setCategory(e.target.value);setChecked(false);setResult(null)}}><option>Smartphone</option><option>Tablet</option><option>Laptop</option><option>Accessory</option></select></label>
-        <div className={ui.fieldRow}><label className={ui.label}>MANUFACTURER<input className={ui.input} value={manufacturer} onChange={e=>setManufacturer(e.target.value)} placeholder={category==='Laptop'?'Apple, Dell, HP, Samsung, ASUS…':'Apple, Samsung, OPPO, vivo…'}/></label><label className={ui.label}>EXACT MODEL<input className={ui.input} value={model} onChange={e=>setModel(e.target.value)} placeholder={category==='Laptop'?'e.g. MacBook Air':'e.g. iPhone 17'}/></label></div>
+        <div className={ui.fieldRow}><label className={ui.label}>MANUFACTURER<input className={ui.input} maxLength={80} value={manufacturer} onChange={e=>setManufacturer(e.target.value)} placeholder={category==='Laptop'?'Apple, Dell, HP, Samsung, ASUS…':'Apple, Samsung, OPPO, vivo…'}/></label><label className={ui.label}>EXACT MODEL<input className={ui.input} maxLength={120} value={model} onChange={e=>setModel(e.target.value)} placeholder={category==='Laptop'?'e.g. MacBook Air':'e.g. iPhone 17'}/></label></div>
         <div className={ui.notice}>Visual examples elsewhere on RADVORA do not automatically mean compatibility. Enter the exact model here before relying on fit guidance.</div>
         <div className={ui.actions}><button className={ui.primary} type="submit" disabled={loading||!manufacturer.trim()||!model.trim()}>{loading?'Checking…':'Check compatibility →'}</button></div>
       </form>
