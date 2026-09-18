@@ -27,6 +27,16 @@ const organizationSchema={
   description:'Consumer technology brand developing premium device identity products with compatibility and product claims kept explicit and evidence-controlled.'
 }
 
+const websiteSchema={
+  '@context':'https://schema.org',
+  '@type':'WebSite',
+  name:'RADVORA',
+  url:siteUrl,
+  description:'RADVORA ShieldTag is a premium device identity system for smartphones, tablets, laptops and selected technology accessories.'
+}
+
+function safeJson(value:unknown){return JSON.stringify(value).replace(/</g,'\\u003c')}
+
 export default function RootLayout({children}:{children:React.ReactNode}){
-  return <html lang="en"><body><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(organizationSchema)}}/>{children}</body></html>
+  return <html lang="en"><body><script type="application/ld+json" dangerouslySetInnerHTML={{__html:safeJson(organizationSchema)}}/><script type="application/ld+json" dangerouslySetInnerHTML={{__html:safeJson(websiteSchema)}}/>{children}</body></html>
 }
