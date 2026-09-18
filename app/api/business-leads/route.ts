@@ -135,9 +135,12 @@ export async function POST(request: NextRequest) {
   const segment = source === 'privacy-page' ? 'privacy' : consumerInterest ? 'consumer_interest' : 'business'
   const context = clean(body.context, 240)
   const notes = consumerInterest
-    ? (context ? `Availability interest · ${context}` : 'Availability interest')
+    ? (context ? `Availability interest · ${context} · explicit email consent` : 'Availability interest · explicit email consent')
     : clean(body.notes, 3000)
 
+  if (consumerInterest && body.consent !== true) {
+    return response({ error: 'Please confirm that you want the requested availability email.' }, 400)
+  }
   if (!EMAIL_PATTERN.test(email) || (!consumerInterest && fullName.length < 2)) {
     return response({ error: consumerInterest ? 'Please provide a valid email address.' : 'Please provide a valid name and email address.' }, 400)
   }
