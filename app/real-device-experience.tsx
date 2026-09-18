@@ -138,7 +138,7 @@ function Ecosystem(){
 }
 
 function FamilyGrid(){
-  return <section className={ui.familySection} id="products"><div className={ui.sectionIntro}><span>THE SHIELDTAG FAMILY</span><h2>Designed around the device.<br/><em>Not forced onto it.</em></h2><p>Five form factors use the same restrained RADVORA visual language while changing scale and proportion for different device classes.</p></div><div className={ui.familyGrid}>{families.map((f,i)=>{const d=devices.find(x=>x.id===f.deviceId)!;return <article key={f.id} className={ui.familyCard}><div className={ui.familyIndex}>0{i+1}</div><div className={ui.familyVisual}><DeviceVisual device={d} finish={finish} label={f.label}/></div><div className={ui.familyCopy}><span>{f.for}</span><h3>{f.name}</h3><p>{f.copy}</p><a href="/compatibility">Check compatibility →</a></div></article>})}</div></section>
+  return <section className={ui.familySection} id="products"><div className={ui.sectionIntro}><span>THE SHIELDTAG FAMILY</span><h2>Designed around the device.<br/><em>Not forced onto it.</em></h2><p>Five form factors use the same restrained RADVORA visual language while changing scale and proportion for different device classes.</p></div><div className={ui.familyGrid}>{families.map((f,i)=>{const d=devices.find(x=>x.id===f.deviceId)!;return <article key={f.id} className={ui.familyCard}><div className={ui.familyIndex}>0{i+1}</div><div className={ui.familyVisual}><DeviceVisual device={d} label={f.label}/></div><div className={ui.familyCopy}><span>{f.for}</span><h3>{f.name}</h3><p>{f.copy}</p><a href="/compatibility">Check compatibility →</a></div></article>})}</div></section>
 }
 
 function FinishStudio({finishId,setFinishId}:{finishId:string;setFinishId:(id:string)=>void}){
