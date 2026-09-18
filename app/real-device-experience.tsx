@@ -72,7 +72,7 @@ function DeviceVisual({device,finish,label='SHIELDTAG',priority=false,interactiv
 
 function labelForDevice(device:DeviceExample){return device.category==='Laptop'?'EXECUTIVE':device.category==='Tablet'?'PRO':device.id==='powerbank'?'UTILITY':device.category==='Accessory'?'MINI':'SIGNATURE'}
 
-function HeroWave({finish}:{finish:Finish}){
+function HeroWave(){
   const wave=['iphone','galaxy','oppo','vivo','ipad','macbook','buds','powerbank']
   const stageRef=useRef<HTMLDivElement>(null)
   const [progress,setProgress]=useState(.42)
@@ -130,14 +130,14 @@ function HeroWave({finish}:{finish:Finish}){
   </div>
 }
 
-function Ecosystem({finish}:{finish:Finish}){
+function Ecosystem(){
   return <section className={ui.ecosystem} id="devices">
     <div className={ui.sectionIntro}><span>MADE FOR THE DEVICES YOU ALREADY USE</span><h2>One design language.<br/><em>Across your everyday tech.</em></h2><p>From smartphones to tablets, laptops and compact accessories, each ShieldTag is proportioned and colour-matched to feel considered on the device—not added as an afterthought.</p></div>
     <div className={ui.ecoGrid}>{devices.map(d=><article key={d.id} className={ui.ecoCard}><div className={ui.ecoVisual}><DeviceVisual device={d} label={labelForDevice(d)}/></div><div className={ui.ecoInfo}><div><span>{d.category}</span><h3>{d.brand}</h3><p>{d.name}</p></div><div className={ui.syncNote}><small>COLOUR SYNC</small><b>{d.syncFinish.name}</b></div></div></article>)}</div>
   </section>
 }
 
-function FamilyGrid({finish}:{finish:Finish}){
+function FamilyGrid(){
   return <section className={ui.familySection} id="products"><div className={ui.sectionIntro}><span>THE SHIELDTAG FAMILY</span><h2>Designed around the device.<br/><em>Not forced onto it.</em></h2><p>Five form factors use the same restrained RADVORA visual language while changing scale and proportion for different device classes.</p></div><div className={ui.familyGrid}>{families.map((f,i)=>{const d=devices.find(x=>x.id===f.deviceId)!;return <article key={f.id} className={ui.familyCard}><div className={ui.familyIndex}>0{i+1}</div><div className={ui.familyVisual}><DeviceVisual device={d} finish={finish} label={f.label}/></div><div className={ui.familyCopy}><span>{f.for}</span><h3>{f.name}</h3><p>{f.copy}</p><a href="/compatibility">Check compatibility →</a></div></article>})}</div></section>
 }
 
@@ -177,11 +177,11 @@ function DeviceMatcher({finishId,setFinishId}:{finishId:string;setFinishId:(id:s
   </section>
 }
 
-function ApplicationGallery({finish}:{finish:Finish}){
+function ApplicationGallery(){
   return <section className={ui.gallerySection}><div className={ui.sectionIntro}><span>REAL-DEVICE APPLICATION GALLERY</span><h2>See it in context.<br/><em>Not in isolation.</em></h2><p>Every example keeps the ShieldTag away from obvious cameras, controls and critical hardware zones. Final placement remains subject to the approved compatibility guide.</p></div><div className={ui.galleryGrid}>{['iphone','galaxy','oppo','vivo','ipad','macbook','buds','powerbank'].map((id,i)=>{const d=devices.find(x=>x.id===id)!;return <figure key={id} className={`${ui.galleryCard} ${i===0||i===5?ui.galleryWide:''}`}><DeviceVisual device={d} label={labelForDevice(d)}/><figcaption><b>{d.brand} {d.name}</b><span>Compatibility illustration · placement preview</span></figcaption></figure>})}</div></section>
 }
 
-function BeforeAfter({finish}:{finish:Finish}){
+function BeforeAfter(){
   const [reveal,setReveal]=useState(54)
   const d=devices[0]
   return <section className={ui.beforeSection}><div className={ui.beforeCopy}><span>BEFORE / AFTER</span><h2>One device.<br/><em>One considered detail.</em></h2><p>Drag the control to compare the same rear-view device before and after its colour-matched RADVORA badge is applied.</p></div><div className={ui.compare} style={{'--reveal':`${reveal}%`} as CSSProperties}><div className={ui.compareBase}><DeviceVisual device={d} label="SIGNATURE" showTag={false}/></div><div className={ui.compareOverlay}><DeviceVisual device={d} label="SIGNATURE"/></div><div className={ui.compareLabels}><span>Before ShieldTag</span><span>With RADVORA</span></div><input aria-label="Compare device before and after ShieldTag" type="range" min="8" max="92" value={reveal} onChange={e=>setReveal(Number(e.target.value))}/><div className={ui.compareHandle}/></div></section>
@@ -196,7 +196,7 @@ function Installation({finish}:{finish:Finish}){
 
 function VideoGallery({finish}:{finish:Finish}){
   const [active,setActive]=useState('apply')
-  return <section className={ui.videoSection}><div className={ui.sectionIntro}><span>SEE SHIELDTAG IN MOTION</span><h2>Understand the fit.<br/><em>Before it reaches your device.</em></h2><p>Interactive motion previews make colour matching, placement and product proportions easier to understand at a glance.</p></div><div className={ui.videoGrid}>{videos.map(v=>{const d=devices.find(x=>x.id===v.device)!;const on=active===v.id;return <button key={v.id} className={`${ui.videoCard} ${on?ui.videoActive:''}`} onClick={()=>setActive(v.id)}><div className={ui.videoPoster}><DeviceVisual device={d} finish={finish} label={d.category==='Laptop'?'EXECUTIVE':d.category==='Tablet'?'PRO':'SIGNATURE'}/><div className={ui.playDisc}>{on?'II':'▶'}</div><div className={ui.videoScan}/></div><div className={ui.videoCopy}><span>INTERACTIVE PREVIEW</span><h3>{v.title}</h3><p>{v.copy}</p></div></button>})}</div></section>
+  return <section className={ui.videoSection}><div className={ui.sectionIntro}><span>SEE SHIELDTAG IN MOTION</span><h2>Understand the fit.<br/><em>Before it reaches your device.</em></h2><p>Interactive motion previews make colour matching, placement and product proportions easier to understand at a glance.</p></div><div className={ui.videoGrid}>{videos.map(v=>{const d=devices.find(x=>x.id===v.device)!;const on=active===v.id;return <button key={v.id} className={`${ui.videoCard} ${on?ui.videoActive:''}`} onClick={()=>setActive(v.id)}><div className={ui.videoPoster}><DeviceVisual device={d} finish={finish} label={labelForDevice(d)} useDeviceFinish={v.id!=='match'}/><div className={ui.playDisc}>{on?'II':'▶'}</div><div className={ui.videoScan}/></div><div className={ui.videoCopy}><span>INTERACTIVE PREVIEW</span><h3>{v.title}</h3><p>{v.copy}</p></div></button>})}</div></section>
 }
 
 function Materials(){return <section className={ui.materialSection}><div className={ui.sectionIntro}><span>DESIGNED LIKE HARDWARE</span><h2>A precision identity badge.<br/><em>Not a generic sticker.</em></h2><p>Every visual detail is built around proportion, edge definition, restrained reflectivity and a finish that sits naturally beside premium devices.</p></div><div className={ui.materialGrid}><article><span>01</span><h3>Refined edges</h3><p>Chamfer-inspired geometry and controlled proportions create a hardware-led silhouette.</p></article><article><span>02</span><h3>Controlled reflectivity</h3><p>Matte, satin and metallic visual directions avoid exaggerated chrome and neon.</p></article><article><span>03</span><h3>Device-aware proportions</h3><p>Phone, tablet, laptop and Mini formats scale independently instead of forcing one sticker size everywhere.</p></article><article><span>04</span><h3>Validated performance only</h3><p>Durability and care claims are published only when final product testing supports them.</p></article></div></section>}
@@ -224,8 +224,8 @@ export default function RealDeviceExperience(){
   return <div className={ui.page}>
     <header className={ui.nav}><a className={ui.brand} href="/"><Logo/><span><b>RADVORA</b><small>SHIELDTAG</small></span></a><nav><a href="#devices">Devices</a><a href="#products">Products</a><a href="#finishes">Finishes</a><a href="#matcher">Find Your Match</a><a href="#how">How to Apply</a></nav><a className={ui.navCta} href="#matcher">Find Your Match <span>→</span></a></header>
     <main>
-      <section className={ui.hero}><div className={ui.heroCopy}><span className={ui.kicker}>PREMIUM DEVICE IDENTITY</span><h1>One Shield.<br/><em>Every Device.</em></h1><p>RADVORA ShieldTag is a precision identity badge designed to complement the devices you already own—with device-aware proportions, rear-surface placement and finishes tuned to the hardware around it.</p><div className={ui.heroActions}><a href="#products">Explore ShieldTag <span>→</span></a><a className={ui.ghost} href="#how">See How It Works</a></div><div className={ui.heroProof}><span>Rear-mounted placement</span><span>Colour-synchronised finishes</span><span>Phone · tablet · laptop · accessories</span></div></div><HeroWave finish={finish}/></section>
-      <Ecosystem finish={finish}/><FamilyGrid finish={finish}/><FinishStudio finishId={finishId} setFinishId={setFinishId}/><DeviceMatcher finishId={finishId} setFinishId={setFinishId}/><ApplicationGallery finish={finish}/><BeforeAfter finish={finish}/><Installation finish={finish}/><VideoGallery finish={finish}/><Materials/><Packaging finish={finish}/><Compatibility/><FAQ/>
+      <section className={ui.hero}><div className={ui.heroCopy}><span className={ui.kicker}>PREMIUM DEVICE IDENTITY</span><h1>One Shield.<br/><em>Every Device.</em></h1><p>RADVORA ShieldTag is a precision identity badge designed to complement the devices you already own—with device-aware proportions, rear-surface placement and finishes tuned to the hardware around it.</p><div className={ui.heroActions}><a href="#products">Explore ShieldTag <span>→</span></a><a className={ui.ghost} href="#how">See How It Works</a></div><div className={ui.heroProof}><span>Rear-mounted placement</span><span>Colour-synchronised finishes</span><span>Phone · tablet · laptop · accessories</span></div></div><HeroWave/></section>
+      <Ecosystem/><FamilyGrid/><FinishStudio finishId={finishId} setFinishId={setFinishId}/><DeviceMatcher finishId={finishId} setFinishId={setFinishId}/><ApplicationGallery/><BeforeAfter/><Installation finish={finish}/><VideoGallery finish={finish}/><Materials/><Packaging finish={finish}/><Compatibility/><FAQ/>
       <section className={ui.finalCta}><span>RADVORA SHIELDTAG</span><h2>One Shield. Every Device.</h2><p>Find the ShieldTag designed to complement the technology you already own.</p><div><a href="#matcher">Find Your Match <span>→</span></a><a className={ui.ghost} href="#finishes">View Finishes</a><a className={ui.ghost} href="/compatibility">Compatibility Guide</a></div></section>
     </main>
     <footer className={ui.footer}><a className={ui.brand} href="/"><Logo/><span><b>RADVORA</b><small>ONE SHIELD. EVERY DEVICE.</small></span></a><div><a href="/products">Products</a><a href="/compatibility">Compatibility</a><a href="/support">Support</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a></div><p>Device imagery is used to illustrate fit and styling context. Trademarks belong to their respective owners; no endorsement or affiliation is implied.</p></footer>
