@@ -1,3 +1,4 @@
+.skipLink{position:fixed;z-index:120;left:14px;top:10px;transform:translateY(-160%);padding:10px 13px;background:#eff8fa;color:#071014!important;font-size:10px;font-weight:800;transition:transform .18s ease}.skipLink:focus{transform:translateY(0)}
 :global(html){scroll-behavior:smooth}
 .page{
   --bg:#050607;--surface:#0b0e12;--surface2:#10151b;--line:rgba(255,255,255,.085);--line2:rgba(255,255,255,.16);
