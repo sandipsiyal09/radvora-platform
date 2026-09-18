@@ -1,10 +1,10 @@
 'use client'
 
-import { CSSProperties, useEffect, useMemo, useState } from 'react'
+import { CSSProperties, useEffect, useMemo, useRef, useState } from 'react'
 import ui from './real-device-experience.module.css'
 
 type Finish={id:string;name:string;base:string;edge:string;accent:string;text:string}
-type DeviceExample={id:string;brand:string;name:string;category:string;image:string;source:string;tagClass:string;fit:'contain'|'cover';tone:string;syncFinish:Finish}
+type DeviceExample={id:string;brand:string;name:string;category:string;deviceColor:string;image:string;source:string;tagClass:string;fit:'contain'|'cover';tone:string;syncFinish:Finish}
 type Family={id:string;name:string;for:string;copy:string;deviceId:string;label:string}
 
 const finishes:Finish[]=[
@@ -19,14 +19,14 @@ const finishes:Finish[]=[
 ]
 
 const devices:DeviceExample[]=[
-  {id:'iphone',brand:'Apple',name:'iPhone 17',category:'Smartphone',image:'https://www.apple.com/v/iphone-17/g/images/overview/product-viewer/colors_lavender__bcaie9a8npj6_large.jpg',source:'https://www.apple.com/in/iphone-17/',tagClass:'tagIphone',fit:'contain',tone:'mist',syncFinish:{id:'lavender-sync',name:'Lavender Sync',base:'#c9bfd9',edge:'#f1eaf8',accent:'#e6d7ff',text:'#211b2b'}},
-  {id:'galaxy',brand:'Samsung',name:'Galaxy S26',category:'Smartphone',image:'https://images.samsung.com/is/image/samsung/p6pim/in/s2602/gallery/in-galaxy-s26-s942-578627-sm-s942bzscins-550888079?%24624_624_PNG%24=',source:'https://www.samsung.com/in/smartphones/galaxy-s26/',tagClass:'tagGalaxy',fit:'contain',tone:'silver',syncFinish:{id:'silver-sync',name:'Silver Shadow Sync',base:'#aeb2b9',edge:'#eef1f4',accent:'#d9f7ff',text:'#11161c'}},
-  {id:'oppo',brand:'OPPO',name:'Reno16 5G',category:'Smartphone',image:'https://www.oppo.com/content/dam/oppo_com/common/mkt/v2-2/oppo-reno16-series-en/specs/reno16/light-purple-deep-purple-white.png',source:'https://www.oppo.com/in/smartphones/series-reno/reno16/specs/',tagClass:'tagOppo',fit:'contain',tone:'purple',syncFinish:{id:'violet-sync',name:'Twilight Violet Sync',base:'#4d354f',edge:'#a781aa',accent:'#d9aee2',text:'#fff9ff'}},
-  {id:'vivo',brand:'vivo',name:'V50',category:'Smartphone',image:'https://asia-exstatic-vivofs.vivo.com/PSee2l50xoirPK7y/1740991283302/e337d8e8bdec570993f6c7c4228af755.png',source:'https://www.vivo.com/en/products/picture/v50',tagClass:'tagVivo',fit:'contain',tone:'blue',syncFinish:{id:'blue-sync',name:'Starry Blue Sync',base:'#184c9d',edge:'#6aa3e8',accent:'#8fd5ff',text:'#f5fbff'}},
-  {id:'ipad',brand:'Apple',name:'iPad Air',category:'Tablet',image:'https://www.apple.com/v/ipad-air/ah/images/overview/closer-look/space-gray/slide_2B__dvqfqwnkj2c2_large.jpg',source:'https://www.apple.com/in/ipad-air/',tagClass:'tagIpad',fit:'contain',tone:'blue',syncFinish:{id:'ipad-graphite-sync',name:'Space Gray Sync',base:'#68686b',edge:'#a8aaad',accent:'#c7edf7',text:'#f7fafb'}},
-  {id:'macbook',brand:'Apple',name:'MacBook Air',category:'Laptop',image:'https://www.apple.com/v/macbook-air/specs/b/images/specs/13-inch/mba_13_size1__eyfditb7ixea_large.jpg',source:'https://www.apple.com/in/macbook-air/specs/',tagClass:'tagMac',fit:'contain',tone:'silver',syncFinish:{id:'mac-silver-sync',name:'Silver Alloy Sync',base:'#b8bdc2',edge:'#f0f3f5',accent:'#d9f6ff',text:'#141a1f'}},
-  {id:'buds',brand:'Samsung',name:'Galaxy Buds3 FE Case',category:'Accessory',image:'https://images.samsung.com/is/image/samsung/p6pim/in/sm-r420nzkainu/gallery/in-galaxy-buds3-fe-563497-sm-r420nzkainu-thumb-548868596?%24624_624_PNG%24=',source:'https://www.samsung.com/in/audio-sound/galaxy-buds/galaxy-buds3-fe-black-sm-r420nzkainu/',tagClass:'tagBuds',fit:'contain',tone:'black',syncFinish:{id:'buds-black-sync',name:'Matte Black Sync',base:'#17191c',edge:'#545a61',accent:'#6ce7ff',text:'#f6fafc'}},
-  {id:'powerbank',brand:'Samsung',name:'20,000mAh Battery Pack',category:'Accessory',image:'https://images.samsung.com/is/image/samsung/p6pim/in/eb-p4520xuegin/gallery/in-battery-pack-20000mah-eb-p4520-eb-p4520xuegin-541529928?%241164_776_PNG%24=',source:'https://www.samsung.com/in/mobile-accessories/battery-pack-20-000mah-beige-eb-p4520xuegin/',tagClass:'tagPower',fit:'contain',tone:'beige',syncFinish:{id:'beige-sync',name:'Warm Beige Sync',base:'#d3cbbd',edge:'#f6f1e7',accent:'#e8fbff',text:'#28231d'}}
+  {id:'iphone',brand:'Apple',name:'iPhone 17',category:'Smartphone',deviceColor:'Lavender',image:'https://www.apple.com/v/iphone-17/g/images/overview/product-viewer/colors_lavender__bcaie9a8npj6_large.jpg',source:'https://www.apple.com/in/iphone-17/',tagClass:'tagIphone',fit:'contain',tone:'mist',syncFinish:{id:'lavender-sync',name:'Lavender Sync',base:'#c9bfd9',edge:'#f1eaf8',accent:'#e6d7ff',text:'#211b2b'}},
+  {id:'galaxy',brand:'Samsung',name:'Galaxy S26',category:'Smartphone',deviceColor:'Silver Shadow',image:'https://images.samsung.com/is/image/samsung/p6pim/in/s2602/gallery/in-galaxy-s26-s942-578627-sm-s942bzscins-550888079?%24624_624_PNG%24=',source:'https://www.samsung.com/in/smartphones/galaxy-s26/',tagClass:'tagGalaxy',fit:'contain',tone:'silver',syncFinish:{id:'silver-sync',name:'Silver Shadow Sync',base:'#aeb2b9',edge:'#eef1f4',accent:'#d9f7ff',text:'#11161c'}},
+  {id:'oppo',brand:'OPPO',name:'Reno16 5G',category:'Smartphone',deviceColor:'Twilight Purple',image:'https://www.oppo.com/content/dam/oppo_com/common/mkt/v2-2/oppo-reno16-series-en/specs/reno16/light-purple-deep-purple-white.png',source:'https://www.oppo.com/in/smartphones/series-reno/reno16/specs/',tagClass:'tagOppo',fit:'contain',tone:'purple',syncFinish:{id:'violet-sync',name:'Twilight Violet Sync',base:'#4d354f',edge:'#a781aa',accent:'#d9aee2',text:'#fff9ff'}},
+  {id:'vivo',brand:'vivo',name:'V50',category:'Smartphone',deviceColor:'Starry Blue',image:'https://asia-exstatic-vivofs.vivo.com/PSee2l50xoirPK7y/1740991283302/e337d8e8bdec570993f6c7c4228af755.png',source:'https://www.vivo.com/en/products/picture/v50',tagClass:'tagVivo',fit:'contain',tone:'blue',syncFinish:{id:'blue-sync',name:'Starry Blue Sync',base:'#184c9d',edge:'#6aa3e8',accent:'#8fd5ff',text:'#f5fbff'}},
+  {id:'ipad',brand:'Apple',name:'iPad Air',category:'Tablet',deviceColor:'Space Gray',image:'https://www.apple.com/v/ipad-air/ah/images/overview/closer-look/space-gray/slide_2B__dvqfqwnkj2c2_large.jpg',source:'https://www.apple.com/in/ipad-air/',tagClass:'tagIpad',fit:'contain',tone:'blue',syncFinish:{id:'ipad-graphite-sync',name:'Space Gray Sync',base:'#68686b',edge:'#a8aaad',accent:'#c7edf7',text:'#f7fafb'}},
+  {id:'macbook',brand:'Apple',name:'MacBook Air',category:'Laptop',deviceColor:'Silver',image:'https://www.apple.com/v/macbook-air/specs/b/images/specs/13-inch/mba_13_size1__eyfditb7ixea_large.jpg',source:'https://www.apple.com/in/macbook-air/specs/',tagClass:'tagMac',fit:'contain',tone:'silver',syncFinish:{id:'mac-silver-sync',name:'Silver Alloy Sync',base:'#b8bdc2',edge:'#f0f3f5',accent:'#d9f6ff',text:'#141a1f'}},
+  {id:'buds',brand:'Samsung',name:'Galaxy Buds3 FE Case',category:'Accessory',deviceColor:'Black',image:'https://images.samsung.com/is/image/samsung/p6pim/in/sm-r420nzkainu/gallery/in-galaxy-buds3-fe-563497-sm-r420nzkainu-thumb-548868596?%24624_624_PNG%24=',source:'https://www.samsung.com/in/audio-sound/galaxy-buds/galaxy-buds3-fe-black-sm-r420nzkainu/',tagClass:'tagBuds',fit:'contain',tone:'black',syncFinish:{id:'buds-black-sync',name:'Matte Black Sync',base:'#17191c',edge:'#545a61',accent:'#6ce7ff',text:'#f6fafc'}},
+  {id:'powerbank',brand:'Samsung',name:'20,000mAh Battery Pack',category:'Accessory',deviceColor:'Beige',image:'https://images.samsung.com/is/image/samsung/p6pim/in/eb-p4520xuegin/gallery/in-battery-pack-20000mah-eb-p4520-eb-p4520xuegin-541529928?%241164_776_PNG%24=',source:'https://www.samsung.com/in/mobile-accessories/battery-pack-20-000mah-beige-eb-p4520xuegin/',tagClass:'tagPower',fit:'contain',tone:'beige',syncFinish:{id:'beige-sync',name:'Warm Beige Sync',base:'#d3cbbd',edge:'#f6f1e7',accent:'#e8fbff',text:'#28231d'}}
 ]
 
 const families:Family[]=[
@@ -74,10 +74,58 @@ function labelForDevice(device:DeviceExample){return device.category==='Laptop'?
 
 function HeroWave({finish}:{finish:Finish}){
   const wave=['iphone','galaxy','oppo','vivo','ipad','macbook','buds','powerbank']
-  return <div className={ui.waveStage} aria-label="Real device examples with RADVORA ShieldTag overlays">
-    <div className={ui.waveBeam}/><div className={ui.waveBeamAlt}/><div className={ui.waveHalo}/>
-    {wave.map((id,index)=>{const d=devices.find(x=>x.id===id)!;const label=labelForDevice(d);return <div key={id} className={`${ui.waveItem} ${ui[`wave${index+1}`]}`}><div className={ui.waveCard}><DeviceVisual device={d} label={label} priority={index<2}/><div className={ui.waveMeta}><b>{d.brand}</b><span>{d.name}</span><small>{d.syncFinish.name}</small></div></div></div>})}
-    <div className={ui.waveCaption}><span>REAL DEVICE EXAMPLES</span><b>Recognisable hardware. RADVORA identity layered with restraint.</b></div>
+  const stageRef=useRef<HTMLDivElement>(null)
+  const [progress,setProgress]=useState(.42)
+
+  useEffect(()=>{
+    const reduce=window.matchMedia('(prefers-reduced-motion: reduce)')
+    if(reduce.matches){setProgress(.5);return}
+    let frame=0
+    const update=()=>{
+      const stage=stageRef.current
+      if(!stage)return
+      const rect=stage.getBoundingClientRect()
+      const viewport=window.innerHeight||1
+      const raw=(viewport-rect.top)/(viewport+rect.height)
+      setProgress(Math.max(0,Math.min(1,raw)))
+    }
+    const onScroll=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(update)}
+    update()
+    window.addEventListener('scroll',onScroll,{passive:true})
+    window.addEventListener('resize',onScroll)
+    return()=>{cancelAnimationFrame(frame);window.removeEventListener('scroll',onScroll);window.removeEventListener('resize',onScroll)}
+  },[])
+
+  return <div ref={stageRef} className={ui.waveStage} aria-label="Cinematic real-device wave with RADVORA ShieldTag overlays">
+    <div className={ui.waveAtmosphere}/><div className={ui.waveBeam}/><div className={ui.waveBeamAlt}/><div className={ui.waveHalo}/>
+    {wave.map((id,index)=>{
+      const d=devices.find(x=>x.id===id)!
+      const label=labelForDevice(d)
+      const center=(wave.length-1)/2
+      const offset=index-center
+      const normalized=offset/center
+      const x=offset*142-(progress-.5)*130
+      const y=Math.sin(index*.82)*64+Math.sin(progress*Math.PI*2+index*.48)*10
+      const z=Math.cos(normalized*Math.PI/2)*150-Math.abs(offset)*14
+      const ry=normalized*-18+(progress-.5)*10
+      const rz=normalized*2.8
+      const scale=.89+(1-Math.abs(normalized))*.13
+      const style={
+        '--wave-x':`${x}px`,
+        '--wave-y':`${y}px`,
+        '--wave-z':`${z}px`,
+        '--wave-ry':`${ry}deg`,
+        '--wave-rz':`${rz}deg`,
+        '--wave-scale':scale,
+        '--wave-delay':`${index*70}ms`
+      } as CSSProperties
+      return <div key={id} className={ui.waveItem} style={style}>
+        <div className={ui.waveCard}><DeviceVisual device={d} label={label} priority={index<2}/>
+          <div className={ui.waveMeta}><div><b>{d.brand}</b><span>{d.name}</span></div><small>{d.deviceColor} · {d.syncFinish.name}</small></div>
+        </div>
+      </div>
+    })}
+    <div className={ui.waveCaption}><span>ONE CONTINUOUS DEVICE SYSTEM</span><b>Phone → tablet → laptop → accessories</b></div>
   </div>
 }
 
@@ -95,17 +143,37 @@ function FamilyGrid({finish}:{finish:Finish}){
 function FinishStudio({finishId,setFinishId}:{finishId:string;setFinishId:(id:string)=>void}){
   const finish=finishes.find(f=>f.id===finishId)??finishes[0]
   const iphone=devices[0]
-  return <section className={ui.finishSection} id="finishes"><div className={ui.finishCopy}><span>MATCH YOUR DEVICE</span><h2>Blend in.<br/><em>Stand out.</em></h2><p>Explore eight finish directions and choose whether ShieldTag should blend into the device or create a deliberate contrast.</p><div className={ui.finishMeta}><span>Selected finish</span><b>{finish.name}</b><p>Lighting, tag face and edge treatment update together so the finish reads as a material—not a flat colour chip.</p></div></div><div className={ui.finishStage}><div className={ui.finishDevice}><DeviceVisual device={iphone} finish={finish} label="SIGNATURE" interactive useDeviceFinish={false}/></div><div className={ui.finishLight}/><div className={ui.finishSwatches}>{finishes.map(f=><button key={f.id} className={f.id===finishId?ui.swatchActive:''} onClick={()=>setFinishId(f.id)} aria-pressed={f.id===finishId}><i style={{'--swatch':f.base,'--edge':f.edge} as CSSProperties}/><span>{f.name}</span></button>)}</div></div></section>
+  return <section className={ui.finishSection} id="finishes"><div className={ui.finishCopy}><span>MATCH YOUR DEVICE</span><h2>Blend in.<br/><em>Stand out.</em></h2><p>Explore eight finish directions and choose whether ShieldTag should blend into the device or create a deliberate contrast.</p><div className={ui.finishMeta}><span>Selected finish</span><b>{finish.name}</b><p>Lighting, tag face and edge treatment update together so the finish reads as a material—not a flat colour chip.</p></div></div><div className={ui.finishStage} style={{'--finish-scene':finish.base} as CSSProperties}><div className={ui.finishDevice}><DeviceVisual device={iphone} finish={finish} label="SIGNATURE" interactive useDeviceFinish={false}/></div><div className={ui.finishLight}/><div className={ui.finishSwatches}>{finishes.map(f=><button key={f.id} className={f.id===finishId?ui.swatchActive:''} onClick={()=>setFinishId(f.id)} aria-pressed={f.id===finishId}><i style={{'--swatch':f.base,'--edge':f.edge} as CSSProperties}/><span>{f.name}</span></button>)}</div></div></section>
 }
 
 function DeviceMatcher({finishId,setFinishId}:{finishId:string;setFinishId:(id:string)=>void}){
   const [brand,setBrand]=useState('Apple')
   const [category,setCategory]=useState('Smartphone')
+  const [deviceId,setDeviceId]=useState('iphone')
   const finish=finishes.find(f=>f.id===finishId)??finishes[0]
   const availableBrands=useMemo(()=>[...new Set(devices.filter(d=>d.category===category).map(d=>d.brand))],[category])
+  const availableDevices=useMemo(()=>devices.filter(d=>d.category===category&&d.brand===brand),[category,brand])
+
   useEffect(()=>{if(!availableBrands.includes(brand))setBrand(availableBrands[0]??'Apple')},[category,availableBrands,brand])
-  const match=useMemo(()=>devices.find(d=>d.brand===brand&&d.category===category)??devices.find(d=>d.category===category)??devices[0],[brand,category])
-  return <section className={ui.matcherSection} id="matcher"><div className={ui.matcherPanel}><div className={ui.matcherIntro}><span>FIND YOUR MATCH</span><h2>Preview before you decide.</h2><p>Choose a device context and finish. Exact model compatibility stays fail-closed until an approved device guide confirms it.</p></div><div className={ui.matcherControls}><label><span>01 Device category</span><select value={category} onChange={e=>setCategory(e.target.value)}><option>Smartphone</option><option>Tablet</option><option>Laptop</option><option>Accessory</option></select></label><label><span>02 Brand example</span><select value={brand} onChange={e=>setBrand(e.target.value)}>{availableBrands.map(b=><option key={b}>{b}</option>)}</select></label><label><span>03 ShieldTag finish</span><select value={finishId} onChange={e=>setFinishId(e.target.value)}>{finishes.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}</select></label><div className={ui.matcherStatus}><span>04 Compatibility status</span><b>Check model compatibility before purchase</b><p>Exact fit remains model-specific even when a visual preview is available.</p></div></div></div><div className={ui.matcherPreview}><DeviceVisual device={match} finish={finish} label={category==='Laptop'?'EXECUTIVE':category==='Tablet'?'PRO':category==='Accessory'?'MINI':'SIGNATURE'} interactive useDeviceFinish={false}/><div className={ui.matcherBadge}><span>PREVIEW</span><b>{match.brand} · {match.name}</b><small>{finish.name}</small></div></div></section>
+  useEffect(()=>{if(!availableDevices.some(d=>d.id===deviceId))setDeviceId(availableDevices[0]?.id??devices[0].id)},[availableDevices,deviceId])
+  const match=useMemo(()=>devices.find(d=>d.id===deviceId)??availableDevices[0]??devices[0],[deviceId,availableDevices])
+
+  return <section className={ui.matcherSection} id="matcher">
+    <div className={ui.matcherPanel}><div className={ui.matcherIntro}><span>FIND YOUR MATCH</span><h2>Build the visual match.</h2><p>Choose the device class, brand example, shown product, device colour and ShieldTag finish. Appearance can be previewed here; exact compatibility remains evidence-gated.</p></div>
+      <div className={ui.matcherControls}>
+        <label><span>01 Device category</span><select value={category} onChange={e=>setCategory(e.target.value)}><option>Smartphone</option><option>Tablet</option><option>Laptop</option><option>Accessory</option></select></label>
+        <label><span>02 Brand example</span><select value={brand} onChange={e=>setBrand(e.target.value)}>{availableBrands.map(b=><option key={b}>{b}</option>)}</select></label>
+        <label><span>03 Device example</span><select value={deviceId} onChange={e=>setDeviceId(e.target.value)}>{availableDevices.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}</select></label>
+        <label><span>04 Device colour shown</span><select value={match.deviceColor} disabled aria-label="Shown device colour"><option>{match.deviceColor}</option></select></label>
+        <label><span>05 ShieldTag finish</span><select value={finishId} onChange={e=>setFinishId(e.target.value)}>{finishes.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}</select></label>
+        <div className={ui.matcherStatus}><span>06 Compatibility status</span><b>Compatibility confirmation required</b><p>The preview does not claim model-level fit. Confirm the approved compatibility guide before purchase.</p></div>
+      </div>
+    </div>
+    <div className={ui.matcherPreview} style={{'--matcher-glow':finish.base} as CSSProperties}>
+      <DeviceVisual device={match} finish={finish} label={labelForDevice(match)} interactive useDeviceFinish={false}/>
+      <div className={ui.matcherBadge}><span>VISUAL MATCH</span><b>{match.brand} · {match.name}</b><small>{match.deviceColor} → {finish.name}</small></div>
+    </div>
+  </section>
 }
 
 function ApplicationGallery({finish}:{finish:Finish}){
@@ -140,6 +208,17 @@ function FAQ(){return <section className={ui.faq}><div className={ui.sectionIntr
 
 export default function RealDeviceExperience(){
   const [finishId,setFinishId]=useState('obsidian')
+
+  useEffect(()=>{
+    const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const sections=Array.from(document.querySelectorAll<HTMLElement>('main > section:not(:first-child)'))
+    if(reduce){sections.forEach(section=>section.classList.add(ui.sectionVisible));return}
+    const observer=new IntersectionObserver(entries=>{
+      entries.forEach(entry=>{if(entry.isIntersecting){(entry.target as HTMLElement).classList.add(ui.sectionVisible);observer.unobserve(entry.target)}})
+    },{threshold:.08,rootMargin:'0px 0px -6% 0px'})
+    sections.forEach(section=>{section.classList.add(ui.sectionReveal);observer.observe(section)})
+    return()=>observer.disconnect()
+  },[])
   const finish=finishes.find(f=>f.id===finishId)??finishes[0]
   return <div className={ui.page}>
     <header className={ui.nav}><a className={ui.brand} href="/"><Logo/><span><b>RADVORA</b><small>SHIELDTAG</small></span></a><nav><a href="#devices">Devices</a><a href="#products">Products</a><a href="#finishes">Finishes</a><a href="#matcher">Find Your Match</a><a href="#how">How to Apply</a></nav><a className={ui.navCta} href="#matcher">Find Your Match <span>→</span></a></header>
