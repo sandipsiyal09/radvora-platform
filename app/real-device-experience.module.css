@@ -79,3 +79,24 @@
 .waveCard,.ecoCard,.familyCard,.galleryCard{box-shadow:0 18px 50px rgba(0,0,0,.18)}
 .waveCard .deviceVisual,.ecoVisual .deviceVisual,.galleryCard .deviceVisual,.familyVisual .deviceVisual{background:radial-gradient(circle at 50% 32%,#ffffff 0,#f2f4f6 58%,#e5e9ed 100%)!important}
 .waveMeta small{opacity:.82}
+
+
+/* final customer-facing polish */
+.syncNote{display:grid;gap:3px;text-align:right;max-width:130px}
+.syncNote small{font-size:7px;letter-spacing:.14em;color:#5edcf5}
+.syncNote b{font-size:9px;color:#cdd8df;font-weight:650}
+.ecoInfo{min-height:82px;align-items:center!important}
+.ecoCard{background:linear-gradient(180deg,#10171e 0%,#090e13 100%)!important}
+.ecoCard:hover .tag{transform:translateZ(0) scale(1.03)}
+.deviceVisual .tagAnchor .tag{transition:transform .28s ease,filter .28s ease}
+.deviceVisual:hover .tagAnchor .tag{filter:drop-shadow(0 12px 20px rgba(0,0,0,.30))}
+.familyCard:nth-child(3){border-color:rgba(174,184,194,.16)}
+.familyCard:nth-child(5){border-color:rgba(199,171,122,.13)}
+.familyCard:nth-child(3) .familyVisual,.familyCard:nth-child(5) .familyVisual{background:radial-gradient(circle at 50% 28%,rgba(255,255,255,.12),transparent 52%)!important}
+.galleryCard figcaption{min-height:62px}
+.heroProof span{white-space:nowrap}
+@media(max-width:760px){
+  .syncNote{text-align:left;max-width:none}
+  .ecoInfo{min-height:0}
+  .heroProof span{white-space:normal}
+}
