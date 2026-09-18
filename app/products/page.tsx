@@ -3,11 +3,7 @@ import Link from 'next/link'
 import { PublicShell } from '../public-shell'
 import ui from '../public-brand.module.css'
 
-export const metadata:Metadata={
-  title:'ShieldTag Products',
-  description:'Explore RADVORA ShieldTag formats for smartphones, tablets, laptops and selected technology accessories.',
-  alternates:{canonical:'/products'}
-}
+export const metadata:Metadata={title:'ShieldTag Products',description:'Explore the RADVORA ShieldTag system for smartphones, tablets, laptops and compact technology.',alternates:{canonical:'/products'}}
 
 const families=[
   {index:'01',name:'ShieldTag Signature',device:'Smartphones',format:'Compact identity badge',copy:'The everyday ShieldTag proportion for modern smartphone rear surfaces.'},
@@ -19,20 +15,17 @@ const families=[
 export default function ProductsPage(){
   return <PublicShell><main className={ui.main}>
     <section className={ui.hero}>
-      <div className={ui.heroCopy}><span className={ui.kicker}>SHIELDTAG / PRODUCT SYSTEM</span><h1>Choose the format.<br/><em>Then make it yours.</em></h1><p>RADVORA changes the badge proportion with the device class. Start with the hardware, then move into ShieldLab to choose the finish and create a shareable build.</p><div className={ui.actions}><Link className={ui.primary} href="/#shieldlab">Open ShieldLab</Link><Link className={ui.secondary} href="/compatibility">Verify a device</Link></div></div>
-      <aside className={ui.heroAside}><span>LIVE PRODUCT STATUS</span><strong>Availability is governed, not guessed.</strong><p>Public price, stock and checkout appear only when approved India commerce data is configured. Styling and compatibility remain useful before purchase opens.</p><ul><li><span>Formats</span><b>4 public directions</b></li><li><span>Finish directions</span><b>8</b></li><li><span>Compatibility</span><b>Model-specific</b></li></ul></aside>
+      <div className={ui.heroCopy}><span className={ui.kicker}>THE SHIELDTAG SYSTEM</span><h1>One identity.<br/><em>Four device formats.</em></h1><p>Start with the hardware—not with a generic sticker size. ShieldTag changes visual proportion across smartphones, tablets, laptops and compact accessories.</p><div className={ui.actions}><Link className={ui.primary} href="/#shieldlab">Build in ShieldLab</Link><Link className={ui.secondary} href="/compatibility">Verify a device</Link></div></div>
+      <aside className={ui.heroAside}><span>PRODUCT PRINCIPLE</span><strong>Designed around the device.</strong><p>Choose the format, tune the finish and verify the exact model before relying on fit guidance.</p><ul><li><span>Formats</span><b>4</b></li><li><span>Finish directions</span><b>8</b></li><li><span>Compatibility</span><b>Model-specific</b></li></ul></aside>
     </section>
-
-    <section className={ui.section}><div className={ui.sectionHead}><span className={ui.kicker}>THE SYSTEM</span><h2>Phone. Tablet. Laptop.<br/><em>Compact tech.</em></h2><p>The visible range matters: visitors should understand immediately that ShieldTag is a device identity system, not a single one-size product.</p></div>
-      <div className={ui.grid4}>{families.map(f=><article key={f.name} className={ui.familyCard}><span>{f.index} · {f.device.toUpperCase()}</span><div className={ui.familyIcon}><b>{f.name.replace('ShieldTag ','')}</b></div><h3>{f.name}</h3><p>{f.copy}</p><footer><b>{f.format}</b><small>Open ShieldLab to preview finish direction before checking exact model fit.</small></footer></article>)}</div>
+    <section className={ui.section}><div className={ui.sectionHead}><span className={ui.kicker}>CHOOSE THE FORMAT</span><h2>Phone. Tablet. Laptop.<br/><em>Compact tech.</em></h2><p>Each public format serves one clear hardware context. The exact device record remains the final source for compatibility.</p></div>
+      <div className={ui.grid4}>{families.map(f=><article key={f.name} className={ui.familyCard}><span>{f.index} · {f.device.toUpperCase()}</span><div className={ui.familyIcon}><b>{f.name.replace('ShieldTag ','')}</b></div><h3>{f.name}</h3><p>{f.copy}</p><footer><b>{f.format}</b><small>Preview it in ShieldLab, then verify the exact model.</small></footer></article>)}</div>
     </section>
-
     <section className={ui.section}><div className={ui.grid3}>
-      <article className={ui.panel}><span className={ui.kicker}>BUILD</span><h3>Create the look.</h3><p>Pick a real device context, select a finish and save or share the exact configuration from ShieldLab.</p><div className={ui.actions}><Link className={ui.secondary} href="/#shieldlab">Open ShieldLab →</Link></div></article>
-      <article className={ui.panel}><span className={ui.kicker}>VERIFY</span><h3>Confirm the model.</h3><p>Visual styling never silently turns into a compatibility result. The checker remains the source for reviewed fit status.</p><div className={ui.actions}><Link className={ui.secondary} href="/compatibility">Compatibility →</Link></div></article>
-      <article className={ui.panel}><span className={ui.kicker}>AVAILABILITY</span><h3>See live commercial status.</h3><p>Price and checkout remain hidden until the governed catalog has legitimate price, stock, tax and seller configuration.</p><div className={ui.actions}><Link className={ui.secondary} href="/products/shieldtag-pro">ShieldTag Pro status →</Link></div></article>
+      <article className={ui.panel}><span className={ui.kicker}>BUILD</span><h3>Create the look.</h3><p>Choose a real device context and one of eight finish directions. Save or share the exact build.</p><div className={ui.actions}><Link className={ui.secondary} href="/#shieldlab">Open ShieldLab →</Link></div></article>
+      <article className={ui.panel}><span className={ui.kicker}>VERIFY</span><h3>Confirm the exact model.</h3><p>Visual styling does not silently become compatibility. Use the reviewed device checker before relying on fit guidance.</p><div className={ui.actions}><Link className={ui.secondary} href="/compatibility">Compatibility →</Link></div></article>
+      <article className={ui.panel}><span className={ui.kicker}>BUY</span><h3>Commerce appears only when real.</h3><p>Public price, stock and checkout remain hidden until approved India commerce data is configured.</p><div className={ui.actions}><Link className={ui.secondary} href="/products/shieldtag-pro">See product status →</Link></div></article>
     </div></section>
-
     <div className={ui.notice}>Manufacturer names and device examples are used for styling context and compatibility workflow only. They do not imply partnership, certification or endorsement.</div>
   </main></PublicShell>
 }

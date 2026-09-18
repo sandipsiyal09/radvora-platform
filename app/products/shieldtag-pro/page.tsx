@@ -7,12 +7,7 @@ import { PublicShell } from '../../public-shell'
 import ui from '../../public-brand.module.css'
 
 export const dynamic='force-dynamic'
-
-export const metadata:Metadata={
-  title:'ShieldTag Pro',
-  description:'RADVORA ShieldTag Pro is the tablet-proportioned member of the ShieldTag device identity family.',
-  alternates:{canonical:'/products/shieldtag-pro'}
-}
+export const metadata:Metadata={title:'ShieldTag Pro',description:'RADVORA ShieldTag Pro is the tablet-proportioned member of the ShieldTag device identity system.',alternates:{canonical:'/products/shieldtag-pro'}}
 
 export default async function ShieldTagProPage(){
   const supabase=await createClient()
@@ -23,12 +18,19 @@ export default async function ShieldTagProPage(){
 
   return <PublicShell><main className={ui.main}>
     <section className={ui.hero}>
-      <div className={ui.heroCopy}><span className={ui.kicker}>SHIELDTAG PRO</span><h1>Proportioned<br/><em>for tablets.</em></h1><p>ShieldTag Pro is the larger-format member of the RADVORA identity system, designed to look visually balanced on approved tablet backs and compatible cases.</p><div className={ui.actions}><Link className={ui.primary} href="/#matcher">Preview on a tablet →</Link><Link className={ui.secondary} href="/compatibility">Check exact compatibility</Link></div></div>
-      <aside className={ui.heroAside}><span>PRODUCT FAMILY</span><strong>Tablet · Pro format</strong><p>Visual examples can show colour and placement direction. Exact model fit remains separately verified.</p><ul><li><span>Authentication</span><b>Serialized where issued</b></li><li><span>Compatibility</span><b>Model-specific</b></li><li><span>Claims</span><b>Evidence-controlled</b></li></ul></aside>
+      <div className={ui.heroCopy}><span className={ui.kicker}>SHIELDTAG PRO / TABLETS</span><h1>More surface.<br/><em>More presence.</em></h1><p>ShieldTag Pro is the tablet-proportioned format in the RADVORA system—scaled to sit visually balanced beside larger hardware.</p><div className={ui.actions}><Link className={ui.primary} href="/#shieldlab">Preview in ShieldLab</Link><Link className={ui.secondary} href="/compatibility">Check exact compatibility</Link></div></div>
+      <aside className={ui.heroAside}><span>PRODUCT FORMAT</span><strong>Pro · tablet proportion</strong><p>See the visual direction in ShieldLab, then confirm the exact tablet before relying on fit guidance.</p><ul><li><span>Format</span><b>Tablet</b></li><li><span>Compatibility</span><b>Model-specific</b></li><li><span>Purchase state</span><b>{indiaPurchasable?'Available':'Not enabled'}</b></li></ul></aside>
     </section>
 
-    <section className={ui.section}><div className={ui.grid3}><article className={ui.panel}><span className={ui.kicker}>PROPORTION</span><h3>Made larger for tablet surfaces.</h3><p>The Pro format is visually scaled for tablet backs rather than reusing the smaller smartphone badge unchanged.</p></article><article className={ui.panel}><span className={ui.kicker}>PLACEMENT</span><h3>Keep functional zones clear.</h3><p>Approved placement should avoid cameras, buttons, charging contacts and other hardware that needs to remain unobstructed.</p></article><article className={ui.panel}><span className={ui.kicker}>FINISH</span><h3>Match or contrast.</h3><p>Use the finish studio to preview a close device match or a deliberately contrasting ShieldTag direction.</p></article></div></section>
+    <section className={ui.section}><div className={ui.grid3}>
+      <article className={ui.panel}><span className={ui.kicker}>PROPORTION</span><h3>Scaled for tablet surfaces.</h3><p>The Pro format uses a broader visual footprint than the smartphone format so the identity mark remains balanced on larger hardware.</p></article>
+      <article className={ui.panel}><span className={ui.kicker}>PLACEMENT</span><h3>Respect the hardware.</h3><p>Keep cameras, controls, charging contacts and other functional zones clear according to approved guidance.</p></article>
+      <article className={ui.panel}><span className={ui.kicker}>FINISH</span><h3>Blend in or contrast.</h3><p>Preview eight finish directions in ShieldLab before deciding which visual treatment best suits the tablet.</p></article>
+    </div></section>
 
-    <section className={ui.section}><div className={ui.grid2}><article className={ui.compatPanel}><span className={ui.kicker}>COMMERCIAL STATUS</span><h3>{indiaPurchasable?'Available for purchase':'Purchasing is not enabled yet.'}</h3>{product.price_inr?<p><strong>{new Intl.NumberFormat('en-IN',{style:'currency',currency:product.currency||'INR'}).format(Number(product.price_inr))}</strong></p>:<p>Final public pricing will appear only when the approved sellable catalogue is enabled.</p>}{availableStock!==null&&<p>Recorded availability: {availableStock>0?'In stock':'Out of stock'}.</p>}{indiaPurchasable?<AddToCartButton productId={product.id}/>:<div className={ui.notice}>India checkout remains unavailable until all required commerce, seller, tax, inventory and payment prerequisites are satisfied.</div>}</article><article className={ui.compatPanel}><span className={ui.kicker}>BEFORE YOU APPLY</span><h3>Confirm the exact tablet.</h3><p>Seeing a tablet in the visual matcher is not a compatibility result. Use the checker for the manufacturer and exact model, then follow the approved installation guidance.</p><div className={ui.actions}><Link className={ui.secondary} href="/compatibility">Compatibility →</Link><Link className={ui.secondary} href="/installation">Installation →</Link></div></article></div></section>
+    <section className={ui.section}><div className={ui.grid2}>
+      <article className={ui.compatPanel}><span className={ui.kicker}>AVAILABILITY</span><h3>{indiaPurchasable?'Ready to purchase':'Purchase is not enabled yet.'}</h3>{product.price_inr?<p><strong>{new Intl.NumberFormat('en-IN',{style:'currency',currency:product.currency||'INR'}).format(Number(product.price_inr))}</strong></p>:<p>Public pricing will appear when the approved sellable catalog is enabled.</p>}{availableStock!==null&&<p>Recorded availability: {availableStock>0?'In stock':'Out of stock'}.</p>}{indiaPurchasable?<AddToCartButton productId={product.id}/>:<div className={ui.notice}>India checkout remains unavailable until the required seller, tax, inventory and payment prerequisites are satisfied.</div>}</article>
+      <article className={ui.compatPanel}><span className={ui.kicker}>BEFORE YOU APPLY</span><h3>Verify the exact tablet.</h3><p>Seeing a tablet in ShieldLab is a styling preview, not a compatibility result. Confirm the exact manufacturer and model, then follow the installation guide.</p><div className={ui.actions}><Link className={ui.secondary} href="/compatibility">Compatibility →</Link><Link className={ui.secondary} href="/installation">Installation →</Link></div></article>
+    </div></section>
   </main></PublicShell>
 }
