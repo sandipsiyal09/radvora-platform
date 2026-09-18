@@ -17,7 +17,7 @@ export async function generateMetadata({searchParams}:{searchParams:SearchParams
     ? `Open this RADVORA ShieldLab build: ${resolved.device.brand} ${resolved.device.name} with ${resolved.finish.name}. Styling preview only; verify exact model fit separately.`
     : 'Build a RADVORA ShieldTag look for smartphones, tablets, laptops and accessories, compare finish directions, save or share the build, then verify exact model compatibility and availability.'
   const query=`?device=${encodeURIComponent(resolved.deviceId)}&finish=${encodeURIComponent(resolved.finishId)}`
-  const image=`/api/share-card${query}`
+  const image=`/share-card${query}`
 
   return {
     title:{absolute:title},
