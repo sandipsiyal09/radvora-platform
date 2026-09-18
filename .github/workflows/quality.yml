@@ -151,7 +151,8 @@ jobs:
             process.exit(1)
           }
           const route = fs.readFileSync(routePath, 'utf8')
-          const login = fs.readFileSync('app/login/page.tsx', 'utf8')
+          const loginPaths = ['app/login/page.tsx', 'app/login/login-form.tsx']
+          const login = loginPaths.filter(path => fs.existsSync(path)).map(path => fs.readFileSync(path, 'utf8')).join('\n')
           const requiredRoute = [
             "request.headers.get('sec-fetch-site')?.toLowerCase()==='cross-site'",
             'if(!origin)return true',
