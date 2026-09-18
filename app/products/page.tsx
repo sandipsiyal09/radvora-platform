@@ -24,7 +24,7 @@ export default function ProductsPage(){
     </section>
 
     <section className={ui.section}><div className={ui.sectionHead}><span className={ui.kicker}>THE SYSTEM</span><h2>Phone. Tablet. Laptop.<br/><em>Compact tech.</em></h2><p>The visible range matters: visitors should understand immediately that ShieldTag is a device identity system, not a single one-size product.</p></div>
-      <div className={ui.grid5}>{families.map(f=><article key={f.name} className={ui.familyCard}><span>{f.index} · {f.device.toUpperCase()}</span><div className={ui.familyIcon}><b>{f.name.replace('ShieldTag ','')}</b></div><h3>{f.name}</h3><p>{f.copy}</p><footer><b>{f.format}</b><small>Open ShieldLab to preview finish direction before checking exact model fit.</small></footer></article>)}</div>
+      <div className={ui.grid4}>{families.map(f=><article key={f.name} className={ui.familyCard}><span>{f.index} · {f.device.toUpperCase()}</span><div className={ui.familyIcon}><b>{f.name.replace('ShieldTag ','')}</b></div><h3>{f.name}</h3><p>{f.copy}</p><footer><b>{f.format}</b><small>Open ShieldLab to preview finish direction before checking exact model fit.</small></footer></article>)}</div>
     </section>
 
     <section className={ui.section}><div className={ui.grid3}>
