@@ -101,6 +101,8 @@ function ShieldLab(){
 
   async function shareBuild(){
     const url=new URL(window.location.href)
+    url.searchParams.set('device',deviceId)
+    url.searchParams.set('finish',finishId)
     url.hash='shieldlab'
     const share={title:'My RADVORA ShieldTag build',text:`${selected.brand} ${selected.name} · ${finish.name}`,url:url.toString()}
     try{
