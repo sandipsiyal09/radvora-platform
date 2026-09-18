@@ -257,6 +257,8 @@ export default function RealDeviceExperience(){
       </section>
     </main>
 
+    <nav className={ui.mobileDock} aria-label="Mobile quick actions"><a href="#shieldlab">{savedBuildLabel?'Resume build':'Build yours'}</a><a href="/account">My RADVORA</a></nav>
+
     <footer className={ui.footer}>
       <a className={ui.brand} href="/" aria-label="RADVORA home"><Logo/><span><b>RADVORA</b><small>SHIELDTAG</small></span></a>
       <nav aria-label="Footer"><a href="/products">Products</a><a href="/compatibility">Compatibility</a><a href="/account">My RADVORA</a><a href="/research">Research</a><a href="/support">Support</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a></nav>
