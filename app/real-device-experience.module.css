@@ -178,3 +178,36 @@
   opacity:.45;
 }
 .device_ipad .tagAnchor:after,.device_macbook .tagAnchor:after{width:78%;height:52%;opacity:.34}
+
+
+/* interaction QA: use the same calibrated hardware renderer everywhere */
+.compareBase>.deviceVisual,.compareOverlay>.deviceVisual{
+  width:100%!important;
+  height:100%!important;
+  border:0!important;
+  border-radius:0!important;
+}
+.compareBase,.compareOverlay{background:radial-gradient(circle at 50% 32%,#fff,#eef1f4 62%,#e1e5e9)!important}
+.demoPhone img{
+  object-fit:cover!important;
+  object-position:70% 50%!important;
+}
+.demoStage[data-step="2"] .demoTag,.demoStage[data-step="3"] .demoTag,.demoStage[data-step="4"] .demoTag{
+  left:57%;
+  top:63%;
+  transform:translate(-50%,-50%) scale(.68) rotate(-6deg);
+}
+.matcherControls select:focus-visible,.finishSwatches button:focus-visible,.stepList button:focus-visible,.videoCard:focus-visible{
+  outline:2px solid #71e5ff;
+  outline-offset:3px;
+}
+
+@media(max-width:760px){
+  .device_iphone .tagIphone{left:64%!important;bottom:29%!important;transform:translateX(-50%) scale(.60)!important}
+  .device_ipad .tagIpad{left:52%!important;bottom:34%!important;transform:translateX(-50%) scale(.60)!important}
+  .device_oppo .tagOppo{left:50%!important;bottom:22%!important;transform:translateX(-50%) scale(.56)!important}
+  .device_vivo .tagVivo{left:50%!important;bottom:19%!important;transform:translateX(-50%) scale(.56)!important}
+  .device_macbook .tagMac{left:50%!important;bottom:24%!important;transform:translateX(-50%) scale(.72)!important}
+  .device_airpods .tagPods{left:50%!important;bottom:20%!important;transform:translateX(-50%) scale(.54)!important}
+  .device_powerbank .tagPower{left:50%!important;bottom:22%!important;transform:translateX(-50%) scale(.60)!important}
+}
