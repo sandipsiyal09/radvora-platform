@@ -27,6 +27,7 @@ export default function ProductInterestForm({
           email:String(data.get('email')||''),
           source,
           context,
+          consent:true,
           website:String(data.get('website')||'')
         })
       })
