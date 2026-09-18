@@ -28,3 +28,8 @@
 .formStatus{margin:2px 0 0;color:#8fa0aa;font-size:10px;line-height:1.55}
 .formStatus a{color:#c9f5fd;text-decoration:underline}
 @media(max-width:760px){.formShell{padding:22px 0}}
+
+.authForm{display:grid;gap:14px;margin-top:20px}
+.authForm .primary{width:max-content}
+.authStatus{margin:4px 0 0;color:#bdeffc;font-size:10px;line-height:1.6}
+@media(max-width:760px){.authForm .primary{width:100%}}
