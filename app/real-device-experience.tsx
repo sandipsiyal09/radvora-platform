@@ -117,7 +117,8 @@ function HeroWave({finish}:{finish:Finish}){
         '--wave-ry':`${ry}deg`,
         '--wave-rz':`${rz}deg`,
         '--wave-scale':scale,
-        '--wave-delay':`${index*70}ms`
+        '--wave-delay':`${index*70}ms`,
+        zIndex:Math.round(100+z)
       } as CSSProperties
       return <div key={id} className={ui.waveItem} style={style}>
         <div className={ui.waveCard}><DeviceVisual device={d} label={label} priority={index<2}/>
