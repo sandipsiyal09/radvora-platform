@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { PublicShell } from '../public-shell'
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
@@ -21,5 +22,5 @@ const sections = [
 ]
 
 export default function TermsPage(){
-  return <main className="page-shell"><div className="content-card prose-card"><p className="eyebrow">RADVORA TECHNOLOGIES · INDIA</p><h1>Terms of Service</h1><p>Last updated: 11 September 2026</p><p>These terms govern access to and use of the RADVORA Technologies website, accounts, ordering systems, products, and related customer services.</p>{sections.map(([title, body])=><section key={title}><h2>{title}</h2><p>{body}</p></section>)}</div></main>
+  return <PublicShell><main className="page-shell"><div className="content-card prose-card"><p className="eyebrow">RADVORA TECHNOLOGIES · INDIA</p><h1>Terms of Service</h1><p>Last updated: 11 September 2026</p><p>These terms govern access to and use of the RADVORA Technologies website, accounts, ordering systems, products, and related customer services.</p>{sections.map(([title, body])=><section key={title}><h2>{title}</h2><p>{body}</p></section>)}</div></main></PublicShell>
 }
