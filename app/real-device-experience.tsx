@@ -175,14 +175,14 @@ export default function RealDeviceExperience(){
     }catch{}
   },[])
 
-  return <div className={ui.page}>
+  return <div className={ui.page}><a className={ui.skipLink} href="#radvora-main">Skip to content</a>
     <header className={ui.nav}>
       <a className={ui.brand} href="/" aria-label="RADVORA home"><Logo/><span><b>RADVORA</b><small>SHIELDTAG</small></span></a>
       <nav aria-label="Primary"><a href="#formats">Formats</a><a href="#shieldlab">ShieldLab</a><a href="#finishes">Finishes</a><a href="/compatibility">Compatibility</a><a href="/products">Products</a><a href="/account">My RADVORA</a></nav>
       <a className={ui.navCta} href="#shieldlab">{savedBuildLabel?'Resume build':'Build yours'}</a>
     </header>
 
-    <main>
+    <main id="radvora-main">
       <section className={ui.hero}>
         <div className={ui.heroCopy}>
           <span className={ui.eyebrow}>ONE SHIELD. EVERY DEVICE.</span>
@@ -192,8 +192,8 @@ export default function RealDeviceExperience(){
           <div className={ui.heroProof}><span>4 device formats</span><span>8 finish directions</span><span>Shareable builds</span></div>
         </div>
         <div className={ui.heroStage}>
-          <div className={ui.heroGlow}/>
-          <div className={ui.heroWord}>SHIELD</div>
+          <div className={ui.heroGlow} aria-hidden="true"/>
+          <div className={ui.heroWord} aria-hidden="true">SHIELD</div>
           <DeviceVisual device={heroDevice} finish={heroFinish} priority/>
           <div className={ui.heroMeta}><span>Signature / Obsidian</span><b>01</b></div>
         </div>
