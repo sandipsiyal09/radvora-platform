@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { PublicShell } from '../public-shell'
 import ui from '../public-brand.module.css'
 
+export const metadata={title:'ShieldTag Installation',description:'Follow RADVORA ShieldTag installation guidance: Clean, Peel, Align, Press and Ready, with device functional zones kept clear.',alternates:{canonical:'/installation'}}
+
 const steps=[
   ['01','Clean','Prepare a clean, dry, compatible surface before positioning the badge.'],
   ['02','Peel','Lift ShieldTag carefully from its backing without touching more adhesive area than necessary.'],
