@@ -1,3 +1,4 @@
+.skipLink{position:fixed;z-index:120;left:14px;top:10px;transform:translateY(-160%);padding:10px 13px;background:#eff8fa;color:#071014!important;font-size:10px;font-weight:800;transition:transform .18s ease}.skipLink:focus{transform:translateY(0)}
 .page{
   --bg:#050607;--surface:#0c1014;--line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.16);--text:#f4f7f9;--muted:#85919a;--cyan:#76e6ff;
   min-height:100vh;color:var(--text);background:radial-gradient(circle at 72% -8%,rgba(55,153,183,.11),transparent 24%),#050607;
