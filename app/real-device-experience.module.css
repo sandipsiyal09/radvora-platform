@@ -1,3 +1,4 @@
+:global(html){scroll-behavior:smooth}
 .page{
   --bg:#05070a;--panel:#0b1016;--panel2:#10171e;--line:rgba(255,255,255,.08);
   --text:#f4f7f9;--muted:#84939f;--cyan:#6be4fb;
@@ -496,6 +497,7 @@
   .tagPower{left:50%;bottom:22%;transform:translateX(-50%) scale(.60)}
 }
 @media(prefers-reduced-motion:reduce){
+  :global(html){scroll-behavior:auto}
   .finishLight,.videoScan,.waveItem,.waveItem .tag{animation:none!important}
   .waveItem{transition:none!important}
   .sectionReveal{opacity:1!important;transform:none!important}
