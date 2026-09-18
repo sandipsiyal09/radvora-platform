@@ -33,3 +33,10 @@
 .authForm .primary{width:max-content}
 .authStatus{margin:4px 0 0;color:#bdeffc;font-size:10px;line-height:1.6}
 @media(max-width:760px){.authForm .primary{width:100%}}
+
+.interestBox,.interestCompact{position:relative;margin-top:20px;padding:22px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);display:grid;gap:14px}
+.interestCompact{margin-top:18px;padding:18px 0}
+.interestCopy{display:grid;gap:6px}.interestCopy b{font-size:14px;letter-spacing:-.02em}.interestCopy small{color:#72808a;font-size:9px;line-height:1.5}
+.interestRow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end}.interestRow .formLabel{grid-column:1/-1}.interestRow .primary{min-height:45px}
+.interestConsent{display:flex;align-items:flex-start;gap:8px;color:#73808a;font-size:9px;line-height:1.55}.interestConsent input{margin-top:2px;flex:0 0 auto}.interestConsent a{color:#c8f3fc;text-decoration:underline;text-underline-offset:2px}
+@media(max-width:760px){.interestRow{grid-template-columns:1fr}.interestRow .primary{width:100%}}
