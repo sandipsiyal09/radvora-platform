@@ -211,3 +211,15 @@
   .device_airpods .tagPods{left:50%!important;bottom:20%!important;transform:translateX(-50%) scale(.54)!important}
   .device_powerbank .tagPower{left:50%!important;bottom:22%!important;transform:translateX(-50%) scale(.60)!important}
 }
+
+
+/* accessory QA: closed case gives Mini a real mounting surface */
+.tone_black{--tone:#1b1d20}
+.tagBuds{left:50%!important;right:auto!important;bottom:20%!important;transform:translateX(-50%) scale(.62)!important}
+.device_buds .deviceImageFrame{inset:18px!important}
+.device_buds .deviceImageFrame img{object-fit:contain!important;object-position:center!important}
+.device_buds .tagBuds{left:50%!important;bottom:18%!important;transform:translateX(-50%) scale(.58)!important}
+.device_buds:after{content:"";position:absolute;inset:auto 22% 4% 22%;height:16%;background:radial-gradient(ellipse,rgba(0,0,0,.18),transparent 66%);filter:blur(10px);pointer-events:none}
+@media(max-width:760px){
+  .device_buds .tagBuds{left:50%!important;bottom:18%!important;transform:translateX(-50%) scale(.52)!important}
+}
