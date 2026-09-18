@@ -178,7 +178,7 @@ export default function RealDeviceExperience(){
   return <div className={ui.page}>
     <header className={ui.nav}>
       <a className={ui.brand} href="/" aria-label="RADVORA home"><Logo/><span><b>RADVORA</b><small>SHIELDTAG</small></span></a>
-      <nav aria-label="Primary"><a href="#formats">Formats</a><a href="#shieldlab">ShieldLab</a><a href="#finishes">Finishes</a><a href="/compatibility">Compatibility</a><a href="/products">Products</a></nav>
+      <nav aria-label="Primary"><a href="#formats">Formats</a><a href="#shieldlab">ShieldLab</a><a href="#finishes">Finishes</a><a href="/compatibility">Compatibility</a><a href="/products">Products</a><a href="/account">My RADVORA</a></nav>
       <a className={ui.navCta} href="#shieldlab">{savedBuildLabel?'Resume build':'Build yours'}</a>
     </header>
 
@@ -259,7 +259,7 @@ export default function RealDeviceExperience(){
 
     <footer className={ui.footer}>
       <a className={ui.brand} href="/" aria-label="RADVORA home"><Logo/><span><b>RADVORA</b><small>SHIELDTAG</small></span></a>
-      <nav aria-label="Footer"><a href="/products">Products</a><a href="/compatibility">Compatibility</a><a href="/research">Research</a><a href="/support">Support</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a></nav>
+      <nav aria-label="Footer"><a href="/products">Products</a><a href="/compatibility">Compatibility</a><a href="/account">My RADVORA</a><a href="/research">Research</a><a href="/support">Support</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a></nav>
       <p>Device names and imagery explain styling context only. No manufacturer affiliation or endorsement is implied.</p>
     </footer>
   </div>
