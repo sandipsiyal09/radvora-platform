@@ -69,7 +69,7 @@ function Tag({finish,label='SHIELDTAG'}:{finish:Finish;label?:string}){
 
 function DeviceVisual({device,finish,priority=false}:{device:DeviceExample;finish:Finish;priority?:boolean}){
   const [failed,setFailed]=useState(false)
-  return <div className={`${ui.deviceVisual} ${ui[`tone_${device.tone}`]}`}>
+  return <div className={`${ui.deviceVisual} ${ui[`tone_${device.tone}`]} ${ui[`category_${device.category.toLowerCase()}`]}`}>
     <div className={ui.deviceGlow}/>
     {!failed
       ? <img src={device.image} alt={`${device.brand} ${device.name} styling preview`} loading={priority?'eager':'lazy'} fetchPriority={priority?'high':'auto'} decoding="async" draggable={false} onError={()=>setFailed(true)}/>
