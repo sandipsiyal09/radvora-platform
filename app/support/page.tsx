@@ -6,7 +6,7 @@ export const metadata={title:'Support',description:'Get RADVORA ShieldTag suppor
 
 const faqs=[
   ['Which ShieldTag family should I choose?','Start with device class: Signature for smartphones, Pro for tablets, Executive for laptops and Mini for compact accessories. Exact model fit still requires compatibility confirmation.'],
-  ['Why can I see a device in the visual matcher but not a compatibility result?','ShieldLab demonstrates styling and finish direction. Compatibility is a separate evidence-controlled record, so an unreviewed model remains “not yet reviewed.”'],
+  ['Why can I see a device in ShieldLab but not a compatibility result?','ShieldLab demonstrates styling and finish direction. Compatibility is a separate evidence-controlled record, so an unreviewed model remains “not yet reviewed.”'],
   ['How should ShieldTag be positioned?','Use a clean approved surface and keep clear of cameras, flash, buttons, ports, vents, hinges, charging contacts and other functional hardware unless model-specific guidance says otherwise.'],
   ['Can I match ShieldTag to my device colour?','The design system includes eight finish directions. Visual previews can show a close match or deliberate contrast; the sellable finish catalogue appears only after final approval.'],
   ['Is ShieldTag waterproof or scratch-proof?','No specific water-resistance, scratch-resistance or similar durability rating is published until the final production product has completed the required validation.'],
