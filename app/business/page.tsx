@@ -2,7 +2,7 @@ import BusinessLeadForm from './lead-form'
 import { PublicShell } from '../public-shell'
 import ui from '../public-brand.module.css'
 
-export const metadata={title:'Business | RADVORA',description:'Corporate, retail, distribution and OEM enquiries for RADVORA ShieldTag.'}
+export const metadata={title:'Business',description:'Corporate, retail, distribution and OEM enquiries for RADVORA ShieldTag.'}
 
 export default function BusinessPage(){
   return <PublicShell><main className={ui.main}>
