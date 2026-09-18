@@ -92,6 +92,25 @@ function ShieldLab({onSaved}:{onSaved:(label:string)=>void}){
     window.history.replaceState({},'',url)
   },[deviceId,finishId])
 
+  function handleStagePointerMove(event:React.PointerEvent<HTMLDivElement>){
+    if(event.pointerType!=='mouse'&&event.pointerType!=='pen')return
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return
+    const rect=event.currentTarget.getBoundingClientRect()
+    const x=Math.min(1,Math.max(0,(event.clientX-rect.left)/rect.width))
+    const y=Math.min(1,Math.max(0,(event.clientY-rect.top)/rect.height))
+    event.currentTarget.style.setProperty('--stage-rx',`${((0.5-y)*4).toFixed(2)}deg`)
+    event.currentTarget.style.setProperty('--stage-ry',`${((x-0.5)*6).toFixed(2)}deg`)
+    event.currentTarget.style.setProperty('--light-x',`${(x*100).toFixed(1)}%`)
+    event.currentTarget.style.setProperty('--light-y',`${(y*100).toFixed(1)}%`)
+  }
+
+  function resetStageDepth(event:React.PointerEvent<HTMLDivElement>){
+    event.currentTarget.style.setProperty('--stage-rx','0deg')
+    event.currentTarget.style.setProperty('--stage-ry','0deg')
+    event.currentTarget.style.setProperty('--light-x','50%')
+    event.currentTarget.style.setProperty('--light-y','45%')
+  }
+
   function chooseCategory(category:DeviceCategory){
     const first=devices.find(item=>item.category===category)
     if(first)setDeviceId(first.id)
@@ -119,7 +138,7 @@ function ShieldLab({onSaved}:{onSaved:(label:string)=>void}){
   }
 
   return <section className={ui.lab} id="shieldlab">
-    <div className={ui.labStage} aria-live="polite">
+    <div className={ui.labStage} aria-live="polite" onPointerMove={handleStagePointerMove} onPointerLeave={resetStageDepth}>
       <div className={ui.stageMeta}><span>SHIELDLAB / LIVE PREVIEW</span><b>{selected.brand} {selected.name}</b><small>{selected.deviceColor} · {finish.name}</small></div>
       <DeviceVisual device={selected} finish={finish}/>
       <div className={ui.stageFooter}><span>{labelFor(selected.category)}</span><b>{finish.name}</b></div>
