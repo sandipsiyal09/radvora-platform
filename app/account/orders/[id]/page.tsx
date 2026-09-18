@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { createClient } from '../../../../lib/supabase/server'
 import RetryPaymentButton from './retry-payment-button'
 import CancelOrderButton from './cancel-order-button'
+import { PublicShell } from '../../../public-shell'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,7 +15,7 @@ export default async function OrderDetailPage({params}:PageProps){
   const {id}=await params
   const supabase=await createClient()
   const {data:{user}}=await supabase.auth.getUser()
-  if(!user){return <main className="page-wrap"><div className="shell"><section className="panel"><span className="kicker">ORDER DETAILS</span><h1>Sign in to continue.</h1><Link className="pill light" href="/login">Sign in →</Link></section></div></main>}
+  if(!user){return <PublicShell><main className="page-wrap"><div className="shell"><section className="panel"><span className="kicker">ORDER DETAILS</span><h1>Sign in to continue.</h1><Link className="pill light" href="/login">Sign in →</Link></section></div></main></PublicShell>}
 
   const [{data:order},{data:itemRows},{data:paymentRows},{data:refunds}]=await Promise.all([
     supabase.from('orders').select('id,order_number,status,currency,subtotal,tax,shipping,total,payment_provider,payment_reference,created_at,updated_at,shipping_name,shipping_phone,shipping_line1,shipping_line2,shipping_city,shipping_state,shipping_postal_code,shipping_country,fulfillment_carrier,tracking_number,tracking_url,shipped_at,delivered_at,checkout_terms_accepted_at,checkout_terms_version').eq('id',id).eq('user_id',user.id).maybeSingle(),
@@ -35,7 +36,7 @@ export default async function OrderDetailPage({params}:PageProps){
   const canRetryPayment=order.status==='pending'&&!hasSuccessfulAttempt
   const canCancelPending=order.status==='pending'&&!hasActivePaymentSession
 
-  return <main className="page-wrap"><div className="shell">
+  return <PublicShell><main className="page-wrap"><div className="shell">
     <section className="page-head"><span className="kicker">ORDER {order.order_number}</span><h1>Order details.</h1><p>Placed {new Date(order.created_at).toLocaleString('en-IN')} · Current status: <strong>{order.status}</strong></p></section>
     <div className="admin-grid">
       <section className="panel"><span className="kicker">ITEMS & TAX SNAPSHOT</span><h2>{items.length} line item{items.length===1?'':'s'}</h2>{items.map(item=><div className="account-row" key={item.id}><div><b>{item.products?.name||'RADVORA product'}</b><span>Qty {item.quantity} · catalog unit price {money(item.unit_price)}</span>{item.hsn_code&&item.gst_rate!==null?<span>HSN {item.hsn_code} · GST {Number(item.gst_rate)}% · catalog price {item.price_includes_gst?'included GST':'excluded GST'}</span>:<span>Legacy order line · tax classification snapshot unavailable</span>}{item.line_subtotal!==null||item.tax_amount!==null?<span>Taxable value {money(item.line_subtotal)} · GST {money(item.tax_amount)}</span>:null}</div><em>{money(item.line_total)}</em></div>)}</section>
@@ -46,5 +47,5 @@ export default async function OrderDetailPage({params}:PageProps){
       {order.checkout_terms_accepted_at?<section className="panel"><span className="kicker">CHECKOUT RECORD</span><h2>Policies accepted</h2><p>Accepted {new Date(order.checkout_terms_accepted_at).toLocaleString('en-IN')}{order.checkout_terms_version?` · Version ${order.checkout_terms_version}`:''}.</p><div className="actions"><Link className="pill ghost" href="/terms">Terms</Link><Link className="pill ghost" href="/returns">Returns</Link><Link className="pill ghost" href="/shipping">Shipping</Link><Link className="pill ghost" href="/privacy">Privacy</Link></div></section>:null}
     </div>
     <div className="actions"><Link className="pill ghost" href="/account">← Back to account</Link><Link className="pill ghost" href="/support">Need help?</Link></div>
-  </div></main>
+  </div></main></PublicShell>
 }
