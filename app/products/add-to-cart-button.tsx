@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '../../lib/supabase/client'
+import ui from '../public-brand.module.css'
 
 export default function AddToCartButton({productId}:{productId:string}){
   const [busy,setBusy]=useState(false)
@@ -25,5 +26,5 @@ export default function AddToCartButton({productId}:{productId:string}){
     }
   }
 
-  return <div><button className="pill light" type="button" onClick={add} disabled={busy}>{busy?'Adding…':'Add to cart →'}</button>{message?<p className="status-message" role="status">{message} {message==='Added to cart.'?<a href="/cart">View cart</a>:null}</p>:null}</div>
+  return <div><button className={ui.primary} type="button" onClick={add} disabled={busy}>{busy?'Adding…':'Add to cart →'}</button>{message?<p className={ui.formStatus} role="status">{message} {message==='Added to cart.'?<a href="/cart">View cart</a>:null}</p>:null}</div>
 }

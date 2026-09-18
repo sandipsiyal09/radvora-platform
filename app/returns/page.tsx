@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { PublicShell } from '../public-shell'
+import ui from '../public-brand.module.css'
 
 export const metadata: Metadata = {
   title: 'Returns & Refunds',
@@ -19,5 +20,5 @@ const sections = [
 ]
 
 export default function ReturnsPage(){
-  return <PublicShell><main className="page-shell"><div className="content-card prose-card"><p className="eyebrow">RADVORA TECHNOLOGIES</p><h1>Returns &amp; Refunds</h1><p>Last updated: 11 September 2026</p><p>This policy describes the general RADVORA process for returns, refunds, replacements, damaged deliveries, and related customer requests. Product- or market-specific terms may also apply.</p>{sections.map(([title, body])=><section key={title}><h2>{title}</h2><p>{body}</p></section>)}</div></main></PublicShell>
+  return <PublicShell><main className={ui.main}><article className={ui.legal}><header className={ui.legalHeader}><span className={ui.legalMeta}>RADVORA TECHNOLOGIES</span><h1>Returns & Refunds</h1><p>Last updated: 11 September 2026</p><p>This policy describes the general RADVORA process for returns, refunds, replacements, damaged deliveries, and related customer requests. Product- or market-specific terms may also apply.</p></header>{sections.map(([sectionTitle, body])=><section className={ui.legalSection} key={sectionTitle}><h2>{sectionTitle}</h2><p>{body}</p></section>)}</article></main></PublicShell>
 }
