@@ -13,7 +13,7 @@ export default function OpenGraphImage(){
       </div>
       <div style={{display:'flex',flexDirection:'column',gap:22,maxWidth:980}}>
         <span style={{fontSize:18,letterSpacing:6,color:'#6be4fb'}}>PREMIUM DEVICE IDENTITY</span>
-        <div style={{fontSize:82,lineHeight:.98,fontWeight:700,letterSpacing:-4}}>One Shield.<br/>Every Device.</div>
+        <div style={{display:'flex',flexDirection:'column',fontSize:82,lineHeight:.98,fontWeight:700,letterSpacing:-4}}><span>One Shield.</span><span>Every Device.</span></div>
         <div style={{fontSize:24,lineHeight:1.4,color:'#9badb7'}}>A device-aware identity system for phones, tablets, laptops and selected technology accessories.</div>
       </div>
     </div>,size
