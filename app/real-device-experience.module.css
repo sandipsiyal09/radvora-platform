@@ -138,6 +138,7 @@
 .tone_blue{background:linear-gradient(145deg,#e4edf4,#fafcfd)}
 .tone_white{background:linear-gradient(145deg,#f4f6f7,#fff)}
 .tone_beige{background:linear-gradient(145deg,#eee9df,#faf8f3)}
+.tone_sand{background:linear-gradient(145deg,#ddd8d0,#f7f4ef)}
 .tone_black{background:linear-gradient(145deg,#dfe2e5,#f8f9fa)}
 
 .device_iphone .deviceImageFrame{inset:12px}
@@ -153,6 +154,10 @@
 .device_buds .deviceImageFrame{inset:18px}
 .device_buds .deviceImageFrame img{object-fit:contain}
 .device_powerbank .deviceImageFrame img{object-fit:contain}
+.device_tabs11 .deviceImageFrame{inset:16px}
+.device_tabs11 .deviceImageFrame img{object-fit:contain;object-position:center}
+.device_xps .deviceImageFrame,.device_omnibook .deviceImageFrame,.device_galaxybook .deviceImageFrame,.device_zenbook .deviceImageFrame{inset:14px}
+.device_xps .deviceImageFrame img,.device_omnibook .deviceImageFrame img,.device_galaxybook .deviceImageFrame img,.device_zenbook .deviceImageFrame img{object-fit:contain;object-position:center}
 
 .tagAnchor{
   position:absolute;z-index:10;transform-origin:center;pointer-events:none;
@@ -203,6 +208,35 @@
 .tagMini .tagFace svg{width:15px}
 .tagMini .tagFace b{font-size:5px}.tagMini .tagFace small{font-size:3px}
 
+.categoryTabs{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:0 0 14px
+}
+.categoryTabs button{
+  min-height:70px;padding:14px 16px;border-radius:18px;border:1px solid var(--line);
+  background:rgba(255,255,255,.018);color:#84939f;text-align:left;cursor:pointer;
+  display:grid;gap:4px;transition:transform .22s ease,border-color .22s ease,background .22s ease
+}
+.categoryTabs button:hover{transform:translateY(-2px);border-color:rgba(107,228,251,.22)}
+.categoryTabs button span{font-size:12px;font-weight:750;color:#dce7ed}
+.categoryTabs button small{font-size:8px;letter-spacing:.11em;text-transform:uppercase}
+.categoryTabActive{background:linear-gradient(145deg,rgba(80,232,255,.09),rgba(255,255,255,.025))!important;border-color:rgba(107,228,251,.3)!important}
+.categoryTabActive span{color:#fff!important}
+.categoryTabActive small{color:#67e2fa!important}
+.coverageBar{
+  display:flex;align-items:end;justify-content:space-between;gap:18px;margin:0 0 18px;padding:15px 18px;
+  border-radius:18px;border:1px solid rgba(255,255,255,.065);background:linear-gradient(90deg,rgba(255,255,255,.024),transparent)
+}
+.coverageBar>div{display:grid;gap:5px}
+.coverageBar span{font-size:7px;letter-spacing:.17em;color:#66dff7}
+.coverageBar b{font-size:12px;color:#eaf1f4}
+.coverageBar p{margin:0;color:#778793;font-size:9px;letter-spacing:.08em;text-align:right}
+.matcherCoverage{
+  margin-top:18px;padding:13px 14px;border-radius:14px;border:1px solid rgba(107,228,251,.12);
+  background:rgba(80,232,255,.025);display:grid;gap:3px
+}
+.matcherCoverage b{font-size:10px;color:#c9f3fc}
+.matcherCoverage span{font-size:8px;color:#778995}
+
 .ecosystem,.familySection,.finishSection,.matcherSection,.gallerySection,.beforeSection,
 .installSection,.videoSection,.materialSection,.packSection,.compatSection,.faq{
   width:min(1540px,94vw);margin:0 auto;padding:108px 0
@@ -212,7 +246,7 @@
   max-width:760px;color:var(--muted);font-size:13px;line-height:1.72;margin-top:18px
 }
 
-.ecoGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+.ecoGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:13px}
 .ecoCard,.familyCard,.galleryCard{
   overflow:hidden;border:1px solid var(--line);background:linear-gradient(180deg,#10171e,#080d12);
   box-shadow:0 16px 42px rgba(0,0,0,.16)
@@ -470,6 +504,9 @@
   .waveCard .deviceVisual{height:335px}
 
   .ecoGrid,.galleryGrid,.familyGrid,.materialGrid,.compatCards{grid-template-columns:1fr}
+  .categoryTabs{grid-template-columns:repeat(2,1fr)}
+  .coverageBar{align-items:flex-start;flex-direction:column}
+  .coverageBar p{text-align:left}
   .familyCard:last-child{grid-column:auto}
   .ecoVisual .deviceVisual,.galleryCard .deviceVisual,.galleryWide .deviceVisual{height:350px}
   .ecoInfo{min-height:0;align-items:flex-start;flex-direction:column}
