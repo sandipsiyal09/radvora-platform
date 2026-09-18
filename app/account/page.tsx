@@ -5,6 +5,7 @@ import CustomerCare from './customer-care'
 import ProfileForm from './profile-form'
 import SignOutButton from './sign-out-button'
 import './account.css'
+import { PublicShell } from '../public-shell'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,7 +18,7 @@ export default async function AccountPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return <main className="page-wrap"><div className="shell"><section className="glass bento-card"><p className="kicker">RADVORA ACCOUNT</p><h1>Sign in to continue.</h1><p>Manage registered products, warranty, orders and support.</p><Link className="pill light" href="/login">Sign in</Link></section></div></main>
+    return <PublicShell><main className="page-wrap"><div className="shell"><section className="glass bento-card"><p className="kicker">RADVORA ACCOUNT</p><h1>Sign in to continue.</h1><p>Manage registered products, warranty, orders and support.</p><Link className="pill light" href="/login">Sign in</Link></section></div></main></PublicShell>
   }
 
   const [{ data: profile }, { data: registrations }, { data: serialRows }, { data: orders }, {data:supportTickets}, {data:warrantyClaims}] = await Promise.all([
@@ -31,7 +32,7 @@ export default async function AccountPage() {
 
   const serials=((serialRows||[]) as unknown as SerialRow[]).map(row=>({id:row.id,serial_number:row.serial_number,product_name:row.products?.name||'RADVORA product'}))
 
-  return <main className="page-wrap"><div className="shell">
+  return <PublicShell><main className="page-wrap"><div className="shell">
     <section className="page-head"><p className="kicker">MY RADVORA</p><h1>Your account.</h1><p>{user.email}</p><div className="actions"><Link className="pill ghost" href="/cart">Open cart →</Link><Link className="pill ghost" href="/verify">Verify product →</Link><SignOutButton/></div></section>
     <div className="account-grid">
       <ProfileForm profile={(profile as ProfileRow | null) || null} email={user.email || ''}/>
@@ -41,5 +42,5 @@ export default async function AccountPage() {
     </div>
     <section className="panel register-panel"><RegisterProduct /></section>
     <CustomerCare serials={serials}/>
-  </div></main>
+  </div></main></PublicShell>
 }
