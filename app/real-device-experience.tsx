@@ -242,7 +242,7 @@ function DeviceMatcher({finishId,setFinishId}:{finishId:string;setFinishId:(id:s
     </div>
     <div className={ui.matcherPreview} style={{'--matcher-glow':finish.base} as CSSProperties}>
       <DeviceVisual device={match} finish={finish} label={labelForDevice(match)} interactive useDeviceFinish={false}/>
-      <div className={ui.matcherBadge}><span>VISUAL MATCH</span><b>{match.brand} · {match.name}</b><small>{match.deviceColor} → {finish.name}</small></div>
+      <div className={ui.matcherBadge} aria-live="polite"><span>VISUAL MATCH</span><b>{match.brand} · {match.name}</b><small>{match.deviceColor} → {finish.name}</small></div>
     </div>
   </section>
 }
