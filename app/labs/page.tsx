@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { PublicShell } from '../public-shell'
 import ui from '../public-brand.module.css'
 
+export const metadata={title:'RADVORA Labs',description:'Explore RADVORA ShieldTag validation methods for compatibility, materials, product care and evidence-controlled claims.',alternates:{canonical:'/labs'}}
+
 const cards=[
   {n:'01',title:'Compatibility methodology',body:'Record the exact device, model family, variant, ShieldTag format and approved placement so compatibility is never generalized beyond the reviewed configuration.'},
   {n:'02',title:'Materials & care validation',body:'Publish adhesion, removal, reapplication, water-resistance or durability statements only after the final production materials and construction have been tested.'},
