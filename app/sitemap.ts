@@ -8,6 +8,8 @@ export default function sitemap():MetadataRoute.Sitemap{
     '/products/shieldtag-pro',
     '/compatibility',
     '/installation',
+    '/research',
+    '/labs',
     '/verify',
     '/warranty',
     '/support',
