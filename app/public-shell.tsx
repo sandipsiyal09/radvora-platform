@@ -5,13 +5,13 @@ import ui from './public-brand.module.css'
 function Mark(){return <svg viewBox="0 0 72 48" aria-hidden="true"><path d="M4 6h58L43 22H24l-6 6h32L28 44l-8-9 9-10H10L2 17 25 6Z" fill="currentColor"/><path d="M33 22h20L39 35l-10-9 4-4Z" fill="currentColor" opacity=".45"/></svg>}
 
 export function PublicShell({children}:{children:ReactNode}){
-  return <div className={ui.page}>
+  return <div className={ui.page}><a className={ui.skipLink} href="#radvora-main">Skip to content</a>
     <header className={ui.nav}>
       <Link href="/" className={ui.brand} aria-label="RADVORA home"><Mark/><span><b>RADVORA</b><small>SHIELDTAG</small></span></Link>
       <nav aria-label="Primary"><Link href="/products">Products</Link><Link href="/#shieldlab">ShieldLab</Link><Link href="/compatibility">Compatibility</Link><Link href="/installation">Installation</Link><Link href="/support">Support</Link><Link href="/account">My RADVORA</Link></nav>
       <Link href="/#shieldlab" className={ui.cta}>Build yours</Link>
     </header>
-    {children}
+    <div id="radvora-main" tabIndex={-1}>{children}</div>
     <nav className={ui.mobileDock} aria-label="Mobile quick actions"><Link href="/#shieldlab">Build yours</Link><Link href="/account">My RADVORA</Link></nav>
     <footer className={ui.footer}>
       <Link href="/" className={ui.brand} aria-label="RADVORA home"><Mark/><span><b>RADVORA</b><small>SHIELDTAG</small></span></Link>
