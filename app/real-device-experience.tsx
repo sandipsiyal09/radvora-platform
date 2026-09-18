@@ -69,7 +69,7 @@ function DeviceVisual({device,finish,label='SHIELDTAG',priority=false,interactiv
   const [imageFailed,setImageFailed]=useState(false)
   const appliedFinish=useDeviceFinish?device.syncFinish:(finish??device.syncFinish)
   return <div className={`${ui.deviceVisual} ${ui[`device_${device.id}`]} ${ui[`tone_${device.tone}`]} ${interactive?ui.deviceInteractive:''} ${imageFailed?ui.deviceImageFailed:''}`}>
-    <div className={ui.deviceImageFrame}>{!imageFailed?<img src={device.image} alt={`${device.brand} ${device.name} rear view with RADVORA ShieldTag placement preview`} loading={priority?'eager':'lazy'} decoding="async" className={device.fit==='cover'?ui.imageCover:ui.imageContain} onError={()=>setImageFailed(true)}/>:<div className={ui.deviceFallback} role="img" aria-label={`${device.brand} ${device.name} image temporarily unavailable`}><Logo/><span><b>{device.brand}</b><small>{device.category}</small></span></div>}</div>
+    <div className={ui.deviceImageFrame}>{!imageFailed?<img src={device.image} alt={`${device.brand} ${device.name} rear view with RADVORA ShieldTag placement preview`} loading={priority?'eager':'lazy'} fetchPriority={priority?'high':'auto'} decoding="async" draggable={false} className={device.fit==='cover'?ui.imageCover:ui.imageContain} onError={()=>setImageFailed(true)}/>:<div className={ui.deviceFallback} role="img" aria-label={`${device.brand} ${device.name} image temporarily unavailable`}><Logo/><span><b>{device.brand}</b><small>{device.category}</small></span></div>}</div>
     {showTag&&<div className={`${ui.tagAnchor} ${ui[device.tagClass]}`} style={device.placement?{left:device.placement.left,bottom:device.placement.bottom,transform:`translateX(-50%) scale(${device.placement.scale})`}:undefined}><Tag finish={appliedFinish} label={label} mini={device.category==='Accessory'}/></div>}
     <div className={ui.deviceGloss}/>
   </div>
@@ -77,10 +77,61 @@ function DeviceVisual({device,finish,label='SHIELDTAG',priority=false,interactiv
 
 function labelForDevice(device:DeviceExample){return device.category==='Laptop'?'EXECUTIVE':device.category==='Tablet'?'PRO':device.id==='powerbank'?'UTILITY':device.category==='Accessory'?'MINI':'SIGNATURE'}
 
+function ExperienceProgress(){
+  const barRef=useRef<HTMLDivElement>(null)
+  useEffect(()=>{
+    const reduce=window.matchMedia('(prefers-reduced-motion: reduce)')
+    if(reduce.matches)return
+    let frame=0
+    const update=()=>{
+      const max=Math.max(1,document.documentElement.scrollHeight-window.innerHeight)
+      const progress=Math.max(0,Math.min(1,window.scrollY/max))
+      barRef.current?.style.setProperty('--experience-progress',String(progress))
+    }
+    const onScroll=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(update)}
+    update()
+    window.addEventListener('scroll',onScroll,{passive:true})
+    window.addEventListener('resize',onScroll)
+    return()=>{cancelAnimationFrame(frame);window.removeEventListener('scroll',onScroll);window.removeEventListener('resize',onScroll)}
+  },[])
+  return <div ref={barRef} className={ui.experienceProgress} aria-hidden="true"/>
+}
+
+function JourneyRail(){
+  const steps=[
+    ['01','Choose the device','Start with the hardware you actually use.','#devices'],
+    ['02','Tune the finish','Explore material and colour direction.','#finishes'],
+    ['03','Verify the model','Compatibility stays evidence-gated.','/compatibility'],
+    ['04','Apply with intent','Follow placement guidance before use.','#how']
+  ]
+  return <nav className={ui.journeyRail} aria-label="ShieldTag journey">{steps.map(([n,title,copy,href])=><a key={n} href={href}><span>{n}</span><div><b>{title}</b><small>{copy}</small></div><i>→</i></a>)}</nav>
+}
+
 function HeroWave(){
   const wave=['iphone','galaxy','oppo','vivo','ipad','macbook','buds','powerbank']
   const stageRef=useRef<HTMLDivElement>(null)
+  const pointerFrame=useRef(0)
   const [progress,setProgress]=useState(.42)
+
+  function updatePointer(e:React.PointerEvent<HTMLDivElement>){
+    const stage=stageRef.current
+    if(!stage||window.matchMedia('(prefers-reduced-motion: reduce)').matches||window.matchMedia('(pointer: coarse)').matches)return
+    const rect=stage.getBoundingClientRect()
+    const x=((e.clientX-rect.left)/Math.max(1,rect.width)-.5)*2
+    const y=((e.clientY-rect.top)/Math.max(1,rect.height)-.5)*2
+    cancelAnimationFrame(pointerFrame.current)
+    pointerFrame.current=requestAnimationFrame(()=>{
+      stage.style.setProperty('--pointer-x',x.toFixed(3))
+      stage.style.setProperty('--pointer-y',y.toFixed(3))
+    })
+  }
+
+  function resetPointer(){
+    const stage=stageRef.current
+    if(!stage)return
+    stage.style.setProperty('--pointer-x','0')
+    stage.style.setProperty('--pointer-y','0')
+  }
 
   useEffect(()=>{
     const reduce=window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -98,10 +149,10 @@ function HeroWave(){
     update()
     window.addEventListener('scroll',onScroll,{passive:true})
     window.addEventListener('resize',onScroll)
-    return()=>{cancelAnimationFrame(frame);window.removeEventListener('scroll',onScroll);window.removeEventListener('resize',onScroll)}
+    return()=>{cancelAnimationFrame(frame);cancelAnimationFrame(pointerFrame.current);window.removeEventListener('scroll',onScroll);window.removeEventListener('resize',onScroll)}
   },[])
 
-  return <div ref={stageRef} className={ui.waveStage} aria-label="Cinematic real-device wave with RADVORA ShieldTag overlays">
+  return <div ref={stageRef} className={ui.waveStage} role="group" aria-label="Interactive real-device stage showing RADVORA ShieldTag styling previews" onPointerMove={updatePointer} onPointerLeave={resetPointer}>
     <div className={ui.waveAtmosphere}/><div className={ui.waveBeam}/><div className={ui.waveBeamAlt}/><div className={ui.waveHalo}/>
     {wave.map((id,index)=>{
       const d=devices.find(x=>x.id===id)!
@@ -155,7 +206,7 @@ function FamilyGrid(){
 function FinishStudio({finishId,setFinishId}:{finishId:string;setFinishId:(id:string)=>void}){
   const finish=finishes.find(f=>f.id===finishId)??finishes[0]
   const iphone=devices[0]
-  return <section className={ui.finishSection} id="finishes"><div className={ui.finishCopy}><span>MATCH YOUR DEVICE</span><h2>Blend in.<br/><em>Stand out.</em></h2><p>Explore eight finish directions and choose whether ShieldTag should blend into the device or create a deliberate contrast.</p><div className={ui.finishMeta}><span>Selected finish</span><b>{finish.name}</b><p>Lighting, tag face and edge treatment update together so the finish reads as a material—not a flat colour chip.</p></div></div><div className={ui.finishStage} style={{'--finish-scene':finish.base} as CSSProperties}><div className={ui.finishDevice}><DeviceVisual device={iphone} finish={finish} label="SIGNATURE" interactive useDeviceFinish={false}/></div><div className={ui.finishLight}/><div className={ui.finishSwatches}>{finishes.map(f=><button key={f.id} className={f.id===finishId?ui.swatchActive:''} onClick={()=>setFinishId(f.id)} aria-pressed={f.id===finishId}><i style={{'--swatch':f.base,'--edge':f.edge} as CSSProperties}/><span>{f.name}</span></button>)}</div></div></section>
+  return <section className={ui.finishSection} id="finishes"><div className={ui.finishCopy}><span>MATCH YOUR DEVICE</span><h2>Blend in.<br/><em>Stand out.</em></h2><p>Explore eight finish directions and choose whether ShieldTag should blend into the device or create a deliberate contrast.</p><div className={ui.finishMeta}><span>Selected finish</span><b>{finish.name}</b><p>Lighting, tag face and edge treatment update together so the finish reads as a material—not a flat colour chip.</p></div></div><div className={ui.finishStage} style={{'--finish-scene':finish.base} as CSSProperties}><div className={ui.finishDevice}><DeviceVisual device={iphone} finish={finish} label="SIGNATURE" interactive useDeviceFinish={false}/></div><div className={ui.finishLight}/><div className={ui.finishSwatches}>{finishes.map(f=><button type="button" key={f.id} className={f.id===finishId?ui.swatchActive:''} onClick={()=>setFinishId(f.id)} aria-pressed={f.id===finishId}><i style={{'--swatch':f.base,'--edge':f.edge} as CSSProperties}/><span>{f.name}</span></button>)}</div></div></section>
 }
 
 function DeviceMatcher({finishId,setFinishId}:{finishId:string;setFinishId:(id:string)=>void}){
@@ -210,12 +261,12 @@ function Installation({finish}:{finish:Finish}){
   const [step,setStep]=useState(0)
   const [playing,setPlaying]=useState(true)
   useEffect(()=>{if(!playing)return;const id=window.setInterval(()=>setStep(v=>(v+1)%installSteps.length),1900);return()=>window.clearInterval(id)},[playing])
-  return <section className={ui.installSection} id="how"><div className={ui.installText}><span>ATTACH IN SECONDS</span><h2>Peel. Align.<br/><em>Press. Ready.</em></h2><p>A clear five-step application guide keeps placement simple, deliberate and away from functional hardware.</p><div className={ui.stepList}>{installSteps.map(([title,copy],i)=><button key={title} onClick={()=>{setStep(i);setPlaying(false)}} className={step===i?ui.stepActive:''}><span>0{i+1}</span><div><b>{title}</b><p>{copy}</p></div></button>)}</div></div><div className={ui.installDemo}><div className={ui.demoTop}><span>APPLICATION GUIDE</span><button onClick={()=>setPlaying(v=>!v)}>{playing?'Pause':'Play'}</button></div><div className={ui.demoStage} data-step={step}><div className={ui.demoPhone}><img src={devices[0].image} alt="Device used in animated ShieldTag application guide"/></div><div className={ui.demoCloth}/><div className={ui.demoBacking}/><div className={ui.demoTag}><Tag finish={devices[0].syncFinish} label="SIGNATURE"/></div><div className={ui.demoFinger}/><div className={ui.demoPulse}/></div><div className={ui.demoCaption}><b>{installSteps[step][0]}</b><p>{installSteps[step][1]}</p></div></div></section>
+  return <section className={ui.installSection} id="how"><div className={ui.installText}><span>ATTACH IN SECONDS</span><h2>Peel. Align.<br/><em>Press. Ready.</em></h2><p>A clear five-step application guide keeps placement simple, deliberate and away from functional hardware.</p><div className={ui.stepList}>{installSteps.map(([title,copy],i)=><button type="button" key={title} onClick={()=>{setStep(i);setPlaying(false)}} className={step===i?ui.stepActive:''}><span>0{i+1}</span><div><b>{title}</b><p>{copy}</p></div></button>)}</div></div><div className={ui.installDemo}><div className={ui.demoTop}><span>APPLICATION GUIDE</span><button type="button" onClick={()=>setPlaying(v=>!v)} aria-pressed={playing}>{playing?'Pause':'Play'}</button></div><div className={ui.demoStage} data-step={step}><div className={ui.demoPhone}><img src={devices[0].image} alt="Device used in animated ShieldTag application guide"/></div><div className={ui.demoCloth}/><div className={ui.demoBacking}/><div className={ui.demoTag}><Tag finish={devices[0].syncFinish} label="SIGNATURE"/></div><div className={ui.demoFinger}/><div className={ui.demoPulse}/></div><div className={ui.demoCaption}><b>{installSteps[step][0]}</b><p>{installSteps[step][1]}</p></div></div></section>
 }
 
 function VideoGallery({finish}:{finish:Finish}){
   const [active,setActive]=useState('apply')
-  return <section className={ui.videoSection}><div className={ui.sectionIntro}><span>SEE SHIELDTAG IN MOTION</span><h2>Understand the fit.<br/><em>Before it reaches your device.</em></h2><p>Interactive motion previews make colour matching, placement and product proportions easier to understand at a glance.</p></div><div className={ui.videoGrid}>{videos.map(v=>{const d=devices.find(x=>x.id===v.device)!;const on=active===v.id;return <button key={v.id} className={`${ui.videoCard} ${on?ui.videoActive:''}`} onClick={()=>setActive(v.id)}><div className={ui.videoPoster}><DeviceVisual device={d} finish={finish} label={labelForDevice(d)} useDeviceFinish={v.id!=='match'}/><div className={ui.playDisc}>{on?'II':'▶'}</div><div className={ui.videoScan}/></div><div className={ui.videoCopy}><span>INTERACTIVE PREVIEW</span><h3>{v.title}</h3><p>{v.copy}</p></div></button>})}</div></section>
+  return <section className={ui.videoSection}><div className={ui.sectionIntro}><span>SEE SHIELDTAG IN MOTION</span><h2>Understand the fit.<br/><em>Before it reaches your device.</em></h2><p>Interactive motion previews make colour matching, placement and product proportions easier to understand at a glance.</p></div><div className={ui.videoGrid}>{videos.map(v=>{const d=devices.find(x=>x.id===v.device)!;const on=active===v.id;return <button type="button" key={v.id} className={`${ui.videoCard} ${on?ui.videoActive:''}`} onClick={()=>setActive(v.id)}><div className={ui.videoPoster}><DeviceVisual device={d} finish={finish} label={labelForDevice(d)} useDeviceFinish={v.id!=='match'}/><div className={ui.playDisc}>{on?'II':'▶'}</div><div className={ui.videoScan}/></div><div className={ui.videoCopy}><span>INTERACTIVE PREVIEW</span><h3>{v.title}</h3><p>{v.copy}</p></div></button>})}</div></section>
 }
 
 function Materials(){return <section className={ui.materialSection}><div className={ui.sectionIntro}><span>DESIGNED LIKE HARDWARE</span><h2>A precision identity badge.<br/><em>Not a generic sticker.</em></h2><p>Every visual detail is built around proportion, edge definition, restrained reflectivity and a finish that sits naturally beside premium devices.</p></div><div className={ui.materialGrid}><article><span>01</span><h3>Refined edges</h3><p>Chamfer-inspired geometry and controlled proportions create a hardware-led silhouette.</p></article><article><span>02</span><h3>Controlled reflectivity</h3><p>Matte, satin and metallic visual directions avoid exaggerated chrome and neon.</p></article><article><span>03</span><h3>Device-aware proportions</h3><p>Phone, tablet, laptop and Mini formats scale independently instead of forcing one sticker size everywhere.</p></article><article><span>04</span><h3>Validated performance only</h3><p>Durability and care claims are published only when final product testing supports them.</p></article></div></section>}
@@ -241,12 +292,14 @@ export default function RealDeviceExperience(){
   },[])
   const finish=finishes.find(f=>f.id===finishId)??finishes[0]
   return <div className={ui.page}>
-    <header className={ui.nav}><a className={ui.brand} href="/"><Logo/><span><b>RADVORA</b><small>SHIELDTAG</small></span></a><nav><a href="#devices">Devices</a><a href="#products">Products</a><a href="#finishes">Finishes</a><a href="#matcher">Find Your Match</a><a href="#how">How to Apply</a></nav><a className={ui.navCta} href="#matcher">Find Your Match <span>→</span></a></header>
+    <ExperienceProgress/>
+    <header className={ui.nav}><a className={ui.brand} href="/" aria-label="RADVORA home"><Logo/><span><b>RADVORA</b><small>SHIELDTAG</small></span></a><nav aria-label="Primary"><a href="#devices">Devices</a><a href="#products">Products</a><a href="#finishes">Finishes</a><a href="#matcher">Find Your Match</a><a href="#how">How to Apply</a></nav><a className={ui.navCta} href="#matcher">Find Your Match <span>→</span></a></header>
     <main>
-      <section className={ui.hero}><div className={ui.heroCopy}><span className={ui.kicker}>PREMIUM DEVICE IDENTITY</span><h1>One Shield.<br/><em>Every Device.</em></h1><p>RADVORA ShieldTag is a precision identity badge designed to complement the devices you already own—with device-aware proportions, rear-surface placement and finishes tuned to the hardware around it.</p><div className={ui.heroActions}><a href="#products">Explore ShieldTag <span>→</span></a><a className={ui.ghost} href="#how">See How It Works</a></div><div className={ui.heroProof}><span>Rear-mounted placement</span><span>Colour-synchronised finishes</span><span>Phone · tablet · laptop · accessories</span></div></div><HeroWave/></section>
+      <section className={ui.hero}><div className={ui.heroCopy}><span className={ui.kicker}>SHIELDTAG · DEVICE IDENTITY ENGINEERED AROUND HARDWARE</span><h1>Identity that<br/><em>looks engineered in.</em></h1><p>Choose a real device context, tune the finish, then verify the exact model before relying on fit guidance. RADVORA keeps visual styling expressive and compatibility evidence-gated.</p><div className={ui.heroActions}><a href="#matcher">Build Your Match <span>→</span></a><a className={ui.ghost} href="#products">Explore ShieldTag</a></div><div className={ui.heroProof}><span>Real-device visualisation</span><span>Eight finish directions</span><span>Compatibility stays model-specific</span></div></div><HeroWave/></section>
+      <JourneyRail/>
       <Ecosystem/><FamilyGrid/><FinishStudio finishId={finishId} setFinishId={setFinishId}/><DeviceMatcher finishId={finishId} setFinishId={setFinishId}/><ApplicationGallery/><BeforeAfter/><Installation finish={finish}/><VideoGallery finish={finish}/><Materials/><Packaging finish={finish}/><Compatibility/><FAQ/>
       <section className={ui.finalCta}><span>RADVORA SHIELDTAG</span><h2>One Shield. Every Device.</h2><p>Find the ShieldTag designed to complement the technology you already own.</p><div><a href="#matcher">Find Your Match <span>→</span></a><a className={ui.ghost} href="#finishes">View Finishes</a><a className={ui.ghost} href="/compatibility">Compatibility Guide</a></div></section>
     </main>
-    <footer className={ui.footer}><a className={ui.brand} href="/"><Logo/><span><b>RADVORA</b><small>ONE SHIELD. EVERY DEVICE.</small></span></a><div><a href="/products">Products</a><a href="/compatibility">Compatibility</a><a href="/support">Support</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a></div><p>Device imagery is used to illustrate fit and styling context. Trademarks belong to their respective owners; no endorsement or affiliation is implied.</p></footer>
+    <footer className={ui.footer}><a className={ui.brand} href="/" aria-label="RADVORA home"><Logo/><span><b>RADVORA</b><small>ONE SHIELD. EVERY DEVICE.</small></span></a><nav aria-label="Footer"><a href="/products">Products</a><a href="/compatibility">Compatibility</a><a href="/support">Support</a><a href="/research">Research</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a></nav><p>Device imagery is used to illustrate fit and styling context. Trademarks belong to their respective owners; no endorsement or affiliation is implied.</p></footer>
   </div>
 }
