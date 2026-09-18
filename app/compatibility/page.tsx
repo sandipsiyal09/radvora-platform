@@ -1,8 +1,9 @@
 'use client'
 
-import { FormEvent, useState } from 'react'
-import Link from 'next/link'
+import { FormEvent, useMemo, useState } from 'react'
 import { createClient } from '../../lib/supabase/client'
+import { PublicShell } from '../public-shell'
+import ui from '../public-brand.module.css'
 
 type Compatibility = {
   manufacturer: string
@@ -14,48 +15,58 @@ type Compatibility = {
   evidence_note: string | null
 }
 
+const familyByCategory:Record<string,string>={
+  Smartphone:'ShieldTag Signature',
+  Tablet:'ShieldTag Pro',
+  Laptop:'ShieldTag Executive',
+  Accessory:'ShieldTag Mini / Utility'
+}
+
 export default function CompatibilityPage(){
+  const [category,setCategory]=useState('Smartphone')
   const [manufacturer,setManufacturer]=useState('')
   const [model,setModel]=useState('')
   const [loading,setLoading]=useState(false)
   const [checked,setChecked]=useState(false)
   const [result,setResult]=useState<Compatibility | null>(null)
+  const suggestedFamily=useMemo(()=>familyByCategory[category]||'ShieldTag',[category])
 
-  async function check(e: FormEvent){
+  async function check(e:FormEvent){
     e.preventDefault()
-    if(!manufacturer.trim() || !model.trim()) return
-    setLoading(true)
-    setChecked(false)
-    setResult(null)
-    const supabase = createClient()
-    const { data } = await supabase
-      .from('device_compatibility')
+    if(!manufacturer.trim()||!model.trim())return
+    setLoading(true);setChecked(false);setResult(null)
+    const supabase=createClient()
+    const {data}=await supabase.from('device_compatibility')
       .select('manufacturer,device_family,device_model,region_variant,compatibility_status,installation_note,evidence_note')
-      .ilike('manufacturer', manufacturer.trim())
-      .ilike('device_model', model.trim())
+      .ilike('manufacturer',manufacturer.trim())
+      .ilike('device_model',model.trim())
       .maybeSingle()
-    setResult((data as Compatibility | null) ?? null)
-    setChecked(true)
-    setLoading(false)
+    setResult((data as Compatibility|null)??null)
+    setChecked(true);setLoading(false)
   }
 
-  return <main className="page-wrap"><div className="shell">
-    <Link className="brand" href="/"><span>RADVORA</span><small>TECHNOLOGIES</small></Link>
-    <section className="page-head"><span className="kicker">DEVICE COMPATIBILITY</span><h1>Check your phone.</h1><p>Compatibility results are published only after RADVORA has reviewed the device/product combination. Unreviewed models are shown as unknown rather than assumed compatible.</p></section>
-    <div className="verify-grid">
-      <form className="panel" onSubmit={check}>
-        <span className="kicker">SHIELDTAG PRO</span><h2>Find your device</h2>
-        <input className="field" value={manufacturer} onChange={e=>setManufacturer(e.target.value)} placeholder="Manufacturer, e.g. Apple" />
-        <input className="field" value={model} onChange={e=>setModel(e.target.value)} placeholder="Model, e.g. iPhone 16" />
-        <div className="actions"><button className="pill light" type="submit" disabled={loading || !manufacturer.trim() || !model.trim()}>{loading?'Checking…':'Check compatibility →'}</button></div>
+  return <PublicShell><main className={ui.main}>
+    <section className={ui.hero}>
+      <div className={ui.heroCopy}><span className={ui.kicker}>DEVICE COMPATIBILITY</span><h1>Check your<br/><em>exact device.</em></h1><p>Phone, tablet, laptop or accessory—the result stays model-specific. If RADVORA has not published a reviewed record for the exact manufacturer and model, the site shows it as not yet reviewed rather than guessing.</p></div>
+      <aside className={ui.heroAside}><span>FAIL-CLOSED BY DESIGN</span><strong>Unknown is not compatible.</strong><p>A styling preview can help you visualise ShieldTag. This checker is the separate compatibility layer.</p><ul><li><span>Selected category</span><b>{category}</b></li><li><span>Suggested family</span><b>{suggestedFamily}</b></li><li><span>Unreviewed model</span><b>No assumption</b></li></ul></aside>
+    </section>
+
+    <section className={ui.section}><div className={ui.grid2}>
+      <form className={[ui.compatPanel,ui.compatForm].join(' ')} onSubmit={check}>
+        <span className={ui.kicker}>FIND YOUR DEVICE</span>
+        <label className={ui.label}>DEVICE CATEGORY<select className={ui.select} value={category} onChange={e=>{setCategory(e.target.value);setChecked(false);setResult(null)}}><option>Smartphone</option><option>Tablet</option><option>Laptop</option><option>Accessory</option></select></label>
+        <div className={ui.fieldRow}><label className={ui.label}>MANUFACTURER<input className={ui.input} value={manufacturer} onChange={e=>setManufacturer(e.target.value)} placeholder={category==='Laptop'?'Apple, Dell, HP, Samsung, ASUS…':'Apple, Samsung, OPPO, vivo…'}/></label><label className={ui.label}>EXACT MODEL<input className={ui.input} value={model} onChange={e=>setModel(e.target.value)} placeholder={category==='Laptop'?'e.g. MacBook Air':'e.g. iPhone 17'}/></label></div>
+        <div className={ui.notice}>Visual examples elsewhere on RADVORA do not automatically mean compatibility. Enter the exact model here before relying on fit guidance.</div>
+        <div className={ui.actions}><button className={ui.primary} type="submit" disabled={loading||!manufacturer.trim()||!model.trim()}>{loading?'Checking…':'Check compatibility →'}</button></div>
       </form>
-      <aside className="panel status-card">
-        <span className="status-pill">{!checked?'AWAITING DEVICE':result?result.compatibility_status.replace('_',' ').toUpperCase():'NOT YET REVIEWED'}</span>
-        <h2 style={{fontSize:34,margin:'18px 0 8px'}}>{!checked?'Compatibility status':result?`${result.manufacturer} ${result.device_model}`:'No published result yet.'}</h2>
-        {!checked && <p style={{color:'#8492a6',lineHeight:1.7}}>Enter the manufacturer and exact model name.</p>}
-        {checked && !result && <p style={{color:'#8492a6',lineHeight:1.7}}>RADVORA has not published a reviewed compatibility record for this exact device yet. This does not mean compatible or incompatible.</p>}
-        {result && <div className="verify-result"><div><span>Status</span><b>{result.compatibility_status}</b></div><div><span>Family</span><b>{result.device_family || '—'}</b></div><div><span>Variant</span><b>{result.region_variant || 'General'}</b></div><div><span>Installation</span><b>{result.installation_note || 'Standard guidance applies'}</b></div></div>}
+
+      <aside className={ui.compatPanel}>
+        <span className={ui.status}>{!checked?'AWAITING DEVICE':result?result.compatibility_status.replace('_',' ').toUpperCase():'NOT YET REVIEWED'}</span>
+        <h3>{!checked?'Compatibility status':result?result.manufacturer+' '+result.device_model:'No published record for this exact device.'}</h3>
+        {!checked&&<p>Choose the category, manufacturer and exact model. The database result—not the visual matcher—controls compatibility status.</p>}
+        {checked&&!result&&<p>RADVORA has not published a reviewed compatibility record for this exact device yet. This is deliberately not treated as either compatible or incompatible.</p>}
+        {result&&<div className={ui.resultGrid}><div><span>STATUS</span><b>{result.compatibility_status}</b></div><div><span>DEVICE FAMILY</span><b>{result.device_family||category}</b></div><div><span>REGION / VARIANT</span><b>{result.region_variant||'General'}</b></div><div><span>INSTALLATION</span><b>{result.installation_note||'Use approved guidance'}</b></div></div>}
       </aside>
-    </div>
-  </div></main>
+    </div></section>
+  </main></PublicShell>
 }
