@@ -5,7 +5,10 @@ export default function sitemap():MetadataRoute.Sitemap{
   const routes=[
     '',
     '/products',
+    '/products/shieldtag-signature',
     '/products/shieldtag-pro',
+    '/products/shieldtag-executive',
+    '/products/shieldtag-mini',
     '/compatibility',
     '/installation',
     '/research',
