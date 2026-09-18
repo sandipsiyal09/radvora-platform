@@ -20,12 +20,12 @@ const finishes:Finish[]=[
 
 const devices:DeviceExample[]=[
   {id:'iphone',brand:'Apple',name:'iPhone 17',category:'Smartphone',image:'https://www.apple.com/v/iphone-17/g/images/overview/product-viewer/colors_lavender__bcaie9a8npj6_large.jpg',source:'https://www.apple.com/in/iphone-17/',tagClass:'tagIphone',fit:'contain',tone:'mist',syncFinish:{id:'lavender-sync',name:'Lavender Sync',base:'#c9bfd9',edge:'#f1eaf8',accent:'#e6d7ff',text:'#211b2b'}},
-  {id:'galaxy',brand:'Samsung',name:'Galaxy S26',category:'Smartphone',image:'https://images.samsung.com/is/image/samsung/p6pim/in/s2602/gallery/in-galaxy-s26-s942-578627-sm-s942bzscins-thumb-550888070?%24624_624_PNG%24=',source:'https://www.samsung.com/in/smartphones/galaxy-s26/',tagClass:'tagGalaxy',fit:'contain',tone:'silver',syncFinish:{id:'silver-sync',name:'Silver Shadow Sync',base:'#aeb2b9',edge:'#eef1f4',accent:'#d9f7ff',text:'#11161c'}},
+  {id:'galaxy',brand:'Samsung',name:'Galaxy S26',category:'Smartphone',image:'https://images.samsung.com/is/image/samsung/p6pim/in/s2602/gallery/in-galaxy-s26-s942-578627-sm-s942bzscins-550888079?%24624_624_PNG%24=',source:'https://www.samsung.com/in/smartphones/galaxy-s26/',tagClass:'tagGalaxy',fit:'contain',tone:'silver',syncFinish:{id:'silver-sync',name:'Silver Shadow Sync',base:'#aeb2b9',edge:'#eef1f4',accent:'#d9f7ff',text:'#11161c'}},
   {id:'oppo',brand:'OPPO',name:'Reno16 5G',category:'Smartphone',image:'https://www.oppo.com/content/dam/oppo_com/common/mkt/v2-2/oppo-reno16-series-en/specs/reno16/light-purple-deep-purple-white.png',source:'https://www.oppo.com/in/smartphones/series-reno/reno16/specs/',tagClass:'tagOppo',fit:'contain',tone:'purple',syncFinish:{id:'violet-sync',name:'Twilight Violet Sync',base:'#4d354f',edge:'#a781aa',accent:'#d9aee2',text:'#fff9ff'}},
   {id:'vivo',brand:'vivo',name:'V50',category:'Smartphone',image:'https://asia-exstatic-vivofs.vivo.com/PSee2l50xoirPK7y/1740991283302/e337d8e8bdec570993f6c7c4228af755.png',source:'https://www.vivo.com/en/products/picture/v50',tagClass:'tagVivo',fit:'contain',tone:'blue',syncFinish:{id:'blue-sync',name:'Starry Blue Sync',base:'#184c9d',edge:'#6aa3e8',accent:'#8fd5ff',text:'#f5fbff'}},
   {id:'ipad',brand:'Apple',name:'iPad Air',category:'Tablet',image:'https://www.apple.com/v/ipad-air/ah/images/overview/closer-look/space-gray/slide_2B__dvqfqwnkj2c2_large.jpg',source:'https://www.apple.com/in/ipad-air/',tagClass:'tagIpad',fit:'contain',tone:'blue',syncFinish:{id:'ipad-graphite-sync',name:'Space Gray Sync',base:'#68686b',edge:'#a8aaad',accent:'#c7edf7',text:'#f7fafb'}},
   {id:'macbook',brand:'Apple',name:'MacBook Air',category:'Laptop',image:'https://www.apple.com/v/macbook-air/specs/b/images/specs/13-inch/mba_13_size1__eyfditb7ixea_large.jpg',source:'https://www.apple.com/in/macbook-air/specs/',tagClass:'tagMac',fit:'contain',tone:'silver',syncFinish:{id:'mac-silver-sync',name:'Silver Alloy Sync',base:'#b8bdc2',edge:'#f0f3f5',accent:'#d9f6ff',text:'#141a1f'}},
-  {id:'airpods',brand:'Apple',name:'AirPods Pro case',category:'Accessory',image:'https://www.apple.com/v/airpods-pro/r/images/specs/airpods__eqrzs6rwhu2q_large.jpg',source:'https://www.apple.com/in/airpods-pro/specs/',tagClass:'tagPods',fit:'contain',tone:'white',syncFinish:{id:'pearl-sync',name:'Pearl White Sync',base:'#e9ebed',edge:'#ffffff',accent:'#c9f5ff',text:'#162028'}},
+  {id:'buds',brand:'Samsung',name:'Galaxy Buds3 FE Case',category:'Accessory',image:'https://images.samsung.com/is/image/samsung/p6pim/in/sm-r420nzkainu/gallery/in-galaxy-buds3-fe-563497-sm-r420nzkainu-thumb-548868596?%24624_624_PNG%24=',source:'https://www.samsung.com/in/audio-sound/galaxy-buds/galaxy-buds3-fe-black-sm-r420nzkainu/',tagClass:'tagBuds',fit:'contain',tone:'black',syncFinish:{id:'buds-black-sync',name:'Matte Black Sync',base:'#17191c',edge:'#545a61',accent:'#6ce7ff',text:'#f6fafc'}},
   {id:'powerbank',brand:'Samsung',name:'20,000mAh Battery Pack',category:'Accessory',image:'https://images.samsung.com/is/image/samsung/p6pim/in/eb-p4520xuegin/gallery/in-battery-pack-20000mah-eb-p4520-eb-p4520xuegin-541529928?%241164_776_PNG%24=',source:'https://www.samsung.com/in/mobile-accessories/battery-pack-20-000mah-beige-eb-p4520xuegin/',tagClass:'tagPower',fit:'contain',tone:'beige',syncFinish:{id:'beige-sync',name:'Warm Beige Sync',base:'#d3cbbd',edge:'#f6f1e7',accent:'#e8fbff',text:'#28231d'}}
 ]
 
@@ -33,7 +33,7 @@ const families:Family[]=[
   {id:'signature',name:'ShieldTag Signature',for:'Smartphones',copy:'Compact, precise and visually balanced for modern phones.',deviceId:'iphone',label:'SIGNATURE'},
   {id:'pro',name:'ShieldTag Pro',for:'Tablets',copy:'A larger format proportioned for tablet backs and cases.',deviceId:'ipad',label:'PRO'},
   {id:'executive',name:'ShieldTag Executive',for:'Laptops',copy:'A restrained plaque-style identity badge for premium computers.',deviceId:'macbook',label:'EXECUTIVE'},
-  {id:'mini',name:'ShieldTag Mini',for:'Compact accessories',copy:'A reduced-format badge for small compatible surfaces.',deviceId:'airpods',label:'MINI'},
+  {id:'mini',name:'ShieldTag Mini',for:'Compact accessories',copy:'A reduced-format badge for small compatible surfaces.',deviceId:'buds',label:'MINI'},
   {id:'utility',name:'ShieldTag Utility',for:'Universal technology',copy:'A flexible format for supported electronics and asset contexts.',deviceId:'powerbank',label:'UTILITY'}
 ]
 
@@ -72,7 +72,7 @@ function DeviceVisual({device,finish,label='SHIELDTAG',priority=false,interactiv
 function labelForDevice(device:DeviceExample){return device.category==='Laptop'?'EXECUTIVE':device.category==='Tablet'?'PRO':device.id==='powerbank'?'UTILITY':device.category==='Accessory'?'MINI':'SIGNATURE'}
 
 function HeroWave({finish}:{finish:Finish}){
-  const wave=['iphone','galaxy','oppo','vivo','ipad','macbook','airpods','powerbank']
+  const wave=['iphone','galaxy','oppo','vivo','ipad','macbook','buds','powerbank']
   return <div className={ui.waveStage} aria-label="Real device examples with RADVORA ShieldTag overlays">
     <div className={ui.waveBeam}/><div className={ui.waveBeamAlt}/><div className={ui.waveHalo}/>
     {wave.map((id,index)=>{const d=devices.find(x=>x.id===id)!;const label=labelForDevice(d);return <div key={id} className={`${ui.waveItem} ${ui[`wave${index+1}`]}`}><div className={ui.waveCard}><DeviceVisual device={d} label={label} priority={index<2}/><div className={ui.waveMeta}><b>{d.brand}</b><span>{d.name}</span><small>{d.syncFinish.name}</small></div></div></div>})}
@@ -108,7 +108,7 @@ function DeviceMatcher({finishId,setFinishId}:{finishId:string;setFinishId:(id:s
 }
 
 function ApplicationGallery({finish}:{finish:Finish}){
-  return <section className={ui.gallerySection}><div className={ui.sectionIntro}><span>REAL-DEVICE APPLICATION GALLERY</span><h2>See it in context.<br/><em>Not in isolation.</em></h2><p>Every example keeps the ShieldTag away from obvious cameras, controls and critical hardware zones. Final placement remains subject to the approved compatibility guide.</p></div><div className={ui.galleryGrid}>{['iphone','galaxy','oppo','vivo','ipad','macbook','airpods','powerbank'].map((id,i)=>{const d=devices.find(x=>x.id===id)!;return <figure key={id} className={`${ui.galleryCard} ${i===0||i===5?ui.galleryWide:''}`}><DeviceVisual device={d} label={labelForDevice(d)}/><figcaption><b>{d.brand} {d.name}</b><span>Compatibility illustration · placement preview</span></figcaption></figure>})}</div></section>
+  return <section className={ui.gallerySection}><div className={ui.sectionIntro}><span>REAL-DEVICE APPLICATION GALLERY</span><h2>See it in context.<br/><em>Not in isolation.</em></h2><p>Every example keeps the ShieldTag away from obvious cameras, controls and critical hardware zones. Final placement remains subject to the approved compatibility guide.</p></div><div className={ui.galleryGrid}>{['iphone','galaxy','oppo','vivo','ipad','macbook','buds','powerbank'].map((id,i)=>{const d=devices.find(x=>x.id===id)!;return <figure key={id} className={`${ui.galleryCard} ${i===0||i===5?ui.galleryWide:''}`}><DeviceVisual device={d} label={labelForDevice(d)}/><figcaption><b>{d.brand} {d.name}</b><span>Compatibility illustration · placement preview</span></figcaption></figure>})}</div></section>
 }
 
 function BeforeAfter({finish}:{finish:Finish}){
