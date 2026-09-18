@@ -7,7 +7,7 @@ export const maxDuration = 10
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX_BODY_BYTES = 8 * 1024
-const ALLOWED_SOURCES = new Set(['business-page','dealer-page','distributor-page','contact-page','privacy-page','website'])
+const ALLOWED_SOURCES = new Set(['business-page','dealer-page','distributor-page','contact-page','privacy-page','shieldlab-interest','product-interest','website'])
 
 function clean(value: unknown, maxLength: number) {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : ''
@@ -131,11 +131,18 @@ export async function POST(request: NextRequest) {
   const company = clean(body.company, 160)
   const requestedSource = clean(body.source, 80) || 'website'
   const source = ALLOWED_SOURCES.has(requestedSource) ? requestedSource : 'website'
-  const segment = source === 'privacy-page' ? 'privacy' : 'business'
-  const notes = clean(body.notes, 3000)
+  const consumerInterest = source === 'shieldlab-interest' || source === 'product-interest'
+  const segment = source === 'privacy-page' ? 'privacy' : consumerInterest ? 'consumer_interest' : 'business'
+  const context = clean(body.context, 240)
+  const notes = consumerInterest
+    ? (context ? `Availability interest · ${context} · explicit email consent` : 'Availability interest · explicit email consent')
+    : clean(body.notes, 3000)
 
-  if (fullName.length < 2 || !EMAIL_PATTERN.test(email)) {
-    return response({ error: 'Please provide a valid name and email address.' }, 400)
+  if (consumerInterest && body.consent !== true) {
+    return response({ error: 'Please confirm that you want the requested availability email.' }, 400)
+  }
+  if (!EMAIL_PATTERN.test(email) || (!consumerInterest && fullName.length < 2)) {
+    return response({ error: consumerInterest ? 'Please provide a valid email address.' : 'Please provide a valid name and email address.' }, 400)
   }
 
   try {
@@ -153,10 +160,10 @@ export async function POST(request: NextRequest) {
     }
 
     const { error } = await supabase.from('leads').insert({
-      full_name: fullName,
+      full_name: fullName || null,
       email,
-      phone: phone || null,
-      company: company || null,
+      phone: consumerInterest ? null : phone || null,
+      company: consumerInterest ? null : company || null,
       source,
       segment,
       status: 'new',

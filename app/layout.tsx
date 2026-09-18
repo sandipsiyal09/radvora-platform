@@ -1,5 +1,5 @@
 import './globals.css'
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 
 const siteUrl=process.env.NEXT_PUBLIC_APP_URL||'https://radvora-platform.vercel.app'
 
@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title:{default:'RADVORA ShieldTag — One Shield. Every Device.',template:'%s | RADVORA'},
   description:'RADVORA ShieldTag is a premium device identity badge system designed for smartphones, tablets, laptops and selected technology accessories.',
   applicationName:'RADVORA',
+  appleWebApp:{capable:true,title:'RADVORA',statusBarStyle:'black-translucent'},
   openGraph:{
     type:'website',
     siteName:'RADVORA',
@@ -18,6 +19,8 @@ export const metadata: Metadata = {
   robots:{index:true,follow:true}
 }
 
+export const viewport:Viewport={themeColor:'#050607',colorScheme:'dark'}
+
 const organizationSchema={
   '@context':'https://schema.org',
   '@type':'Organization',
@@ -27,6 +30,16 @@ const organizationSchema={
   description:'Consumer technology brand developing premium device identity products with compatibility and product claims kept explicit and evidence-controlled.'
 }
 
+const websiteSchema={
+  '@context':'https://schema.org',
+  '@type':'WebSite',
+  name:'RADVORA',
+  url:siteUrl,
+  description:'RADVORA ShieldTag is a premium device identity system for smartphones, tablets, laptops and selected technology accessories.'
+}
+
+function safeJson(value:unknown){return JSON.stringify(value).replace(/</g,'\\u003c')}
+
 export default function RootLayout({children}:{children:React.ReactNode}){
-  return <html lang="en"><body><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(organizationSchema)}}/>{children}</body></html>
+  return <html lang="en"><body><script type="application/ld+json" dangerouslySetInnerHTML={{__html:safeJson(organizationSchema)}}/><script type="application/ld+json" dangerouslySetInnerHTML={{__html:safeJson(websiteSchema)}}/>{children}</body></html>
 }

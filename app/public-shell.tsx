@@ -8,13 +8,14 @@ export function PublicShell({children}:{children:ReactNode}){
   return <div className={ui.page}>
     <header className={ui.nav}>
       <Link href="/" className={ui.brand} aria-label="RADVORA home"><Mark/><span><b>RADVORA</b><small>SHIELDTAG</small></span></Link>
-      <nav aria-label="Primary"><Link href="/products">Products</Link><Link href="/#shieldlab">ShieldLab</Link><Link href="/compatibility">Compatibility</Link><Link href="/installation">Installation</Link><Link href="/support">Support</Link></nav>
+      <nav aria-label="Primary"><Link href="/products">Products</Link><Link href="/#shieldlab">ShieldLab</Link><Link href="/compatibility">Compatibility</Link><Link href="/installation">Installation</Link><Link href="/support">Support</Link><Link href="/account">My RADVORA</Link></nav>
       <Link href="/#shieldlab" className={ui.cta}>Build yours</Link>
     </header>
     {children}
+    <nav className={ui.mobileDock} aria-label="Mobile quick actions"><Link href="/#shieldlab">Build yours</Link><Link href="/account">My RADVORA</Link></nav>
     <footer className={ui.footer}>
       <Link href="/" className={ui.brand} aria-label="RADVORA home"><Mark/><span><b>RADVORA</b><small>SHIELDTAG</small></span></Link>
-      <nav aria-label="Footer"><Link href="/products">Products</Link><Link href="/compatibility">Compatibility</Link><Link href="/research">Research</Link><Link href="/labs">Labs</Link><Link href="/verify">Verify</Link><Link href="/warranty">Warranty</Link><Link href="/contact">Contact</Link><Link href="/business">Business</Link><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link></nav>
+      <nav aria-label="Footer"><Link href="/products">Products</Link><Link href="/compatibility">Compatibility</Link><Link href="/account">My RADVORA</Link><Link href="/research">Research</Link><Link href="/labs">Labs</Link><Link href="/verify">Verify</Link><Link href="/warranty">Warranty</Link><Link href="/contact">Contact</Link><Link href="/business">Business</Link><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link></nav>
       <p>Device examples explain styling and compatibility workflow only. No manufacturer affiliation or endorsement is implied.</p>
     </footer>
   </div>

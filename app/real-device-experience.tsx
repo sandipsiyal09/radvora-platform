@@ -2,6 +2,7 @@
 
 import { CSSProperties, useEffect, useMemo, useState } from 'react'
 import ui from './real-device-experience.module.css'
+import ProductInterestForm from './product-interest-form'
 
 type Finish={id:string;name:string;base:string;edge:string;accent:string;text:string}
 type DeviceCategory='Smartphone'|'Tablet'|'Laptop'|'Accessory'
@@ -55,7 +56,7 @@ function DeviceVisual({device,finish,priority=false}:{device:DeviceExample;finis
   </div>
 }
 
-function ShieldLab(){
+function ShieldLab({onSaved}:{onSaved:(label:string)=>void}){
   const [deviceId,setDeviceId]=useState('iphone')
   const [finishId,setFinishId]=useState('titanium')
   const [message,setMessage]=useState('')
@@ -74,9 +75,12 @@ function ShieldLab(){
     if(validFinish&&fromFinish)setFinishId(fromFinish)
     if(!validDevice&&!validFinish){
       try{
-        const saved=JSON.parse(localStorage.getItem('radvora-shieldlab')||'null') as {deviceId?:string;finishId?:string}|null
-        if(saved?.deviceId&&devices.some(item=>item.id===saved.deviceId))setDeviceId(saved.deviceId)
-        if(saved?.finishId&&finishes.some(item=>item.id===saved.finishId))setFinishId(saved.finishId)
+        const saved=JSON.parse(localStorage.getItem('radvora-shieldlab')||'null') as {deviceId?:string;finishId?:string;savedAt?:number}|null
+        const savedDevice=saved?.deviceId?devices.find(item=>item.id===saved.deviceId):undefined
+        const savedFinish=saved?.finishId?finishes.find(item=>item.id===saved.finishId):undefined
+        if(savedDevice)setDeviceId(savedDevice.id)
+        if(savedFinish)setFinishId(savedFinish.id)
+        if(savedDevice&&savedFinish)setMessage(`Restored your saved build: ${savedDevice.brand} ${savedDevice.name} · ${savedFinish.name}.`)
       }catch{}
     }
   },[])
@@ -88,14 +92,37 @@ function ShieldLab(){
     window.history.replaceState({},'',url)
   },[deviceId,finishId])
 
+  function handleStagePointerMove(event:React.PointerEvent<HTMLDivElement>){
+    if(event.pointerType!=='mouse'&&event.pointerType!=='pen')return
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return
+    const rect=event.currentTarget.getBoundingClientRect()
+    const x=Math.min(1,Math.max(0,(event.clientX-rect.left)/rect.width))
+    const y=Math.min(1,Math.max(0,(event.clientY-rect.top)/rect.height))
+    event.currentTarget.style.setProperty('--stage-rx',`${((0.5-y)*4).toFixed(2)}deg`)
+    event.currentTarget.style.setProperty('--stage-ry',`${((x-0.5)*6).toFixed(2)}deg`)
+    event.currentTarget.style.setProperty('--light-x',`${(x*100).toFixed(1)}%`)
+    event.currentTarget.style.setProperty('--light-y',`${(y*100).toFixed(1)}%`)
+  }
+
+  function resetStageDepth(event:React.PointerEvent<HTMLDivElement>){
+    event.currentTarget.style.setProperty('--stage-rx','0deg')
+    event.currentTarget.style.setProperty('--stage-ry','0deg')
+    event.currentTarget.style.setProperty('--light-x','50%')
+    event.currentTarget.style.setProperty('--light-y','45%')
+  }
+
   function chooseCategory(category:DeviceCategory){
     const first=devices.find(item=>item.category===category)
     if(first)setDeviceId(first.id)
   }
 
   function saveBuild(){
-    try{localStorage.setItem('radvora-shieldlab',JSON.stringify({deviceId,finishId}));setMessage('Saved on this device.')}
-    catch{setMessage('This browser could not save the build.')}
+    try{
+      localStorage.setItem('radvora-shieldlab',JSON.stringify({deviceId,finishId,savedAt:Date.now()}))
+      const label=`${selected.brand} ${selected.name} · ${finish.name}`
+      onSaved(label)
+      setMessage('Saved on this device. It will be restored when you return.')
+    }catch{setMessage('This browser could not save the build.')}
   }
 
   async function shareBuild(){
@@ -111,7 +138,7 @@ function ShieldLab(){
   }
 
   return <section className={ui.lab} id="shieldlab">
-    <div className={ui.labStage} aria-live="polite">
+    <div className={ui.labStage} aria-live="polite" onPointerMove={handleStagePointerMove} onPointerLeave={resetStageDepth}>
       <div className={ui.stageMeta}><span>SHIELDLAB / LIVE PREVIEW</span><b>{selected.brand} {selected.name}</b><small>{selected.deviceColor} · {finish.name}</small></div>
       <DeviceVisual device={selected} finish={finish}/>
       <div className={ui.stageFooter}><span>{labelFor(selected.category)}</span><b>{finish.name}</b></div>
@@ -127,6 +154,7 @@ function ShieldLab(){
       <div className={ui.finishGrid} aria-label="Finish selector">{finishes.map(item=><button type="button" key={item.id} aria-pressed={finishId===item.id} onClick={()=>setFinishId(item.id)}><i style={{'--swatch':item.base,'--edge':item.edge} as CSSProperties}/><span>{item.name}</span></button>)}</div>
       <div className={ui.labActions}><button type="button" onClick={saveBuild}>Save build</button><button type="button" onClick={shareBuild}>Share build</button><a href="/compatibility">Verify fit →</a></div>
       <p className={ui.labStatus} role="status" aria-live="polite">{message||'Your device and finish are encoded in the page link.'}</p>
+      <ProductInterestForm source="shieldlab-interest" context={`${selected.brand} ${selected.name} · ${finish.name}`} compact/>
     </div>
   </section>
 }
@@ -134,11 +162,24 @@ function ShieldLab(){
 export default function RealDeviceExperience(){
   const heroDevice=devices[0]
   const heroFinish=finishes[0]
+  const [savedBuildLabel,setSavedBuildLabel]=useState<string|null>(null)
+
+  useEffect(()=>{
+    const params=new URLSearchParams(window.location.search)
+    if(params.has('device')||params.has('finish'))return
+    try{
+      const saved=JSON.parse(localStorage.getItem('radvora-shieldlab')||'null') as {deviceId?:string;finishId?:string}|null
+      const savedDevice=saved?.deviceId?devices.find(item=>item.id===saved.deviceId):undefined
+      const savedFinish=saved?.finishId?finishes.find(item=>item.id===saved.finishId):undefined
+      if(savedDevice&&savedFinish)setSavedBuildLabel(`${savedDevice.brand} ${savedDevice.name} · ${savedFinish.name}`)
+    }catch{}
+  },[])
+
   return <div className={ui.page}>
     <header className={ui.nav}>
       <a className={ui.brand} href="/" aria-label="RADVORA home"><Logo/><span><b>RADVORA</b><small>SHIELDTAG</small></span></a>
-      <nav aria-label="Primary"><a href="#formats">Formats</a><a href="#shieldlab">ShieldLab</a><a href="#finishes">Finishes</a><a href="/compatibility">Compatibility</a><a href="/products">Products</a></nav>
-      <a className={ui.navCta} href="#shieldlab">Build yours</a>
+      <nav aria-label="Primary"><a href="#formats">Formats</a><a href="#shieldlab">ShieldLab</a><a href="#finishes">Finishes</a><a href="/compatibility">Compatibility</a><a href="/products">Products</a><a href="/account">My RADVORA</a></nav>
+      <a className={ui.navCta} href="#shieldlab">{savedBuildLabel?'Resume build':'Build yours'}</a>
     </header>
 
     <main>
@@ -147,7 +188,7 @@ export default function RealDeviceExperience(){
           <span className={ui.eyebrow}>ONE SHIELD. EVERY DEVICE.</span>
           <h1>Designed to<br/><em>belong.</em></h1>
           <p>RADVORA ShieldTag is a device identity system built around the hardware you already love—proportioned by device, styled by finish, verified by exact model.</p>
-          <div className={ui.heroActions}><a href="#shieldlab">Build your ShieldTag</a><a href="/products">Explore the system</a></div>
+          <div className={ui.heroActions}><a href="#shieldlab">{savedBuildLabel?'Resume your saved build':'Build your ShieldTag'}</a><a href="/products">Explore the system</a></div>{savedBuildLabel?<p className={ui.savedBuildHint}>Saved on this device · {savedBuildLabel}</p>:null}
           <div className={ui.heroProof}><span>4 device formats</span><span>8 finish directions</span><span>Shareable builds</span></div>
         </div>
         <div className={ui.heroStage}>
@@ -176,7 +217,7 @@ export default function RealDeviceExperience(){
         </article>)}</div>
       </section>
 
-      <ShieldLab/>
+      <ShieldLab onSaved={setSavedBuildLabel}/>
 
       <section className={ui.finishStory} id="finishes">
         <div className={ui.sectionIntro}><span className={ui.eyebrow}>FINISH STUDIO</span><h2>Blend in.<br/><em>Or stand apart.</em></h2><p>Eight visual directions let the ShieldTag disappear into the hardware or become the deliberate contrast.</p></div>
@@ -216,9 +257,11 @@ export default function RealDeviceExperience(){
       </section>
     </main>
 
+    <nav className={ui.mobileDock} aria-label="Mobile quick actions"><a href="#shieldlab">{savedBuildLabel?'Resume build':'Build yours'}</a><a href="/account">My RADVORA</a></nav>
+
     <footer className={ui.footer}>
       <a className={ui.brand} href="/" aria-label="RADVORA home"><Logo/><span><b>RADVORA</b><small>SHIELDTAG</small></span></a>
-      <nav aria-label="Footer"><a href="/products">Products</a><a href="/compatibility">Compatibility</a><a href="/research">Research</a><a href="/support">Support</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a></nav>
+      <nav aria-label="Footer"><a href="/products">Products</a><a href="/compatibility">Compatibility</a><a href="/account">My RADVORA</a><a href="/research">Research</a><a href="/support">Support</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a></nav>
       <p>Device names and imagery explain styling context only. No manufacturer affiliation or endorsement is implied.</p>
     </footer>
   </div>
