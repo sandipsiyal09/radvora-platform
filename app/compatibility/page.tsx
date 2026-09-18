@@ -19,7 +19,7 @@ const familyByCategory:Record<string,string>={
   Smartphone:'ShieldTag Signature',
   Tablet:'ShieldTag Pro',
   Laptop:'ShieldTag Executive',
-  Accessory:'ShieldTag Mini / Utility'
+  Accessory:'ShieldTag Mini'
 }
 
 function literalIlike(value:string){
