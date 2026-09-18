@@ -90,7 +90,7 @@ export default function CompatibilityPage(){
         <h3>{lookupError?'Compatibility service is temporarily unavailable.':variantRequired?'Multiple reviewed variants match this model.':!checked?'Compatibility status':result?`${result.manufacturer} ${result.device_model}`:'No published record for this exact device.'}</h3>
         {lookupError&&<p>Please try again shortly. RADVORA will not convert a service failure into a compatibility result.</p>}
         {!lookupError&&variantRequired&&<p>Add the region or hardware variant shown for your device, then check again. RADVORA will not guess between multiple reviewed records.</p>}
-        {!lookupError&&!variantRequired&&!checked&&<p>Choose the category, manufacturer and exact model. The database result—not the visual matcher—controls compatibility status.</p>}
+        {!lookupError&&!variantRequired&&!checked&&<p>Choose the category, manufacturer and exact model. The database result—not the ShieldLab styling preview—controls compatibility status.</p>}
         {!lookupError&&!variantRequired&&checked&&!result&&<p>RADVORA has not published a reviewed compatibility record for this exact device yet. This is deliberately not treated as either compatible or incompatible.</p>}
         {result&&<div className={ui.resultGrid}><div><span>STATUS</span><b>{result.compatibility_status}</b></div><div><span>DEVICE FAMILY</span><b>{result.device_family||category}</b></div><div><span>REGION / VARIANT</span><b>{result.region_variant||'General'}</b></div><div><span>INSTALLATION</span><b>{result.installation_note||'Use approved guidance'}</b></div></div>}
       </aside>
