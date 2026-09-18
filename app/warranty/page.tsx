@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { PublicShell } from '../public-shell'
 import ui from '../public-brand.module.css'
 
+export const metadata={title:'Warranty',description:'Review RADVORA warranty guidance, product verification and service pathways for registered ShieldTag products.',alternates:{canonical:'/warranty'}}
+
 export default function WarrantyPage(){
   return <PublicShell><main className={ui.main}>
     <section className={ui.hero}><div className={ui.heroCopy}><span className={ui.kicker}>WARRANTY</span><h1>Service tied to<br/><em>the product record.</em></h1><p>Where warranty coverage applies, product identity, proof of purchase, registration and service history can be reviewed together instead of handled as disconnected messages.</p></div><aside className={ui.heroAside}><span>BEFORE A CLAIM</span><strong>Verify. Register. Document.</strong><p>Eligibility and remedies depend on the applicable product terms and the facts of the request.</p></aside></section>
