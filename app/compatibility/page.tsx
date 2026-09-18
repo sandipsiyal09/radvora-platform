@@ -73,7 +73,7 @@ export default function CompatibilityPage(){
   return <PublicShell><main className={ui.main}>
     <section className={ui.hero}>
       <div className={ui.heroCopy}><span className={ui.kicker}>DEVICE COMPATIBILITY</span><h1>Check your<br/><em>exact device.</em></h1><p>Phone, tablet, laptop or accessory—the result stays model-specific. If RADVORA has not published a reviewed record for the exact manufacturer and model, the site shows it as not yet reviewed rather than guessing.</p></div>
-      <aside className={ui.heroAside}><span>FAIL-CLOSED BY DESIGN</span><strong>Unknown is not compatible.</strong><p>A styling preview can help you visualise ShieldTag. This checker is the separate compatibility layer.</p><ul><li><span>Selected category</span><b>{category}</b></li><li><span>Suggested family</span><b>{suggestedFamily}</b></li><li><span>Unreviewed model</span><b>No assumption</b></li></ul></aside>
+      <aside className={ui.heroAside}><span>FAIL-CLOSED BY DESIGN</span><strong>Unknown is not confirmed compatible.</strong><p>A styling preview can help you visualise ShieldTag. This checker is the separate compatibility layer.</p><ul><li><span>Selected category</span><b>{category}</b></li><li><span>Suggested family</span><b>{suggestedFamily}</b></li><li><span>Unreviewed model</span><b>No assumption</b></li></ul></aside>
     </section>
 
     <section className={ui.section}><div className={ui.grid2}>
