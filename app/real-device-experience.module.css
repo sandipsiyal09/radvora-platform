@@ -42,3 +42,11 @@
   .tagAnchor{left:60%;bottom:22%;transform:translateX(-50%) scale(.56)}.category_tablet .tagAnchor{left:52%;bottom:27%;transform:translateX(-50%) scale(.54)}.category_laptop .tagAnchor{left:50%;bottom:22%;transform:translateX(-50%) scale(.68)}.category_accessory .tagAnchor{left:50%;bottom:18%;transform:translateX(-50%) scale(.46)}
 }
 @media(prefers-reduced-motion:reduce){:global(html){scroll-behavior:auto}.page *{animation:none!important;transition-duration:.01ms!important}}
+
+.mobileDock{display:none}
+@media(max-width:760px){
+  .page{padding-bottom:74px}
+  .mobileDock{position:fixed;z-index:95;left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 1fr;gap:1px;padding:1px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(18px);box-shadow:0 18px 50px rgba(0,0,0,.38)}
+  .mobileDock a{min-height:46px;display:flex;align-items:center;justify-content:center;background:rgba(7,10,14,.94);font-size:9px;font-weight:760;letter-spacing:.04em}
+  .mobileDock a:first-child{background:#eff8fa;color:#071014}
+}
