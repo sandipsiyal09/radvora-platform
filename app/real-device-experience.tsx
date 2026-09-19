@@ -261,6 +261,16 @@ export default function RealDeviceExperience(){
         <a href="/installation">See installation guide →</a>
       </section>
 
+      <section className={ui.lifeStory} aria-labelledby="life-story-title">
+        <div className={ui.lifeIntro}><span className={ui.eyebrow}>BUILT FOR THE THINGS YOU CARRY / 03</span><h2 id="life-story-title">One identity language.<br/><em>Across your everyday tech.</em></h2><p>Explore the ShieldTag look across the devices and accessories already represented in ShieldLab. Exact compatibility remains a separate verification step.</p></div>
+        <div className={ui.lifeRail}>
+          <article><span>PHONE</span><h3>Always with you.</h3><p>A restrained identity detail for the device that rarely leaves your hand.</p><div className={ui.lifeObject}><i className={ui.lifePhone}/><b>01</b></div></article>
+          <article><span>LAPTOP</span><h3>Work, without the label look.</h3><p>A proportion designed to sit quietly with premium hardware.</p><div className={ui.lifeObject}><i className={ui.lifeLaptop}/><b>02</b></div></article>
+          <article><span>ACCESSORIES</span><h3>Small objects. Same system.</h3><p>Carry the same visual identity into selected technology accessories.</p><div className={ui.lifeObject}><i className={ui.lifeCase}/><b>03</b></div></article>
+        </div>
+        <a className={ui.lifeAction} href="#shieldlab">See your device in ShieldLab →</a>
+      </section>
+
       <section className={ui.trust} aria-label="ShieldTag trust principles">
         <article><span>01 / FIT</span><h3>Verify before you choose.</h3><p>Every styling preview stays separate from compatibility. Exact model fit is confirmed through the compatibility system.</p><a href="/compatibility">Verify your model →</a></article>
         <article><span>02 / COMMERCE</span><h3>Buy only from live data.</h3><p>Price, tax, stock and checkout are shown only when approved commerce data is available for the product.</p><a href="/products">View current availability →</a></article>
