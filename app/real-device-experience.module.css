@@ -119,3 +119,14 @@
 .finishGrid{gap:8px;margin-top:14px}.finishGrid button{min-height:60px;padding:10px 12px;background:#090d11;transition:transform .18s ease,border-color .18s ease,background .18s ease}.finishGrid button:hover{transform:translateY(-1px);border-color:#4b5962}.finishGrid button[aria-pressed="true"]{border-color:#73e3fc;background:linear-gradient(135deg,rgba(115,227,252,.1),rgba(115,227,252,.025));box-shadow:inset 0 0 0 1px rgba(115,227,252,.06)}.finishGrid i{width:31px;height:31px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(255,255,255,.24),0 5px 14px rgba(0,0,0,.35)}
 .labActions{padding-top:22px;border-top:1px solid var(--line);margin-top:26px}.labActions button,.labActions a{min-height:44px;padding:0 16px;transition:transform .18s ease,border-color .18s ease}.labActions button:hover,.labActions a:hover{transform:translateY(-1px);border-color:#6f808b}.labActions button:first-child{box-shadow:0 10px 30px rgba(210,247,255,.07)}
 @media(max-width:760px){.labControls{padding-top:58px}.categoryTabs{grid-template-columns:repeat(2,1fr)}.finishGrid button{min-height:58px}.labActions>*{flex:1;justify-content:center}}
+
+/* Mobile journey refinement */
+@media(max-width:760px){
+  .nav{height:64px;padding:0 14px;background:rgba(5,7,9,.88);backdrop-filter:blur(20px)}
+  .brand svg{width:30px}.brand small{font-size:5px}.navCta{min-height:36px;padding:0 12px}
+  .hero{min-height:auto}.heroCopy{min-height:470px;padding-top:70px;padding-bottom:34px}.hero h1{max-width:96%;font-size:clamp(60px,18vw,84px);line-height:.84}.heroLead{max-width:92%!important}.heroActions{display:grid;grid-template-columns:1fr 1fr;width:100%;gap:7px}.heroActions a{justify-content:center;text-align:center;padding:0 10px}.heroProof{grid-template-columns:repeat(3,1fr);gap:0;margin-top:32px}.heroProof span{padding:12px 8px;border-right:1px solid var(--line);font-size:6px}.heroProof span:last-child{border-right:0}.heroProof b{font-size:15px}
+  .heroStage{min-height:510px;margin:0 -14px;border-left:0;border-top:1px solid var(--line)}.heroStage:after{inset:16px}.heroStage .deviceVisual{inset:30px 12px 44px}
+  .mobileDock{left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));border-radius:2px;overflow:hidden}.mobileDock a{min-height:52px;font-size:8px}
+  .labStage{min-height:560px}.labStage>.deviceVisual{inset:60px 6px 62px}.labControls h2{font-size:48px;line-height:.91}.deviceSelect{grid-template-columns:70px 1fr}
+  .scanStory,.privacyStory,.lifeStory{scroll-margin-top:72px}
+}
