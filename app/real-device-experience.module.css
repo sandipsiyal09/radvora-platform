@@ -50,3 +50,27 @@
   .mobileDock a{min-height:46px;display:flex;align-items:center;justify-content:center;background:rgba(7,10,14,.94);font-size:9px;font-weight:760;letter-spacing:.04em}
   .mobileDock a:first-child{background:#eff8fa;color:#071014}
 }
+
+/* Cinematic product-focus pass */
+.hero{width:min(1720px,96vw);grid-template-columns:.72fr 1.28fr}
+.heroCopy{position:relative;z-index:4;padding-left:2vw}
+.heroCopy:before{content:"01 / SHIELDTAG";position:absolute;left:2vw;top:5vh;color:rgba(255,255,255,.22);font-size:8px;letter-spacing:.24em}
+.hero h1{font-size:clamp(76px,8.8vw,164px);line-height:.81;letter-spacing:-.078em}
+.heroLead{max-width:540px!important;font-size:15px!important;color:#a7b0b7!important}
+.heroProof span{display:grid;gap:5px}.heroProof b{font-size:18px;color:#eafaff;font-weight:450;letter-spacing:-.03em}
+.heroStage{background:radial-gradient(circle at 54% 42%,rgba(107,225,255,.12),transparent 27%),linear-gradient(145deg,#0c1117,#050607 72%);border-left-color:rgba(255,255,255,.055)}
+.heroStage:after{content:"";position:absolute;inset:8%;border:1px solid rgba(255,255,255,.055);pointer-events:none}
+.heroGlow{width:48%;height:42%;background:rgba(111,225,250,.15);filter:blur(100px)}
+.heroWord{bottom:-3%;left:-1%;font-size:clamp(130px,16vw,280px);color:rgba(255,255,255,.025)}
+.statement{min-height:72vh;display:flex;flex-direction:column;justify-content:center}
+.statement h2 em{font-style:normal;color:#a7eefe;font-weight:520}
+.formatRail article{background:linear-gradient(180deg,rgba(255,255,255,.012),transparent)}
+.labStage{background:radial-gradient(circle at var(--light-x) var(--light-y),rgba(110,223,247,.12),transparent 25%),linear-gradient(145deg,#0d131a,#050709)}
+.finalCta{min-height:72vh;display:flex;flex-direction:column;justify-content:center}
+@media(max-width:760px){
+ .hero{width:100%;padding:0 14px}.heroCopy{min-height:500px;padding-top:76px}.heroCopy:before{top:28px;left:0}
+ .hero h1{font-size:clamp(62px,18.5vw,90px)}.heroLead{font-size:13px!important;line-height:1.65!important}
+ .heroStage{margin:0 -14px;min-height:560px}.heroStage:after{inset:18px}
+ .heroProof{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.heroProof span{font-size:6px}.heroProof b{font-size:15px}
+ .statement{min-height:68vh}.statement h2{font-size:48px}
+}

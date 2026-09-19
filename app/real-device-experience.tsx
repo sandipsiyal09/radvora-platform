@@ -185,11 +185,11 @@ export default function RealDeviceExperience(){
     <main>
       <section className={ui.hero}>
         <div className={ui.heroCopy}>
-          <span className={ui.eyebrow}>ONE SHIELD. EVERY DEVICE.</span>
-          <h1>Designed to<br/><em>belong.</em></h1>
-          <p>RADVORA ShieldTag is a device identity system built around the hardware you already love—proportioned by device, styled by finish, verified by exact model.</p>
+          <span className={ui.eyebrow}>RADVORA / SHIELDTAG</span>
+          <h1>Your device.<br/><em>Still yours.</em></h1>
+          <p className={ui.heroLead}>A precision identity tag designed to feel native to the device you already carry. Choose the hardware. Choose the finish. Verify the exact fit.</p>
           <div className={ui.heroActions}><a href="#shieldlab">{savedBuildLabel?'Resume your saved build':'Build your ShieldTag'}</a><a href="/products">Explore the system</a></div>{savedBuildLabel?<p className={ui.savedBuildHint}>Saved on this device · {savedBuildLabel}</p>:null}
-          <div className={ui.heroProof}><span>4 device formats</span><span>8 finish directions</span><span>Shareable builds</span></div>
+          <div className={ui.heroProof}><span><b>04</b> device formats</span><span><b>08</b> finish directions</span><span><b>01</b> exact-fit check</span></div>
         </div>
         <div className={ui.heroStage}>
           <div className={ui.heroGlow}/>
@@ -200,9 +200,9 @@ export default function RealDeviceExperience(){
       </section>
 
       <section className={ui.statement}>
-        <span className={ui.eyebrow}>THE IDEA</span>
-        <h2>It should look like it came<br/>with the device.</h2>
-        <p>Not louder than the hardware. Not generic. Not one size forced everywhere.</p>
+        <span className={ui.eyebrow}>DESIGN PRINCIPLE / 01</span>
+        <h2>Not an accessory.<br/><em>A finishing detail.</em></h2>
+        <p>Quiet enough to belong. Distinct enough to make the device unmistakably yours.</p>
       </section>
 
       <section className={ui.formats} id="formats">
