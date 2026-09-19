@@ -261,6 +261,15 @@ export default function RealDeviceExperience(){
         <a href="/installation">See installation guide →</a>
       </section>
 
+      <section className={ui.privacyStory} aria-labelledby="privacy-story-title">
+        <div className={ui.privacyHead}><span className={ui.eyebrow}>OWNER CONTROL / 03</span><h2 id="privacy-story-title">A finder gets a path.<br/><em>Not your whole profile.</em></h2><p>The public interaction is framed around the owner-configured experience. What is available to a finder depends on that configured path; the design does not promise automatic disclosure of private details.</p></div>
+        <div className={ui.privacyCompare}>
+          <article><small>FINDER EXPERIENCE</small><h3>A clear next step.</h3><p>ShieldTag can direct the finder into the configured owner experience so they know how to proceed.</p><span>OWNER-CONFIGURED PATH</span></article>
+          <div className={ui.privacyCore}><Logo/><b>CONTROL<br/>STAYS<br/>CENTRAL</b><i/></div>
+          <article><small>PRIVACY BOUNDARY</small><h3>No blanket exposure.</h3><p>The presentation does not treat personal contact information as automatically public or universally available.</p><span>NO AUTOMATIC DISCLOSURE CLAIM</span></article>
+        </div>
+      </section>
+
       <section className={ui.lifeStory} aria-labelledby="life-story-title">
         <div className={ui.lifeIntro}><span className={ui.eyebrow}>BUILT FOR THE THINGS YOU CARRY / 03</span><h2 id="life-story-title">One identity language.<br/><em>Across your everyday tech.</em></h2><p>Explore the ShieldTag look across the devices and accessories already represented in ShieldLab. Exact compatibility remains a separate verification step.</p></div>
         <div className={ui.lifeRail}>
