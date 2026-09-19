@@ -261,16 +261,17 @@ export default function RealDeviceExperience(){
         <a href="/installation">See installation guide →</a>
       </section>
 
-      <section className={ui.trust}>
-        <article><span>01</span><h3>Fit is model-specific.</h3><p>A styling preview never becomes a compatibility result by assumption.</p><a href="/compatibility">Check your device →</a></article>
-        <article><span>02</span><h3>Availability is live-data controlled.</h3><p>Price, stock and checkout only appear when approved commerce data is configured.</p><a href="/products">See availability →</a></article>
-        <article><span>03</span><h3>Your build can travel.</h3><p>Save it for later or share the exact device-and-finish combination with someone else.</p><a href="#shieldlab">Create a shareable build →</a></article>
+      <section className={ui.trust} aria-label="ShieldTag trust principles">
+        <article><span>01 / FIT</span><h3>Verify before you choose.</h3><p>Every styling preview stays separate from compatibility. Exact model fit is confirmed through the compatibility system.</p><a href="/compatibility">Verify your model →</a></article>
+        <article><span>02 / COMMERCE</span><h3>Buy only from live data.</h3><p>Price, tax, stock and checkout are shown only when approved commerce data is available for the product.</p><a href="/products">View current availability →</a></article>
+        <article><span>03 / OWNERSHIP</span><h3>Make the build yours.</h3><p>Save your device-and-finish combination, return to it later, or share the same build without changing its fit status.</p><a href="#shieldlab">Build and save yours →</a></article>
       </section>
 
       <section className={ui.finalCta}>
-        <span className={ui.eyebrow}>YOUR DEVICE. YOUR SHIELDTAG.</span>
-        <h2>Build the one<br/><em>you would keep.</em></h2>
-        <div><a href="#shieldlab">Open ShieldLab</a><a href="/products">Check availability</a></div>
+        <span className={ui.eyebrow}>MAKE IT YOURS / 04</span>
+        <h2>See it on your device.<br/><em>Then decide.</em></h2>
+        <p className={ui.finalLead}>Start with the look. Verify the exact model. Check governed availability only when you are ready.</p>
+        <div><a href="#shieldlab">Build your ShieldTag</a><a href="/compatibility">Verify exact fit</a></div>
       </section>
     </main>
 
