@@ -178,18 +178,18 @@ export default function RealDeviceExperience(){
   return <div className={ui.page}>
     <header className={ui.nav}>
       <a className={ui.brand} href="/" aria-label="RADVORA home"><Logo/><span><b>RADVORA</b><small>SHIELDTAG</small></span></a>
-      <nav aria-label="Primary"><a href="#formats">Formats</a><a href="#shieldlab">ShieldLab</a><a href="#finishes">Finishes</a><a href="/compatibility">Compatibility</a><a href="/products">Products</a><a href="/account">My RADVORA</a></nav>
+      <nav aria-label="Primary"><a href="#shieldlab">ShieldLab</a><a href="/compatibility">Verify fit</a><a href="/products">Shop</a><a href="/account">My RADVORA</a></nav>
       <a className={ui.navCta} href="#shieldlab">{savedBuildLabel?'Resume build':'Build yours'}</a>
     </header>
 
     <main>
       <section className={ui.hero}>
         <div className={ui.heroCopy}>
-          <span className={ui.eyebrow}>ONE SHIELD. EVERY DEVICE.</span>
-          <h1>Designed to<br/><em>belong.</em></h1>
-          <p>RADVORA ShieldTag is a device identity system built around the hardware you already love—proportioned by device, styled by finish, verified by exact model.</p>
-          <div className={ui.heroActions}><a href="#shieldlab">{savedBuildLabel?'Resume your saved build':'Build your ShieldTag'}</a><a href="/products">Explore the system</a></div>{savedBuildLabel?<p className={ui.savedBuildHint}>Saved on this device · {savedBuildLabel}</p>:null}
-          <div className={ui.heroProof}><span>4 device formats</span><span>8 finish directions</span><span>Shareable builds</span></div>
+          <span className={ui.eyebrow}>RADVORA / SHIELDTAG</span>
+          <h1>Your device.<br/><em>Still yours.</em></h1>
+          <p className={ui.heroLead}>A precision identity tag designed to feel native to the device you already carry. Choose the hardware. Choose the finish. Verify the exact fit.</p>
+          <div className={ui.heroActions}><a href="#shieldlab">{savedBuildLabel?'Resume your saved build':'Build your ShieldTag'}</a><a href="/compatibility">Verify exact fit</a></div>{savedBuildLabel?<p className={ui.savedBuildHint}>Saved on this device · {savedBuildLabel}</p>:null}
+          <div className={ui.heroProof}><span><b>04</b> device formats</span><span><b>08</b> finish directions</span><span><b>01</b> exact-fit check</span></div>
         </div>
         <div className={ui.heroStage}>
           <div className={ui.heroGlow}/>
@@ -200,9 +200,26 @@ export default function RealDeviceExperience(){
       </section>
 
       <section className={ui.statement}>
-        <span className={ui.eyebrow}>THE IDEA</span>
-        <h2>It should look like it came<br/>with the device.</h2>
-        <p>Not louder than the hardware. Not generic. Not one size forced everywhere.</p>
+        <span className={ui.eyebrow}>DESIGN PRINCIPLE / 01</span>
+        <h2>Not an accessory.<br/><em>A finishing detail.</em></h2>
+        <p>Quiet enough to belong. Distinct enough to make the device unmistakably yours.</p>
+      </section>
+
+      <section className={ui.scanStory} aria-labelledby="scan-story-title">
+        <div className={ui.scanCopy}>
+          <span className={ui.eyebrow}>THE MOMENT / 02</span>
+          <h2 id="scan-story-title">Tap the tag.<br/><em>Meet the owner.</em></h2>
+          <p>ShieldTag is designed around a simple handoff: a device is found, its identity surface is opened, and the finder gets the owner-approved path forward.</p>
+          <div className={ui.scanSteps}>
+            <span><b>01</b>Find the device</span><span><b>02</b>Open ShieldTag</span><span><b>03</b>Use the approved contact path</span>
+          </div>
+          <a href="/products">Explore ShieldTag →</a>
+        </div>
+        <div className={ui.scanStage} aria-hidden="true">
+          <div className={ui.scanPhone}><div className={ui.scanIsland}/><div className={ui.scanScreen}><Logo/><small>RADVORA SHIELDTAG</small><b>Owner connection</b><p>Contact details appear only through the configured owner experience.</p><span>OPEN OWNER PATH</span></div></div>
+          <div className={ui.scanSignal}><i/><i/><i/></div>
+          <div className={ui.scanBadge}><Tag finish={finishes[0]} label="SIGNATURE"/></div>
+        </div>
       </section>
 
       <section className={ui.formats} id="formats">
@@ -244,16 +261,36 @@ export default function RealDeviceExperience(){
         <a href="/installation">See installation guide →</a>
       </section>
 
-      <section className={ui.trust}>
-        <article><span>01</span><h3>Fit is model-specific.</h3><p>A styling preview never becomes a compatibility result by assumption.</p><a href="/compatibility">Check your device →</a></article>
-        <article><span>02</span><h3>Availability is live-data controlled.</h3><p>Price, stock and checkout only appear when approved commerce data is configured.</p><a href="/products">See availability →</a></article>
-        <article><span>03</span><h3>Your build can travel.</h3><p>Save it for later or share the exact device-and-finish combination with someone else.</p><a href="#shieldlab">Create a shareable build →</a></article>
+      <section className={ui.privacyStory} aria-labelledby="privacy-story-title">
+        <div className={ui.privacyHead}><span className={ui.eyebrow}>OWNER CONTROL / 03</span><h2 id="privacy-story-title">A finder gets a path.<br/><em>Not your whole profile.</em></h2><p>The public interaction is framed around the owner-configured experience. What is available to a finder depends on that configured path; the design does not promise automatic disclosure of private details.</p></div>
+        <div className={ui.privacyCompare}>
+          <article><small>FINDER EXPERIENCE</small><h3>A clear next step.</h3><p>ShieldTag can direct the finder into the configured owner experience so they know how to proceed.</p><span>OWNER-CONFIGURED PATH</span></article>
+          <div className={ui.privacyCore}><Logo/><b>CONTROL<br/>STAYS<br/>CENTRAL</b><i/></div>
+          <article><small>PRIVACY BOUNDARY</small><h3>No blanket exposure.</h3><p>The presentation does not treat personal contact information as automatically public or universally available.</p><span>NO AUTOMATIC DISCLOSURE CLAIM</span></article>
+        </div>
+      </section>
+
+      <section className={ui.lifeStory} aria-labelledby="life-story-title">
+        <div className={ui.lifeIntro}><span className={ui.eyebrow}>BUILT FOR THE THINGS YOU CARRY / 03</span><h2 id="life-story-title">One identity language.<br/><em>Across your everyday tech.</em></h2><p>Explore the ShieldTag look across the devices and accessories already represented in ShieldLab. Exact compatibility remains a separate verification step.</p></div>
+        <div className={ui.lifeRail}>
+          <article><span>PHONE</span><h3>Always with you.</h3><p>A restrained identity detail for the device that rarely leaves your hand.</p><div className={ui.lifeObject}><i className={ui.lifePhone}/><b>01</b></div></article>
+          <article><span>LAPTOP</span><h3>Work, without the label look.</h3><p>A proportion designed to sit quietly with premium hardware.</p><div className={ui.lifeObject}><i className={ui.lifeLaptop}/><b>02</b></div></article>
+          <article><span>ACCESSORIES</span><h3>Small objects. Same system.</h3><p>Carry the same visual identity into selected technology accessories.</p><div className={ui.lifeObject}><i className={ui.lifeCase}/><b>03</b></div></article>
+        </div>
+        <a className={ui.lifeAction} href="#shieldlab">See your device in ShieldLab →</a>
+      </section>
+
+      <section className={ui.trust} aria-label="ShieldTag trust principles">
+        <article><span>01 / FIT</span><h3>Verify before you choose.</h3><p>Every styling preview stays separate from compatibility. Exact model fit is confirmed through the compatibility system.</p><a href="/compatibility">Verify your model →</a></article>
+        <article><span>02 / COMMERCE</span><h3>Buy only from live data.</h3><p>Price, tax, stock and checkout are shown only when approved commerce data is available for the product.</p><a href="/products">View current availability →</a></article>
+        <article><span>03 / OWNERSHIP</span><h3>Make the build yours.</h3><p>Save your device-and-finish combination, return to it later, or share the same build without changing its fit status.</p><a href="#shieldlab">Build and save yours →</a></article>
       </section>
 
       <section className={ui.finalCta}>
-        <span className={ui.eyebrow}>YOUR DEVICE. YOUR SHIELDTAG.</span>
-        <h2>Build the one<br/><em>you would keep.</em></h2>
-        <div><a href="#shieldlab">Open ShieldLab</a><a href="/products">Check availability</a></div>
+        <span className={ui.eyebrow}>MAKE IT YOURS / 04</span>
+        <h2>See it on your device.<br/><em>Then decide.</em></h2>
+        <p className={ui.finalLead}>Start with the look. Verify the exact model. Check governed availability only when you are ready.</p>
+        <div><a href="#shieldlab">Build your ShieldTag</a><a href="/compatibility">Verify exact fit</a></div>
       </section>
     </main>
 
