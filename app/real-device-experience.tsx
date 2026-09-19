@@ -205,6 +205,23 @@ export default function RealDeviceExperience(){
         <p>Quiet enough to belong. Distinct enough to make the device unmistakably yours.</p>
       </section>
 
+      <section className={ui.scanStory} aria-labelledby="scan-story-title">
+        <div className={ui.scanCopy}>
+          <span className={ui.eyebrow}>THE MOMENT / 02</span>
+          <h2 id="scan-story-title">Tap the tag.<br/><em>Meet the owner.</em></h2>
+          <p>ShieldTag is designed around a simple handoff: a device is found, its identity surface is opened, and the finder gets the owner-approved path forward.</p>
+          <div className={ui.scanSteps}>
+            <span><b>01</b>Find the device</span><span><b>02</b>Open ShieldTag</span><span><b>03</b>Use the approved contact path</span>
+          </div>
+          <a href="/products">Explore ShieldTag →</a>
+        </div>
+        <div className={ui.scanStage} aria-hidden="true">
+          <div className={ui.scanPhone}><div className={ui.scanIsland}/><div className={ui.scanScreen}><Logo/><small>RADVORA SHIELDTAG</small><b>Owner connection</b><p>Contact details appear only through the configured owner experience.</p><span>OPEN OWNER PATH</span></div></div>
+          <div className={ui.scanSignal}><i/><i/><i/></div>
+          <div className={ui.scanBadge}><Tag finish={finishes[0]} label="SIGNATURE"/></div>
+        </div>
+      </section>
+
       <section className={ui.formats} id="formats">
         <div className={ui.sectionIntro}><span className={ui.eyebrow}>THE SYSTEM</span><h2>Four proportions.<br/><em>One identity.</em></h2></div>
         <div className={ui.formatRail}>{formats.map((item,index)=><article key={item.name}>
