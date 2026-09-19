@@ -178,7 +178,7 @@ export default function RealDeviceExperience(){
   return <div className={ui.page}>
     <header className={ui.nav}>
       <a className={ui.brand} href="/" aria-label="RADVORA home"><Logo/><span><b>RADVORA</b><small>SHIELDTAG</small></span></a>
-      <nav aria-label="Primary"><a href="#formats">Formats</a><a href="#shieldlab">ShieldLab</a><a href="#finishes">Finishes</a><a href="/compatibility">Compatibility</a><a href="/products">Products</a><a href="/account">My RADVORA</a></nav>
+      <nav aria-label="Primary"><a href="#shieldlab">ShieldLab</a><a href="/compatibility">Verify fit</a><a href="/products">Shop</a><a href="/account">My RADVORA</a></nav>
       <a className={ui.navCta} href="#shieldlab">{savedBuildLabel?'Resume build':'Build yours'}</a>
     </header>
 
@@ -188,7 +188,7 @@ export default function RealDeviceExperience(){
           <span className={ui.eyebrow}>RADVORA / SHIELDTAG</span>
           <h1>Your device.<br/><em>Still yours.</em></h1>
           <p className={ui.heroLead}>A precision identity tag designed to feel native to the device you already carry. Choose the hardware. Choose the finish. Verify the exact fit.</p>
-          <div className={ui.heroActions}><a href="#shieldlab">{savedBuildLabel?'Resume your saved build':'Build your ShieldTag'}</a><a href="/products">Explore the system</a></div>{savedBuildLabel?<p className={ui.savedBuildHint}>Saved on this device · {savedBuildLabel}</p>:null}
+          <div className={ui.heroActions}><a href="#shieldlab">{savedBuildLabel?'Resume your saved build':'Build your ShieldTag'}</a><a href="/compatibility">Verify exact fit</a></div>{savedBuildLabel?<p className={ui.savedBuildHint}>Saved on this device · {savedBuildLabel}</p>:null}
           <div className={ui.heroProof}><span><b>04</b> device formats</span><span><b>08</b> finish directions</span><span><b>01</b> exact-fit check</span></div>
         </div>
         <div className={ui.heroStage}>
