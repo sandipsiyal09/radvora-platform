@@ -3,6 +3,9 @@
 import { CSSProperties, useEffect, useMemo, useState } from 'react'
 import ui from './real-device-experience.module.css'
 import ProductInterestForm from './product-interest-form'
+import { buildShieldTagSharePayload } from '../lib/shieldtag-share'
+
+// ShieldTag consumer experience. Device styling previews remain separate from compatibility verification.
 
 type Finish={id:string;name:string;base:string;edge:string;accent:string;text:string}
 type DeviceCategory='Smartphone'|'Tablet'|'Laptop'|'Accessory'
@@ -126,11 +129,7 @@ function ShieldLab({onSaved}:{onSaved:(label:string)=>void}){
   }
 
   async function shareBuild(){
-    const url=new URL(window.location.href)
-    url.searchParams.set('device',deviceId)
-    url.searchParams.set('finish',finishId)
-    url.hash='shieldlab'
-    const share={title:'My RADVORA ShieldTag build',text:`${selected.brand} ${selected.name} · ${finish.name}`,url:url.toString()}
+    const share=buildShieldTagSharePayload(window.location.origin,window.location.pathname,{deviceId,finishId,label:`${selected.brand} ${selected.name} · ${finish.name}`})
     try{
       if(navigator.share){await navigator.share(share);setMessage('Shared.')}
       else{await navigator.clipboard.writeText(share.url);setMessage('Build link copied.')}
