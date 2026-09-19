@@ -91,3 +91,12 @@
 @keyframes signal{0%{transform:scale(.35);opacity:0}20%{opacity:1}100%{transform:scale(1.45);opacity:0}}
 @media(max-width:760px){.scanStory{width:calc(100% - 28px);grid-template-columns:1fr;min-height:auto}.scanCopy{padding:82px 0 54px}.scanCopy h2{font-size:52px}.scanSteps{grid-template-columns:1fr}.scanSteps span,.scanSteps span:nth-child(2),.scanSteps span:last-child{min-height:64px;padding:12px 0;border-right:0;border-bottom:1px solid var(--line)}.scanSteps span:last-child{border-bottom:0}.scanStage{min-height:580px;margin:0 -14px}.scanPhone{width:58%}.scanBadge{right:3%;bottom:13%;transform:rotate(7deg) scale(.82)}}
 @media(prefers-reduced-motion:reduce){.scanSignal i{animation:none!important;opacity:.35}}
+
+/* Trust-to-intent editorial pass */
+.trust{gap:1px;background:var(--line);padding:1px 0;margin-top:96px}
+.trust article,.trust article:first-child{position:relative;padding:38px 34px;min-height:330px;border:0;background:#07090b;overflow:hidden}
+.trust article:after{content:"";position:absolute;width:150px;height:150px;right:-60px;bottom:-70px;border:1px solid rgba(112,225,250,.09);border-radius:50%}
+.trust span{letter-spacing:.14em}.trust h3{margin-top:74px;font-size:30px;letter-spacing:-.035em}.trust p{font-size:11px;line-height:1.72}.trust a{margin-top:26px}
+.finalCta{position:relative;overflow:hidden}.finalCta:before{content:"RADVORA";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:19vw;font-weight:900;letter-spacing:-.08em;color:rgba(255,255,255,.018);pointer-events:none}.finalCta>*{position:relative;z-index:2}
+.finalLead{max-width:620px;margin:25px auto 0;color:#87939c;font-size:12px;line-height:1.7}
+@media(max-width:760px){.trust{margin-top:64px;gap:1px}.trust article,.trust article:first-child{padding:30px 22px;min-height:270px;border:0}.trust h3{margin-top:48px;font-size:27px}.finalLead{padding:0 12px}.finalCta:before{font-size:32vw;transform:translate(-50%,-50%) rotate(-90deg)}}
