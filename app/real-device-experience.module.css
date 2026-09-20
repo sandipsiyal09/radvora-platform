@@ -157,3 +157,16 @@
 .heroActions a,.navCta,.mobileDock a{transition:transform .24s cubic-bezier(.2,.8,.2,1),box-shadow .24s ease,background .24s ease}.heroActions a:hover,.navCta:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(108,225,250,.11)}
 @media(max-width:760px){@supports(animation-timeline:view()){.statement,.formats,.lab,.finishStory,.macro,.install,.scanStory,.privacyStory,.lifeStory,.trust,.finalCta{animation-range:entry 2% cover 20%}.heroStage .deviceVisual,.labStage>.deviceVisual,.macroTag{animation:none}}}
 @media(prefers-reduced-motion:reduce){.heroStage:before,.labStage:before,.scanStage:before,.macroStage:before{animation:none!important;display:none}}
+
+/* Cinematic scene-depth pass */
+.statement,.scanStory,.privacyStory,.lifeStory,.finalCta{position:relative;isolation:isolate}
+.statement:before,.privacyStory:before,.finalCta:before{content:"";position:absolute;z-index:-1;pointer-events:none;width:min(46vw,720px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(92,218,247,.09),rgba(92,218,247,0) 68%);filter:blur(22px)}
+.statement:before{right:-14vw;top:8%}.privacyStory:before{left:-18vw;top:4%}.finalCta:before{right:-12vw;bottom:-18%}
+.formatRail,.lifeGrid,.privacyCompare{perspective:1200px}
+.formatRail article,.lifeGrid article,.privacyCompare article{transform-origin:50% 100%;transition:transform .38s cubic-bezier(.2,.8,.2,1),border-color .3s ease,background .3s ease}
+@media(hover:hover){.formatRail article:hover,.lifeGrid article:hover,.privacyCompare article:hover{transform:translateY(-6px) rotateX(1.4deg);border-color:rgba(132,231,252,.28)}}
+.scanPhone,.privacyCore{transition:transform .5s cubic-bezier(.2,.8,.2,1),filter .5s ease}
+@media(hover:hover){.scanStage:hover .scanPhone{transform:translateY(-8px) rotate(-1deg);filter:drop-shadow(0 28px 44px rgba(0,0,0,.42))}.privacyCompare:hover .privacyCore{transform:translateY(-5px);filter:drop-shadow(0 24px 44px rgba(83,218,247,.08))}}
+.finalCta:after{content:"RADVORA";position:absolute;right:-.03em;bottom:-.2em;z-index:-1;color:rgba(255,255,255,.018);font-size:clamp(120px,23vw,380px);font-weight:800;letter-spacing:-.09em;line-height:.8;pointer-events:none}
+@media(max-width:760px){.statement:before,.privacyStory:before,.finalCta:before{width:92vw;opacity:.72}.finalCta:after{font-size:36vw;bottom:.05em}.formatRail,.lifeGrid,.privacyCompare{perspective:none}}
+@media(prefers-reduced-motion:reduce){.formatRail article,.lifeGrid article,.privacyCompare article,.scanPhone,.privacyCore{transition:none!important}}
