@@ -266,3 +266,16 @@
 .cinematicProduct{opacity:clamp(0,calc((var(--cinematic-progress) - .12)*3.5),1)}
 @media(max-width:760px){.shieldTagPlate{width:52vw}.shieldTagHalo{width:92vw}.shieldTagHero{top:45%}}
 @media(prefers-reduced-motion:reduce){.shieldTagHero{position:relative;left:auto;top:auto;transform:none;opacity:1;margin:80px auto 20px}.cinematicProduct{opacity:1}.shieldTagPlate{transform:none}}
+
+
+/* Owner-to-everyday cinematic continuity */
+.privacyStory.cinematicChapter,.lifeStory.cinematicChapter{overflow:clip}
+.privacyStory.cinematicChapter:after{left:-18vw;top:6%}
+.lifeStory.cinematicChapter:after{right:-20vw;bottom:-18vw}
+.privacyStory.cinematicChapter .privacyHead,.lifeStory.cinematicChapter .lifeHead{position:relative;z-index:2}
+.privacyStory.cinematicChapter .chapterNumber,.lifeStory.cinematicChapter .chapterNumber{mix-blend-mode:screen}
+@supports(animation-timeline:view()){
+  .privacyStory.cinematicChapter .privacyCompare,.lifeStory.cinematicChapter .lifeGrid{animation:chapterContentRise linear both;animation-timeline:view();animation-range:entry 8% cover 32%}
+  @keyframes chapterContentRise{from{opacity:.35;transform:translateY(26px)}to{opacity:1;transform:none}}
+}
+@media(prefers-reduced-motion:reduce){.privacyStory.cinematicChapter .privacyCompare,.lifeStory.cinematicChapter .lifeGrid{animation:none!important}}
