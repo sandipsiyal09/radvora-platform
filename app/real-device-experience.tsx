@@ -90,8 +90,10 @@ function ShieldLab({onSaved}:{onSaved:(label:string)=>void}){
 
   useEffect(()=>{
     const url=new URL(window.location.href)
-    url.searchParams.set('device',deviceId)
-    url.searchParams.set('finish',finishId)
+    const params=new URLSearchParams()
+    params.set('device',deviceId)
+    params.set('finish',finishId)
+    url.search=params.toString()
     window.history.replaceState({},'',url)
   },[deviceId,finishId])
 
@@ -188,13 +190,10 @@ export default function RealDeviceExperience(){
           <h1>Your device.<br/><em>Still yours.</em></h1>
           <p className={ui.heroLead}>A precision identity tag designed to feel native to the device you already carry. Choose the hardware. Choose the finish. Verify the exact fit.</p>
           <div className={ui.heroActions}><a href="#shieldlab">{savedBuildLabel?'Resume your saved build':'Build your ShieldTag'}</a><a href="/compatibility">Verify exact fit</a></div>{savedBuildLabel?<p className={ui.savedBuildHint}>Saved on this device · {savedBuildLabel}</p>:null}
-          <div className={ui.heroProof}><span><b>04</b> device formats</span><span><b>08</b> finish directions</span><span><b>01</b> exact-fit check</span></div>
+          <div className={ui.heroProof}><span><b>04</b>device formats</span><span><b>08</b>finish directions</span><span><b>01</b>exact-fit check</span></div>
         </div>
-        <div className={ui.heroStage}>
-          <div className={ui.heroGlow}/>
-          <div className={ui.heroWord}>SHIELD</div>
-          <DeviceVisual device={heroDevice} finish={heroFinish} priority/>
-          <div className={ui.heroMeta}><span>Signature / Obsidian</span><b>01</b></div>
+        <div className={ui.heroStage} aria-label="RADVORA ShieldTag styling preview on Apple iPhone 17">
+          <div className={ui.heroGlow}/><DeviceVisual device={heroDevice} finish={heroFinish} priority/><span className={ui.heroWord}>SHIELD</span>
         </div>
       </section>
 
@@ -209,56 +208,30 @@ export default function RealDeviceExperience(){
           <span className={ui.eyebrow}>THE MOMENT / 02</span>
           <h2 id="scan-story-title">Tap the tag.<br/><em>Meet the owner.</em></h2>
           <p>ShieldTag is designed around a simple handoff: a device is found, its identity surface is opened, and the finder gets the owner-approved path forward.</p>
-          <div className={ui.scanSteps}>
-            <span><b>01</b>Find the device</span><span><b>02</b>Open ShieldTag</span><span><b>03</b>Use the approved contact path</span>
-          </div>
+          <div className={ui.scanSteps}><span><b>01</b>Find the device</span><span><b>02</b>Open ShieldTag</span><span><b>03</b>Use the approved contact path</span></div>
           <a href="/products">Explore ShieldTag →</a>
         </div>
         <div className={ui.scanStage} aria-hidden="true">
           <div className={ui.scanPhone}><div className={ui.scanIsland}/><div className={ui.scanScreen}><Logo/><small>RADVORA SHIELDTAG</small><b>Owner connection</b><p>Contact details appear only through the configured owner experience.</p><span>OPEN OWNER PATH</span></div></div>
-          <div className={ui.scanSignal}><i/><i/><i/></div>
-          <div className={ui.scanBadge}><Tag finish={finishes[0]} label="SIGNATURE"/></div>
+          <div className={ui.scanSignal}><i/><i/><i/></div><div className={ui.scanBadge}><Tag finish={finishes[0]} label="SIGNATURE"/></div>
         </div>
       </section>
 
       <section className={ui.formats} id="formats">
-        <div className={ui.sectionIntro}><span className={ui.eyebrow}>THE SYSTEM</span><h2>Four proportions.<br/><em>One identity.</em></h2></div>
-        <div className={ui.formatRail}>{formats.map((item,index)=><article key={item.name}>
-          <span>{item.n}</span>
-          <div className={ui.formatVisual}><Tag finish={finishes[index]} label={item.name.toUpperCase()}/></div>
-          <small>{item.device}</small>
-          <h3>ShieldTag {item.name}</h3>
-          <p>{item.copy}</p>
-          <a href="#shieldlab">Build this format →</a>
-        </article>)}</div>
+        <div className={ui.sectionHead}><span className={ui.eyebrow}>FORM FACTOR / 03</span><h2>Built to belong<br/>on the object.</h2><p>Four ShieldTag expressions keep the visual language consistent while respecting the scale of different device classes.</p></div>
+        <div className={ui.formatRail}>{formats.map((item,i)=><article key={item.name}><span>{item.n}</span><div className={ui.formatTag} style={{'--scale':`${1-i*.11}`} as CSSProperties}><Tag finish={finishes[i]} label={item.name.toUpperCase()}/></div><small>{item.device}</small><h3>{item.name}</h3><p>{item.copy}</p></article>)}</div>
       </section>
 
       <ShieldLab onSaved={setSavedBuildLabel}/>
 
       <section className={ui.finishStory} id="finishes">
-        <div className={ui.sectionIntro}><span className={ui.eyebrow}>FINISH STUDIO</span><h2>Blend in.<br/><em>Or stand apart.</em></h2><p>Eight visual directions let the ShieldTag disappear into the hardware or become the deliberate contrast.</p></div>
-        <div className={ui.finishShowcase}>{finishes.map((finish,index)=><article key={finish.id}>
-          <span>0{index+1}</span>
-          <div className={ui.finishMacro}><Tag finish={finish} label="SHIELDTAG"/></div>
-          <h3>{finish.name}</h3>
-        </article>)}</div>
+        <div className={ui.sectionHead}><span className={ui.eyebrow}>MATERIAL / 04</span><h2>Finish is part<br/>of the device.</h2><p>Neutral, metallic and expressive directions let the tag disappear into the hardware or become its deliberate signature.</p></div>
+        <div className={ui.finishShowcase}>{finishes.slice(0,4).map((finish,i)=><article key={finish.id} style={{'--finish-bg':finish.base,'--finish-edge':finish.edge} as CSSProperties}><span>0{i+1}</span><div><Tag finish={finish} label="SIGNATURE"/></div><h3>{finish.name}</h3></article>)}</div>
       </section>
 
-      <section className={ui.macro}>
-        <div className={ui.macroCopy}><span className={ui.eyebrow}>CLOSE-UP</span><h2>Small object.<br/>Serious presence.</h2><p>Every visible detail in the preview is about proportion, finish direction and the way the identity mark sits beside the device—not about unsupported performance claims.</p></div>
-        <div className={ui.macroStage}>
-          <div className={ui.macroTag}><Tag finish={finishes[1]} label="EXECUTIVE"/></div>
-          <div className={ui.macroCalloutOne}><b>01</b><span>Face finish</span></div>
-          <div className={ui.macroCalloutTwo}><b>02</b><span>Perimeter profile</span></div>
-          <div className={ui.macroCalloutThree}><b>03</b><span>Identity line</span></div>
-        </div>
-      </section>
+      <section className={ui.macro}><div className={ui.macroCopy}><span className={ui.eyebrow}>DETAIL / 05</span><h2>Designed at<br/>the edge.</h2><p>The visual system uses a fine perimeter, layered face and restrained identity mark so the tag reads like hardware rather than a sticker.</p></div><div className={ui.macroStage}><div className={ui.macroTag}><Tag finish={finishes[1]} label="SIGNATURE"/></div><span>EDGE / FACE / IDENTITY</span></div></section>
 
-      <section className={ui.install}>
-        <div><span className={ui.eyebrow}>INSTALLATION</span><h2>Clean. Align. Press.</h2></div>
-        <p>Keep cameras, vents, ports, controls, hinges and charging contacts clear. Confirm the exact model before relying on placement guidance.</p>
-        <a href="/installation">See installation guide →</a>
-      </section>
+      <section className={ui.install}><div><span className={ui.eyebrow}>PLACEMENT / 06</span><h2>A deliberate<br/>final position.</h2><p>Preview the visual language here, then confirm the exact supported device and fit before purchase.</p><a href="/compatibility">Verify your exact model →</a></div><div className={ui.installDiagram} aria-hidden="true"><div className={ui.installPhone}/><div className={ui.installGuide}/><div className={ui.installTag}><Tag finish={finishes[2]} label="SIGNATURE"/></div><span>ALIGN</span></div></section>
 
       <section className={ui.privacyStory} aria-labelledby="privacy-story-title">
         <div className={ui.privacyHead}><span className={ui.eyebrow}>OWNER CONTROL / 03</span><h2 id="privacy-story-title">A finder gets a path.<br/><em>Not your whole profile.</em></h2><p>The public interaction is framed around the owner-configured experience. What is available to a finder depends on that configured path; the design does not promise automatic disclosure of private details.</p></div>
@@ -270,13 +243,12 @@ export default function RealDeviceExperience(){
       </section>
 
       <section className={ui.lifeStory} aria-labelledby="life-story-title">
-        <div className={ui.lifeIntro}><span className={ui.eyebrow}>BUILT FOR THE THINGS YOU CARRY / 03</span><h2 id="life-story-title">One identity language.<br/><em>Across your everyday tech.</em></h2><p>Explore the ShieldTag look across the devices and accessories already represented in ShieldLab. Exact compatibility remains a separate verification step.</p></div>
-        <div className={ui.lifeRail}>
-          <article><span>PHONE</span><h3>Always with you.</h3><p>A restrained identity detail for the device that rarely leaves your hand.</p><div className={ui.lifeObject}><i className={ui.lifePhone}/><b>01</b></div></article>
-          <article><span>LAPTOP</span><h3>Work, without the label look.</h3><p>A proportion designed to sit quietly with premium hardware.</p><div className={ui.lifeObject}><i className={ui.lifeLaptop}/><b>02</b></div></article>
-          <article><span>ACCESSORIES</span><h3>Small objects. Same system.</h3><p>Carry the same visual identity into selected technology accessories.</p><div className={ui.lifeObject}><i className={ui.lifeCase}/><b>03</b></div></article>
+        <div className={ui.lifeHead}><span className={ui.eyebrow}>EVERYDAY TECH / 07</span><h2 id="life-story-title">One visual language.<br/><em>Across what you carry.</em></h2><p>ShieldTag is conceived as a family of identity details for personal technology. These scenes show the design intent; exact compatibility remains a separate verification step.</p></div>
+        <div className={ui.lifeGrid}>
+          <article className={ui.lifePhone}><div className={ui.lifeDevice}><div className={ui.lifePhoneBody}><span/><div><Tag finish={finishes[0]} label="SIGNATURE"/></div></div></div><div className={ui.lifeCopy}><small>PHONE / DAILY CARRY</small><h3>The thing you reach for first.</h3><p>A compact identity detail intended to sit quietly with the phone rather than compete with it.</p></div></article>
+          <article className={ui.lifeLaptop}><div className={ui.lifeDevice}><div className={ui.lifeLaptopLid}><Logo/><div><Tag finish={finishes[1]} label="EXECUTIVE"/></div></div></div><div className={ui.lifeCopy}><small>LAPTOP / WORKDAY</small><h3>Professional, not promotional.</h3><p>The wider format is styled as a restrained hardware plaque for the computer that moves between work and travel.</p></div></article>
+          <article className={ui.lifeAccessory}><div className={ui.lifeDevice}><div className={ui.lifeCase}><i/><div><Tag finish={finishes[2]} label="MINI"/></div></div></div><div className={ui.lifeCopy}><small>ACCESSORIES / SMALL TECH</small><h3>The same identity, scaled down.</h3><p>A smaller visual expression keeps compact personal technology inside the same ShieldTag language.</p></div></article>
         </div>
-        <a className={ui.lifeAction} href="#shieldlab">See your device in ShieldLab →</a>
       </section>
 
       <section className={ui.trust} aria-label="ShieldTag trust principles">
@@ -285,20 +257,10 @@ export default function RealDeviceExperience(){
         <article><span>03 / OWNERSHIP</span><h3>Make the build yours.</h3><p>Save your device-and-finish combination, return to it later, or share the same build without changing its fit status.</p><a href="#shieldlab">Build and save yours →</a></article>
       </section>
 
-      <section className={ui.finalCta}>
-        <span className={ui.eyebrow}>MAKE IT YOURS / 04</span>
-        <h2>See it on your device.<br/><em>Then decide.</em></h2>
-        <p className={ui.finalLead}>Start with the look. Verify the exact model. Check governed availability only when you are ready.</p>
-        <div><a href="#shieldlab">Build your ShieldTag</a><a href="/compatibility">Verify exact fit</a></div>
-      </section>
+      <section className={ui.finalCta}><span className={ui.eyebrow}>MAKE IT YOURS / 04</span><h2>See it on your device.<br/><em>Then decide.</em></h2><p className={ui.finalLead}>Start with the look. Verify the exact model. Check governed availability only when you are ready.</p><div><a href="#shieldlab">Build your ShieldTag</a><a href="/compatibility">Verify exact fit</a></div></section>
     </main>
 
-    <nav className={ui.mobileDock} aria-label="Mobile quick actions"><a href="#shieldlab">{savedBuildLabel?'Resume build':'Build yours'}</a><a href="/account">My RADVORA</a></nav>
-
-    <footer className={ui.footer}>
-      <a className={ui.brand} href="/" aria-label="RADVORA home"><Logo/><span><b>RADVORA</b><small>SHIELDTAG</small></span></a>
-      <nav aria-label="Footer"><a href="/products">Products</a><a href="/compatibility">Compatibility</a><a href="/account">My RADVORA</a><a href="/research">Research</a><a href="/support">Support</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a></nav>
-      <p>Device names and imagery explain styling context only. No manufacturer affiliation or endorsement is implied.</p>
-    </footer>
+    <footer className={ui.footer}><div><Logo/><b>RADVORA</b></div><p>Device names and imagery explain styling context only. No manufacturer affiliation or endorsement is implied.</p><nav><a href="/products">Products</a><a href="/compatibility">Compatibility</a><a href="/support">Support</a><a href="/privacy">Privacy</a></nav></footer>
+    <div className={ui.mobileDock} aria-label="ShieldTag quick actions"><a href="#shieldlab">Build yours</a><a href="/compatibility">Verify fit</a></div>
   </div>
 }
