@@ -239,3 +239,16 @@
 .utilityLab{width:min(1420px,90vw);margin:100px auto 0;padding-top:100px;border-top:1px solid var(--line)}.utilityLab .linkResolver{width:100%;margin:0}
 @media(max-width:760px){.cinematicOpening{height:300vh}.cinematicSticky{top:62px;height:calc(100vh - 62px)}.cinematicProduct{width:110vw;height:64vh;top:43%;}.cinematicCopy{left:6vw;right:6vw;bottom:7vh;width:auto}.cinematicCopy h1{font-size:clamp(54px,17vw,86px)}.cinematicCopy>p{max-width:88%;font-size:11px}.cinematicFinal{left:6vw;right:6vw;bottom:8vh;width:auto;text-align:left}.cinematicFinal strong{font-size:clamp(46px,14vw,72px)}.cinematicWords b{font-size:24vw}.cinematicIndex{left:6vw}.utilityLab{margin-top:70px;padding-top:70px}}
 @media(prefers-reduced-motion:reduce){.cinematicOpening{height:auto}.cinematicSticky{position:relative;top:auto;min-height:820px}.cinematicProduct{transform:translate(-50%,-50%);filter:none}.cinematicCopy{opacity:1;transform:none}.cinematicFinal{opacity:1;transform:none}.cinematicWords b,.cinematicWords b:nth-child(2){transform:none}}
+
+/* Continuous chapter handoff after the cinematic opening */
+.cinematicChapter,.labChapter{position:relative;isolation:isolate}
+.cinematicChapter{overflow:clip}
+.chapterLine{position:absolute;z-index:12;left:50%;top:-1px;width:1px;height:clamp(72px,10vw,150px);background:linear-gradient(to bottom,var(--cyan),rgba(118,230,255,.12),transparent);transform-origin:top;animation:chapterPulse 3.8s ease-in-out infinite}
+.chapterNumber{position:absolute;z-index:1;right:2vw;top:1vw;font-size:clamp(100px,18vw,300px);line-height:.8;font-weight:900;letter-spacing:-.09em;color:rgba(255,255,255,.018);pointer-events:none}
+.cinematicChapter:after,.labChapter:after{content:"";position:absolute;z-index:-1;width:46vw;height:46vw;max-width:720px;max-height:720px;border-radius:50%;background:rgba(91,215,242,.045);filter:blur(90px);pointer-events:none}
+.scanStory:after{right:-18vw;bottom:-20vw}.formats:after{left:-20vw;top:10%}.finishStory:after{right:-22vw;top:8%}.macro:after{left:-18vw;bottom:-20vw}
+.labChapter{background:#080b0f}.labChapter>.chapterLine{top:0}.labChapter>.chapterNumber{top:3vw;right:3vw;z-index:2}
+@keyframes chapterPulse{0%,100%{opacity:.28;transform:scaleY(.55)}50%{opacity:.9;transform:scaleY(1)}}
+@supports(animation-timeline:view()){.cinematicChapter>.chapterLine,.labChapter>.chapterLine{animation:chapterDraw linear both;animation-timeline:view();animation-range:entry 0% cover 38%}@keyframes chapterDraw{from{opacity:0;transform:scaleY(0)}to{opacity:1;transform:scaleY(1)}}}
+@media(max-width:760px){.chapterNumber{right:3vw;top:3vw;font-size:34vw}.chapterLine{left:7vw;height:76px}.labChapter>.chapterLine{left:7vw}}
+@media(prefers-reduced-motion:reduce){.chapterLine{animation:none;opacity:.5}}
