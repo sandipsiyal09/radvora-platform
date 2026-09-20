@@ -44,7 +44,7 @@ async function request(url:URL,method:'HEAD'|'GET'){
 export async function POST(req:NextRequest){
   try{
     const body=await req.json().catch(()=>null) as {url?:unknown}|null
-    if(typeof body?.url!=='string')return NextResponse.json({ok:false,error:{code:'INVALID_URL',message:'Enter a valid URL.'}},{status:400})
+    if(typeof body?.url!=='string')return NextResponse.json({ok:false,error:{code:'INVALID_URL',message:'Enter a valid URL.'}},{status:400,headers:{'cache-control':'no-store'}})
     const input=body.url.trim()
     if(!input||input.length>2048||/[\\u0000-\\u001f\\u007f]/.test(input))return NextResponse.json({ok:false,error:{code:'INVALID_URL',message:'Enter a valid URL.'}},{status:400})
     let current=new URL(input)
@@ -71,6 +71,6 @@ export async function POST(req:NextRequest){
   }catch(error){
     const code=error instanceof Error?error.message:'RESOLUTION_FAILED'
     const status=['INVALID_URL','UNSUPPORTED_PROTOCOL','EMBEDDED_CREDENTIALS','RESTRICTED_HOST'].includes(code)?400:422
-    return NextResponse.json({ok:false,error:{code,message:'This link could not be safely resolved.'}},{status})
+    return NextResponse.json({ok:false,error:{code,message:'This link could not be safely resolved.'}},{status,headers:{'cache-control':'no-store','x-content-type-options':'nosniff'}})
   }
 }
