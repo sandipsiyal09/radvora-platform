@@ -71,6 +71,7 @@ function ShieldLab({onSaved}:{onSaved:(label:string)=>void}){
   const stageRef=useRef<HTMLDivElement>(null)
   const visualRef=useRef<HTMLDivElement>(null)
   const previousSelection=useRef(`${deviceId}:${finishId}`)
+  const pendingFlip=useRef<ReturnType<typeof Flip.getState>|null>(null)
 
   const selected=useMemo(()=>devices.find(item=>item.id===deviceId)??devices[0],[deviceId])
   const finish=useMemo(()=>finishes.find(item=>item.id===finishId)??finishes[1],[finishId])
@@ -104,9 +105,10 @@ function ShieldLab({onSaved}:{onSaved:(label:string)=>void}){
     const visual=visualRef.current
     const stage=stageRef.current
     if(!visual||!stage)return
-    const state=Flip.getState(visual)
+    const state=pendingFlip.current
+    pendingFlip.current=null
     gsap.killTweensOf([visual,stage])
-    Flip.from(state,{duration:.62,ease:'power3.inOut',absolute:false,scale:true})
+    if(state)Flip.from(state,{duration:.62,ease:'power3.inOut',absolute:false,scale:true})
     gsap.fromTo(visual,{opacity:.58,scale:.965,y:12},{opacity:1,scale:1,y:0,duration:.58,ease:'power3.out',clearProps:'opacity,scale,y'})
     gsap.fromTo(stage,{filter:'brightness(.9)'},{filter:'brightness(1)',duration:.7,ease:'power2.out',clearProps:'filter'})
   },[deviceId,finishId])
@@ -139,9 +141,17 @@ function ShieldLab({onSaved}:{onSaved:(label:string)=>void}){
     event.currentTarget.style.setProperty('--light-y','45%')
   }
 
+  function captureFlip(){
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return
+    if(visualRef.current)pendingFlip.current=Flip.getState(visualRef.current)
+  }
+
+  function chooseDevice(id:string){captureFlip();setDeviceId(id)}
+  function chooseFinish(id:string){captureFlip();setFinishId(id)}
+
   function chooseCategory(category:DeviceCategory){
     const first=devices.find(item=>item.category===category)
-    if(first)setDeviceId(first.id)
+    if(first)chooseDevice(first.id)
   }
 
   function saveBuild(){
@@ -174,8 +184,8 @@ function ShieldLab({onSaved}:{onSaved:(label:string)=>void}){
       <div className={ui.categoryTabs} role="tablist" aria-label="Device categories">
         {(['Smartphone','Tablet','Laptop','Accessory'] as DeviceCategory[]).map(category=><button type="button" role="tab" aria-selected={selected.category===category} key={category} onClick={()=>chooseCategory(category)}>{category}</button>)}
       </div>
-      <label className={ui.deviceSelect}><span>DEVICE</span><select value={selected.id} onChange={e=>setDeviceId(e.target.value)}>{categoryDevices.map(device=><option key={device.id} value={device.id}>{device.brand} · {device.name}</option>)}</select></label>
-      <div className={ui.finishGrid} aria-label="Finish selector">{finishes.map(item=><button type="button" key={item.id} aria-pressed={finishId===item.id} onClick={()=>setFinishId(item.id)}><i style={{'--swatch':item.base,'--edge':item.edge} as CSSProperties}/><span>{item.name}</span></button>)}</div>
+      <label className={ui.deviceSelect}><span>DEVICE</span><select value={selected.id} onChange={e=>chooseDevice(e.target.value)}>{categoryDevices.map(device=><option key={device.id} value={device.id}>{device.brand} · {device.name}</option>)}</select></label>
+      <div className={ui.finishGrid} aria-label="Finish selector">{finishes.map(item=><button type="button" key={item.id} aria-pressed={finishId===item.id} onClick={()=>chooseFinish(item.id)}><i style={{'--swatch':item.base,'--edge':item.edge} as CSSProperties}/><span>{item.name}</span></button>)}</div>
       <div className={ui.labActions}><button type="button" onClick={saveBuild}>Save build</button><button type="button" onClick={shareBuild}>Share build</button><a href="/compatibility">Verify fit →</a></div>
       <p className={ui.labStatus} role="status" aria-live="polite">{message||'Your device and finish are encoded in the page link.'}</p>
       <ProductInterestForm source="shieldlab-interest" context={`${selected.brand} ${selected.name} · ${finish.name}`} compact/>
