@@ -313,7 +313,7 @@ export default function RealDeviceExperience(){
       </section>
 
       <section className={`${ui.statement} ${ui.cinematicChapter}`} id="story"><span className={ui.chapterLine} aria-hidden="true"/><span className={ui.chapterNumber} aria-hidden="true">01</span>
-        <span className={ui.eyebrow}>DESIGN PRINCIPLE / 02</span>
+        <span className={ui.eyebrow}>DESIGN PRINCIPLE / 01</span>
         <h2>Not an accessory.<br/><em>A finishing detail.</em></h2>
         <p>Quiet enough to belong. Distinct enough to make the device unmistakably yours.</p>
       </section>
