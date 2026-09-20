@@ -4,6 +4,7 @@ import { isIP } from 'node:net'
 
 const MAX_REDIRECTS=5
 const TIMEOUT_MS=6500
+const SAFE_RESPONSE_HEADERS={'cache-control':'no-store','x-content-type-options':'nosniff'} as const
 
 function blockedIp(ip:string):boolean{
   const v=isIP(ip)
@@ -44,9 +45,9 @@ async function request(url:URL,method:'HEAD'|'GET'){
 export async function POST(req:NextRequest){
   try{
     const body=await req.json().catch(()=>null) as {url?:unknown}|null
-    if(typeof body?.url!=='string')return NextResponse.json({ok:false,error:{code:'INVALID_URL',message:'Enter a valid URL.'}},{status:400,headers:{'cache-control':'no-store'}})
+    if(typeof body?.url!=='string')return NextResponse.json({ok:false,error:{code:'INVALID_URL',message:'Enter a valid URL.'}},{status:400,headers:SAFE_RESPONSE_HEADERS})
     const input=body.url.trim()
-    if(!input||input.length>2048||/[\\u0000-\\u001f\\u007f]/.test(input))return NextResponse.json({ok:false,error:{code:'INVALID_URL',message:'Enter a valid URL.'}},{status:400})
+    if(!input||input.length>2048||/[\u0000-\u001f\u007f]/.test(input))return NextResponse.json({ok:false,error:{code:'INVALID_URL',message:'Enter a valid URL.'}},{status:400,headers:SAFE_RESPONSE_HEADERS})
     let current=new URL(input)
     const seen=new Set<string>()
     const redirects:string[]=[]
@@ -65,12 +66,12 @@ export async function POST(req:NextRequest){
         redirects.push(next.href); current=next; continue
       }
       if(!res.ok)throw new Error('UPSTREAM_ERROR')
-      return NextResponse.json({ok:true,url:current.href,redirects,status:res.status,contentType:res.headers.get('content-type')},{headers:{'cache-control':'no-store','x-content-type-options':'nosniff'}})
+      return NextResponse.json({ok:true,url:current.href,redirects,status:res.status,contentType:res.headers.get('content-type')},{headers:SAFE_RESPONSE_HEADERS})
     }
     throw new Error('TOO_MANY_REDIRECTS')
   }catch(error){
     const code=error instanceof Error?error.message:'RESOLUTION_FAILED'
     const status=['INVALID_URL','UNSUPPORTED_PROTOCOL','EMBEDDED_CREDENTIALS','RESTRICTED_HOST'].includes(code)?400:422
-    return NextResponse.json({ok:false,error:{code,message:'This link could not be safely resolved.'}},{status,headers:{'cache-control':'no-store','x-content-type-options':'nosniff'}})
+    return NextResponse.json({ok:false,error:{code,message:'This link could not be safely resolved.'}},{status,headers:SAFE_RESPONSE_HEADERS})
   }
 }
