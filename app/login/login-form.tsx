@@ -22,7 +22,7 @@ export default function LoginForm(){
       })
       const result=await response.json().catch(()=>({})) as {message?:string;error?:string}
       if(!response.ok){setMessage(result.error||'Unable to send the sign-in link right now. Please try again shortly.');return}
-      setMessage(result.message||'Check your email for the secure sign-in link.')
+      setMessage(result.message||'If the email can receive RADVORA sign-in links, check your inbox shortly.')
     }catch{
       setMessage('Unable to send the sign-in link right now. Please try again shortly.')
     }finally{
