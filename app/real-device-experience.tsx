@@ -348,7 +348,7 @@ export default function RealDeviceExperience(){
 
       <section className={ui.install}><div><span className={ui.eyebrow}>PLACEMENT / 06</span><h2>A deliberate<br/>final position.</h2><p>Preview the visual language here, then confirm the exact supported device and fit before purchase.</p><a href="/compatibility">Verify your exact model →</a></div><div className={ui.installDiagram} aria-hidden="true"><div className={ui.installPhone}/><div className={ui.installGuide}/><div className={ui.installTag}><Tag finish={finishes[2]} label="SIGNATURE"/></div><span>ALIGN</span></div></section>
 
-      <section className={ui.privacyStory} aria-labelledby="privacy-story-title">
+      <section className={`${ui.privacyStory} ${ui.cinematicChapter}`} aria-labelledby="privacy-story-title"><span className={ui.chapterLine} aria-hidden="true"/><span className={ui.chapterNumber} aria-hidden="true">07</span>
         <div className={ui.privacyHead}><span className={ui.eyebrow}>OWNER CONTROL / 03</span><h2 id="privacy-story-title">A finder gets a path.<br/><em>Not your whole profile.</em></h2><p>The public interaction is framed around the owner-configured experience. What is available to a finder depends on that configured path; the design does not promise automatic disclosure of private details.</p></div>
         <div className={ui.privacyCompare}>
           <article><small>FINDER EXPERIENCE</small><h3>A clear next step.</h3><p>ShieldTag can direct the finder into the configured owner experience so they know how to proceed.</p><span>OWNER-CONFIGURED PATH</span></article>
@@ -357,7 +357,7 @@ export default function RealDeviceExperience(){
         </div>
       </section>
 
-      <section className={ui.lifeStory} aria-labelledby="life-story-title">
+      <section className={`${ui.lifeStory} ${ui.cinematicChapter}`} aria-labelledby="life-story-title"><span className={ui.chapterLine} aria-hidden="true"/><span className={ui.chapterNumber} aria-hidden="true">08</span>
         <div className={ui.lifeHead}><span className={ui.eyebrow}>EVERYDAY TECH / 07</span><h2 id="life-story-title">One visual language.<br/><em>Across what you carry.</em></h2><p>ShieldTag is conceived as a family of identity details for personal technology. These scenes show the design intent; exact compatibility remains a separate verification step.</p></div>
         <div className={ui.lifeGrid}>
           <article className={ui.lifePhone}><div className={ui.lifeDevice}><div className={ui.lifePhoneBody}><span/><div><Tag finish={finishes[0]} label="SIGNATURE"/></div></div></div><div className={ui.lifeCopy}><small>PHONE / DAILY CARRY</small><h3>The thing you reach for first.</h3><p>A compact identity detail intended to sit quietly with the phone rather than compete with it.</p></div></article>
