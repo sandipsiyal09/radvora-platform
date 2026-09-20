@@ -200,19 +200,26 @@ function LinkResolver(){
   const [result,setResult]=useState<{url?:string;redirects?:string[];error?:string}>({})
   const cardRef=useRef<HTMLDivElement>(null)
   const resultRef=useRef<HTMLDivElement>(null)
+  const requestRef=useRef<AbortController|null>(null)
 
   async function resolveLink(event:React.FormEvent){
     event.preventDefault()
     if(!value.trim())return
     const card=cardRef.current
     const flip=card&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches?Flip.getState(card):null
+    requestRef.current?.abort()
+    const controller=new AbortController()
+    requestRef.current=controller
     setState('loading');setResult({})
     try{
-      const response=await fetch('/api/link/resolve',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url:value.trim()})})
+      const response=await fetch('/api/link/resolve',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url:value.trim()}),signal:controller.signal})
       const data=await response.json() as {ok:boolean;url?:string;redirects?:string[];error?:{message?:string}}
       if(!response.ok||!data.ok)throw new Error(data.error?.message||'This link could not be resolved.')
       setResult({url:data.url,redirects:data.redirects});setState('success')
-    }catch(error){setResult({error:error instanceof Error?error.message:'This link could not be resolved.'});setState('error')}
+    }catch(error){
+      if(controller.signal.aborted)return
+      setResult({error:error instanceof Error?error.message:'This link could not be resolved.'});setState('error')
+    }finally{if(requestRef.current===controller)requestRef.current=null}
     requestAnimationFrame(()=>{
       if(flip&&cardRef.current)Flip.from(flip,{duration:.55,ease:'power3.inOut',absolute:false,scale:true})
       resultRef.current?.focus()
