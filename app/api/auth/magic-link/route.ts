@@ -6,6 +6,7 @@ export const maxDuration=10
 
 const MAX_BODY_BYTES=2048
 const EMAIL=/^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const GENERIC_AUTH_MESSAGE='If the email can receive RADVORA sign-in links, check your inbox shortly.'
 
 function json(body:Record<string,unknown>,status=200){
   return NextResponse.json(body,{status,headers:{
@@ -92,5 +93,5 @@ export async function POST(request:Request){
     return json({error:'Unable to send the sign-in link right now. Please try again shortly.'},503)
   }
 
-  return json({ok:true,message:'Check your email for the secure sign-in link.'},202)
+  return json({ok:true,message:GENERIC_AUTH_MESSAGE},202)
 }
