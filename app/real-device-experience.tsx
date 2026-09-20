@@ -249,6 +249,7 @@ export default function RealDeviceExperience(){
   const heroDevice=devices[0]
   const heroFinish=finishes[0]
   const [savedBuildLabel,setSavedBuildLabel]=useState<string|null>(null)
+  const cinematicRef=useRef<HTMLDivElement>(null)
 
   useEffect(()=>{
     const params=new URLSearchParams(window.location.search)
@@ -259,6 +260,21 @@ export default function RealDeviceExperience(){
       const savedFinish=saved?.finishId?finishes.find(item=>item.id===saved.finishId):undefined
       if(savedDevice&&savedFinish)setSavedBuildLabel(`${savedDevice.brand} ${savedDevice.name} · ${savedFinish.name}`)
     }catch{}
+  },[])
+
+  useEffect(()=>{
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return
+    const root=cinematicRef.current
+    if(!root)return
+    const update=()=>{
+      const rect=root.getBoundingClientRect()
+      const travel=Math.max(1,rect.height-window.innerHeight)
+      const progress=Math.min(1,Math.max(0,-rect.top/travel))
+      root.style.setProperty('--cinematic-progress',String(progress))
+      root.style.setProperty('--cinematic-shift',`${progress*100}%`)
+    }
+    update(); window.addEventListener('scroll',update,{passive:true}); window.addEventListener('resize',update)
+    return()=>{window.removeEventListener('scroll',update);window.removeEventListener('resize',update)}
   },[])
 
   function transitionRoute(event:MouseEvent<HTMLAnchorElement>){
@@ -279,23 +295,25 @@ export default function RealDeviceExperience(){
     </header>
 
     <main>
-      <section className={ui.hero}>
-        <div className={ui.heroCopy}>
-          <span className={ui.eyebrow}>RADVORA / SHIELDTAG</span>
-          <h1>Your device.<br/><em>Still yours.</em></h1>
-          <p className={ui.heroLead}>A precision identity tag designed to feel native to the device you already carry. Choose the hardware. Choose the finish. Verify the exact fit.</p>
-          <div className={ui.heroActions}><a href="#shieldlab">{savedBuildLabel?'Resume your saved build':'Build your ShieldTag'}</a><a href="/compatibility">Verify exact fit</a></div>{savedBuildLabel?<p className={ui.savedBuildHint}>Saved on this device · {savedBuildLabel}</p>:null}
-          <div className={ui.heroProof}><span><b>04</b>device formats</span><span><b>08</b>finish directions</span><span><b>01</b>exact-fit check</span></div>
-        </div>
-        <div className={ui.heroStage} aria-label="RADVORA ShieldTag styling preview on Apple iPhone 17">
-          <div className={ui.heroGlow}/><DeviceVisual device={heroDevice} finish={heroFinish} priority/><span className={ui.heroWord}>SHIELD</span>
+      <section ref={cinematicRef} className={ui.cinematicOpening} aria-label="RADVORA ShieldTag introduction">
+        <div className={ui.cinematicSticky}>
+          <div className={ui.cinematicAtmosphere}/><span className={ui.cinematicIndex}>RADVORA / 01</span>
+          <div className={ui.cinematicWords} aria-hidden="true"><b>YOUR DEVICE.</b><b>YOUR IDENTITY.</b><b>YOUR SHIELD.</b></div>
+          <div className={ui.cinematicProduct}><DeviceVisual device={heroDevice} finish={heroFinish} priority/></div>
+          <div className={ui.cinematicCopy}>
+            <span className={ui.eyebrow}>RADVORA / SHIELDTAG</span>
+            <h1>Your device.<br/><em>Still yours.</em></h1>
+            <p>A precision identity detail designed to become part of the hardware—not another thing competing with it.</p>
+            <div className={ui.heroActions}><a href="#shieldlab">{savedBuildLabel?'Resume your saved build':'Build your ShieldTag'}</a><a href="/compatibility" onClick={transitionRoute}>Verify exact fit</a></div>
+            {savedBuildLabel?<p className={ui.savedBuildHint}>Saved on this device · {savedBuildLabel}</p>:null}
+          </div>
+          <div className={ui.cinematicFinal}><small>ONE VISUAL LANGUAGE</small><strong>ONE SHIELD.<br/>EVERY DEVICE.</strong><a href="#story">Discover ↓</a></div>
+          <span className={ui.cinematicMark}>RADVORA</span>
         </div>
       </section>
 
-      <LinkResolver/>
-
-      <section className={ui.statement}>
-        <span className={ui.eyebrow}>DESIGN PRINCIPLE / 01</span>
+      <section className={ui.statement} id="story">
+        <span className={ui.eyebrow}>DESIGN PRINCIPLE / 02</span>
         <h2>Not an accessory.<br/><em>A finishing detail.</em></h2>
         <p>Quiet enough to belong. Distinct enough to make the device unmistakably yours.</p>
       </section>
@@ -353,6 +371,8 @@ export default function RealDeviceExperience(){
         <article><span>02 / COMMERCE</span><h3>Buy only from live data.</h3><p>Price, tax, stock and checkout are shown only when approved commerce data is available for the product.</p><a href="/products">View current availability →</a></article>
         <article><span>03 / OWNERSHIP</span><h3>Make the build yours.</h3><p>Save your device-and-finish combination, return to it later, or share the same build without changing its fit status.</p><a href="#shieldlab">Build and save yours →</a></article>
       </section>
+
+      <section className={ui.utilityLab}><LinkResolver/></section>
 
       <section className={ui.finalCta}><span className={ui.eyebrow}>MAKE IT YOURS / 04</span><h2>See it on your device.<br/><em>Then decide.</em></h2><p className={ui.finalLead}>Start with the look. Verify the exact model. Check governed availability only when you are ready.</p><div><a href="#shieldlab">Build your ShieldTag</a><a href="/compatibility">Verify exact fit</a></div></section>
     </main>
