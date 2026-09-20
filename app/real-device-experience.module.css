@@ -170,3 +170,17 @@
 .finalCta:after{content:"RADVORA";position:absolute;right:-.03em;bottom:-.2em;z-index:-1;color:rgba(255,255,255,.018);font-size:clamp(120px,23vw,380px);font-weight:800;letter-spacing:-.09em;line-height:.8;pointer-events:none}
 @media(max-width:760px){.statement:before,.privacyStory:before,.finalCta:before{width:92vw;opacity:.72}.finalCta:after{font-size:36vw;bottom:.05em}.formatRail,.lifeGrid,.privacyCompare{perspective:none}}
 @media(prefers-reduced-motion:reduce){.formatRail article,.lifeGrid article,.privacyCompare article,.scanPhone,.privacyCore{transition:none!important}}
+
+/* Continuous scene handoff */
+.statement,.formats,.lab,.finishStory,.macro,.scanStory,.privacyStory,.lifeStory,.trust,.finalCta{scroll-margin-top:64px}
+.statement:after,.formats:after,.finishStory:after,.scanStory:after,.privacyStory:after,.lifeStory:after{content:"";position:absolute;left:50%;bottom:-42px;width:1px;height:84px;z-index:4;background:linear-gradient(180deg,transparent,rgba(126,230,251,.28),transparent);pointer-events:none}
+.formats,.finishStory,.scanStory,.privacyStory,.lifeStory{position:relative}
+.lab{position:relative}.lab:after{content:"SHIELDTAG / CONTINUUM";position:absolute;z-index:3;right:18px;bottom:14px;color:rgba(255,255,255,.12);font-size:7px;letter-spacing:.22em;pointer-events:none}
+@supports(animation-timeline:view()){
+ .statement:after,.formats:after,.finishStory:after,.scanStory:after,.privacyStory:after,.lifeStory:after{animation:handoffLine linear both;animation-timeline:view();animation-range:exit 0% exit 42%}
+ .finalCta:after{animation:endWord linear both;animation-timeline:view();animation-range:entry 0% cover 52%}
+}
+@keyframes handoffLine{from{opacity:0;transform:scaleY(.15)}to{opacity:1;transform:scaleY(1)}}
+@keyframes endWord{from{opacity:0;transform:translateX(7%)}to{opacity:1;transform:none}}
+@media(max-width:760px){.statement:after,.formats:after,.finishStory:after,.scanStory:after,.privacyStory:after,.lifeStory:after{height:56px;bottom:-28px}.lab:after{right:10px;bottom:8px;font-size:6px}}
+@media(prefers-reduced-motion:reduce){.statement:after,.formats:after,.finishStory:after,.scanStory:after,.privacyStory:after,.lifeStory:after,.finalCta:after{animation:none!important}}
