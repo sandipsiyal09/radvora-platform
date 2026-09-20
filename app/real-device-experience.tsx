@@ -299,7 +299,7 @@ export default function RealDeviceExperience(){
         <div className={ui.cinematicSticky}>
           <div className={ui.cinematicAtmosphere}/><span className={ui.cinematicIndex}>RADVORA / 01</span>
           <div className={ui.cinematicWords} aria-hidden="true"><b>YOUR DEVICE.</b><b>YOUR IDENTITY.</b><b>YOUR SHIELD.</b></div>
-          <div className={ui.cinematicProduct}><DeviceVisual device={heroDevice} finish={heroFinish} priority/></div>
+          <div className={ui.shieldTagHero} aria-hidden="true"><span className={ui.shieldTagHalo}/><span className={ui.shieldTagPlate}><span className={ui.shieldTagMark}>R</span><span className={ui.shieldTagSignal}>)))</span></span><span className={ui.shieldTagCaption}>SHIELDTAG / IDENTITY LAYER</span></div><div className={ui.cinematicProduct}><DeviceVisual device={heroDevice} finish={heroFinish} priority/></div>
           <div className={ui.cinematicCopy}>
             <span className={ui.eyebrow}>RADVORA / SHIELDTAG</span>
             <h1>Your device.<br/><em>Still yours.</em></h1>
