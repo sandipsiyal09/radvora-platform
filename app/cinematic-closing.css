@@ -10,13 +10,6 @@ main>section[class*="install"]::before{width:48vw;aspect-ratio:1;right:-24vw;top
 main>section[class*="trust"]::before{width:58vw;aspect-ratio:1;left:-30vw;top:-18vw;background:radial-gradient(circle,rgba(118,230,255,.065),transparent 70%)}
 main>section[class*="finalCta"]::before{width:72vw;aspect-ratio:1;left:50%;top:48%;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(118,230,255,.1),transparent 66%)}
 
-main>section[class*="install"]::after,
-main>section[class*="trust"]::after,
-main>section[class*="finalCta"]::after{position:absolute;z-index:-1;font-weight:850;letter-spacing:-.08em;line-height:.75;color:rgba(255,255,255,.025);pointer-events:none}
-main>section[class*="install"]::after{content:"07";right:1vw;bottom:2vw;font-size:clamp(120px,22vw,360px)}
-main>section[class*="trust"]::after{content:"10";left:-1vw;bottom:0;font-size:clamp(120px,22vw,360px)}
-main>section[class*="finalCta"]::after{content:"11";right:-1vw;top:4vw;font-size:clamp(120px,22vw,360px)}
-
 @supports(animation-timeline:view()){
   main>section[class*="install"]>*{animation:radvoraClosingRise linear both;animation-timeline:view();animation-range:entry 6% cover 30%}
   main>section[class*="trust"]>article{animation:radvoraClosingRise linear both;animation-timeline:view();animation-range:entry 4% cover 28%}
@@ -27,9 +20,6 @@ main>section[class*="finalCta"]::after{content:"11";right:-1vw;top:4vw;font-size
   @keyframes radvoraClosingResolve{from{opacity:.28;transform:translateY(34px) scale(.985)}to{opacity:1;transform:none}}
 }
 
-@media(max-width:760px){
-  main>section[class*="install"]::after,main>section[class*="trust"]::after,main>section[class*="finalCta"]::after{font-size:38vw;opacity:.7}
-}
 @media(prefers-reduced-motion:reduce){
   main>section[class*="install"]>*,main>section[class*="trust"]>*,main>section[class*="finalCta"]>*{animation:none!important}
 }
