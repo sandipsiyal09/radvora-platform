@@ -65,7 +65,7 @@ export async function POST(req:NextRequest){
         redirects.push(next.href); current=next; continue
       }
       if(!res.ok)throw new Error('UPSTREAM_ERROR')
-      return NextResponse.json({ok:true,url:current.href,redirects,status:res.status,contentType:res.headers.get('content-type')})
+      return NextResponse.json({ok:true,url:current.href,redirects,status:res.status,contentType:res.headers.get('content-type')},{headers:{'cache-control':'no-store','x-content-type-options':'nosniff'}})
     }
     throw new Error('TOO_MANY_REDIRECTS')
   }catch(error){
