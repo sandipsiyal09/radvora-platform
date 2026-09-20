@@ -130,3 +130,30 @@
   .labStage{min-height:560px}.labStage>.deviceVisual{inset:60px 6px 62px}.labControls h2{font-size:48px;line-height:.91}.deviceSelect{grid-template-columns:70px 1fr}
   .scanStory,.privacyStory,.lifeStory{scroll-margin-top:72px}
 }
+
+/* Cinematic transition system — progressive, CSS-native, reduced-motion safe */
+@supports (animation-timeline:view()){
+  .statement,.formats,.lab,.finishStory,.macro,.install,.scanStory,.privacyStory,.lifeStory,.trust,.finalCta{
+    animation:sectionReveal linear both;animation-timeline:view();animation-range:entry 4% cover 30%;
+  }
+  .statement h2,.formatsHead h2,.labControls h2,.scanCopy h2,.privacyHead h2,.lifeHead h2,.finalCta h2{
+    animation:headlineRise linear both;animation-timeline:view();animation-range:entry 8% cover 28%;
+  }
+  .formatRail article,.finishShowcase article,.trust article,.privacyCompare article,.lifeGrid article{
+    animation:cardArrival linear both;animation-timeline:view();animation-range:entry 6% cover 26%;
+  }
+  .heroStage .deviceVisual,.labStage>.deviceVisual,.macroTag{
+    animation:productFloat linear both;animation-timeline:view();animation-range:entry 0% exit 100%;
+  }
+}
+@keyframes sectionReveal{from{opacity:.18;transform:translateY(54px);filter:blur(8px)}to{opacity:1;transform:none;filter:none}}
+@keyframes headlineRise{from{opacity:.08;transform:translateY(42px) scale(.985);letter-spacing:-.08em}to{opacity:1;transform:none}}
+@keyframes cardArrival{from{opacity:.12;transform:translateY(34px) scale(.975)}to{opacity:1;transform:none}}
+@keyframes productFloat{0%{transform:translateY(28px) scale(.96)}45%{transform:translateY(0) scale(1)}100%{transform:translateY(-24px) scale(1.025)}}
+.heroStage,.labStage,.scanStage,.privacyCore,.macroStage{overflow:hidden}
+.heroStage:before,.labStage:before,.scanStage:before,.macroStage:before{content:"";position:absolute;inset:-35%;pointer-events:none;background:linear-gradient(112deg,transparent 38%,rgba(144,235,255,.075) 49%,transparent 60%);transform:translateX(-55%) rotate(4deg);animation:lightSweep 8s cubic-bezier(.22,.61,.36,1) infinite}
+@keyframes lightSweep{0%,18%{transform:translateX(-55%) rotate(4deg);opacity:0}32%{opacity:1}55%,100%{transform:translateX(55%) rotate(4deg);opacity:0}}
+.nav{transition:background .35s ease,border-color .35s ease,box-shadow .35s ease}.nav:hover{background:rgba(5,7,9,.94);box-shadow:0 14px 45px rgba(0,0,0,.24)}
+.heroActions a,.navCta,.mobileDock a{transition:transform .24s cubic-bezier(.2,.8,.2,1),box-shadow .24s ease,background .24s ease}.heroActions a:hover,.navCta:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(108,225,250,.11)}
+@media(max-width:760px){@supports(animation-timeline:view()){.statement,.formats,.lab,.finishStory,.macro,.install,.scanStory,.privacyStory,.lifeStory,.trust,.finalCta{animation-range:entry 2% cover 20%}.heroStage .deviceVisual,.labStage>.deviceVisual,.macroTag{animation:none}}}
+@media(prefers-reduced-motion:reduce){.heroStage:before,.labStage:before,.scanStage:before,.macroStage:before{animation:none!important;display:none}}
