@@ -184,3 +184,14 @@
 @keyframes endWord{from{opacity:0;transform:translateX(7%)}to{opacity:1;transform:none}}
 @media(max-width:760px){.statement:after,.formats:after,.finishStory:after,.scanStory:after,.privacyStory:after,.lifeStory:after{height:56px;bottom:-28px}.lab:after{right:10px;bottom:8px;font-size:6px}}
 @media(prefers-reduced-motion:reduce){.statement:after,.formats:after,.finishStory:after,.scanStory:after,.privacyStory:after,.lifeStory:after,.finalCta:after{animation:none!important}}
+
+/* Cinematic editorial rhythm — clean reapply on current main */
+.statement h2,.formatsHead h2,.scanCopy h2,.privacyHead h2,.lifeHead h2,.finalCta h2{text-wrap:balance}
+.statement p,.formatsHead p,.scanCopy>p,.privacyHead>p,.lifeHead>p,.finalLead{text-wrap:pretty}
+.eyebrow{display:inline-flex;align-items:center;gap:10px}.eyebrow:before{content:"";width:18px;height:1px;background:currentColor;opacity:.42;transition:width .3s ease}
+.statement:hover .eyebrow:before,.scanStory:hover .eyebrow:before,.privacyStory:hover .eyebrow:before,.lifeStory:hover .eyebrow:before,.finalCta:hover .eyebrow:before{width:34px}
+.statement h2 em,.scanCopy h2 em,.privacyHead h2 em,.lifeHead h2 em,.finalCta h2 em{position:relative;text-shadow:0 0 34px rgba(126,232,253,.08)}
+.statement h2 em:after,.scanCopy h2 em:after,.privacyHead h2 em:after,.lifeHead h2 em:after,.finalCta h2 em:after{content:"";position:absolute;left:0;right:0;bottom:-.08em;height:1px;background:linear-gradient(90deg,rgba(132,234,255,.6),transparent 82%);transform:scaleX(.18);transform-origin:left;opacity:.45;transition:transform .55s cubic-bezier(.2,.8,.2,1)}
+.statement:hover h2 em:after,.scanStory:hover h2 em:after,.privacyStory:hover h2 em:after,.lifeStory:hover h2 em:after,.finalCta:hover h2 em:after{transform:scaleX(1)}
+@media(max-width:760px){.eyebrow:before{width:12px}.statement h2,.scanCopy h2,.privacyHead h2,.lifeHead h2,.finalCta h2{letter-spacing:-.055em}}
+@media(prefers-reduced-motion:reduce){.eyebrow:before,.statement h2 em:after,.scanCopy h2 em:after,.privacyHead h2 em:after,.lifeHead h2 em:after,.finalCta h2 em:after{transition:none!important}}
