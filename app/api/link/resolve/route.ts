@@ -4,15 +4,16 @@ import { isIP } from 'node:net'
 
 const MAX_REDIRECTS=5
 const TIMEOUT_MS=6500
+const PRIVATE_HEADERS={'cache-control':'no-store','x-content-type-options':'nosniff'}
 
 function blockedIp(ip:string):boolean{
   const v=isIP(ip)
   if(v===4){
-    const p=ip.split('.').map(Number),[a,b]=p
+    const p=ip.split('.').map(Number),[a,b,c]=p
     return a===0||a===10||a===127||a>=224||
       (a===169&&b===254)||(a===172&&b>=16&&b<=31)||(a===192&&b===168)||
       (a===100&&b>=64&&b<=127)||(a===192&&b===0)||(a===192&&b===2)||
-      (a===198&&(b===18||b===19))||(a===198&&b===51)||(a===203&&b===0)
+      (a===198&&(b===18||b===19))||(a===198&&b===51&&c===100)||(a===203&&b===0&&c===113)
   }
   if(v===6){
     const x=ip.toLowerCase()
@@ -44,9 +45,9 @@ async function request(url:URL,method:'HEAD'|'GET'){
 export async function POST(req:NextRequest){
   try{
     const body=await req.json().catch(()=>null) as {url?:unknown}|null
-    if(typeof body?.url!=='string')return NextResponse.json({ok:false,error:{code:'INVALID_URL',message:'Enter a valid URL.'}},{status:400,headers:{'cache-control':'no-store'}})
+    if(typeof body?.url!=='string')return NextResponse.json({ok:false,error:{code:'INVALID_URL',message:'Enter a valid URL.'}},{status:400,headers:PRIVATE_HEADERS})
     const input=body.url.trim()
-    if(!input||input.length>2048||/[\\u0000-\\u001f\\u007f]/.test(input))return NextResponse.json({ok:false,error:{code:'INVALID_URL',message:'Enter a valid URL.'}},{status:400})
+    if(!input||input.length>2048||/[\u0000-\u001f\u007f]/.test(input))return NextResponse.json({ok:false,error:{code:'INVALID_URL',message:'Enter a valid URL.'}},{status:400,headers:PRIVATE_HEADERS})
     let current=new URL(input)
     const seen=new Set<string>()
     const redirects:string[]=[]
@@ -65,12 +66,12 @@ export async function POST(req:NextRequest){
         redirects.push(next.href); current=next; continue
       }
       if(!res.ok)throw new Error('UPSTREAM_ERROR')
-      return NextResponse.json({ok:true,url:current.href,redirects,status:res.status,contentType:res.headers.get('content-type')},{headers:{'cache-control':'no-store','x-content-type-options':'nosniff'}})
+      return NextResponse.json({ok:true,url:current.href,redirects,status:res.status,contentType:res.headers.get('content-type')},{headers:PRIVATE_HEADERS})
     }
     throw new Error('TOO_MANY_REDIRECTS')
   }catch(error){
     const code=error instanceof Error?error.message:'RESOLUTION_FAILED'
     const status=['INVALID_URL','UNSUPPORTED_PROTOCOL','EMBEDDED_CREDENTIALS','RESTRICTED_HOST'].includes(code)?400:422
-    return NextResponse.json({ok:false,error:{code,message:'This link could not be safely resolved.'}},{status,headers:{'cache-control':'no-store','x-content-type-options':'nosniff'}})
+    return NextResponse.json({ok:false,error:{code,message:'This link could not be safely resolved.'}},{status,headers:PRIVATE_HEADERS})
   }
 }
