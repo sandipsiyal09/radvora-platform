@@ -346,7 +346,7 @@ export default function RealDeviceExperience(){
 
       <section className={`${ui.macro} ${ui.cinematicChapter}`}><span className={ui.chapterLine} aria-hidden="true"/><span className={ui.chapterNumber} aria-hidden="true">06</span><div className={ui.macroCopy}><span className={ui.eyebrow}>DETAIL / 05</span><h2>Designed at<br/>the edge.</h2><p>The visual system uses a fine perimeter, layered face and restrained identity mark so the tag reads like hardware rather than a sticker.</p></div><div className={ui.macroStage}><div className={ui.macroTag}><Tag finish={finishes[1]} label="SIGNATURE"/></div><span>EDGE / FACE / IDENTITY</span></div></section>
 
-      <section className={ui.install}><div><span className={ui.eyebrow}>PLACEMENT / 06</span><h2>A deliberate<br/>final position.</h2><p>Preview the visual language here, then confirm the exact supported device and fit before purchase.</p><a href="/compatibility">Verify your exact model →</a></div><div className={ui.installDiagram} aria-hidden="true"><div className={ui.installPhone}/><div className={ui.installGuide}/><div className={ui.installTag}><Tag finish={finishes[2]} label="SIGNATURE"/></div><span>ALIGN</span></div></section>
+      <section className={`${ui.install} ${ui.cinematicChapter}`}><span className={ui.chapterLine} aria-hidden="true"/><span className={ui.chapterNumber} aria-hidden="true">07</span><div><span className={ui.eyebrow}>PLACEMENT / 06</span><h2>A deliberate<br/>final position.</h2><p>Preview the visual language here, then confirm the exact supported device and fit before purchase.</p><a href="/compatibility">Verify your exact model →</a></div><div className={ui.installDiagram} aria-hidden="true"><div className={ui.installPhone}/><div className={ui.installGuide}/><div className={ui.installTag}><Tag finish={finishes[2]} label="SIGNATURE"/></div><span>ALIGN</span></div></section>
 
       <section className={`${ui.privacyStory} ${ui.cinematicChapter}`} aria-labelledby="privacy-story-title"><span className={ui.chapterLine} aria-hidden="true"/><span className={ui.chapterNumber} aria-hidden="true">07</span>
         <div className={ui.privacyHead}><span className={ui.eyebrow}>OWNER CONTROL / 03</span><h2 id="privacy-story-title">A finder gets a path.<br/><em>Not your whole profile.</em></h2><p>The public interaction is framed around the owner-configured experience. What is available to a finder depends on that configured path; the design does not promise automatic disclosure of private details.</p></div>
@@ -366,7 +366,7 @@ export default function RealDeviceExperience(){
         </div>
       </section>
 
-      <section className={ui.trust} aria-label="ShieldTag trust principles">
+      <section className={`${ui.trust} ${ui.cinematicChapter}`} aria-label="ShieldTag trust principles"><span className={ui.chapterLine} aria-hidden="true"/><span className={ui.chapterNumber} aria-hidden="true">10</span>
         <article><span>01 / FIT</span><h3>Verify before you choose.</h3><p>Every styling preview stays separate from compatibility. Exact model fit is confirmed through the compatibility system.</p><a href="/compatibility">Verify your model →</a></article>
         <article><span>02 / COMMERCE</span><h3>Buy only from live data.</h3><p>Price, tax, stock and checkout are shown only when approved commerce data is available for the product.</p><a href="/products">View current availability →</a></article>
         <article><span>03 / OWNERSHIP</span><h3>Make the build yours.</h3><p>Save your device-and-finish combination, return to it later, or share the same build without changing its fit status.</p><a href="#shieldlab">Build and save yours →</a></article>
@@ -374,7 +374,7 @@ export default function RealDeviceExperience(){
 
       <section className={ui.utilityLab}><LinkResolver/></section>
 
-      <section className={ui.finalCta}><span className={ui.eyebrow}>MAKE IT YOURS / 04</span><h2>See it on your device.<br/><em>Then decide.</em></h2><p className={ui.finalLead}>Start with the look. Verify the exact model. Check governed availability only when you are ready.</p><div><a href="#shieldlab">Build your ShieldTag</a><a href="/compatibility">Verify exact fit</a></div></section>
+      <section className={`${ui.finalCta} ${ui.cinematicChapter}`}><span className={ui.chapterLine} aria-hidden="true"/><span className={ui.chapterNumber} aria-hidden="true">11</span><span className={ui.eyebrow}>MAKE IT YOURS / 04</span><h2>See it on your device.<br/><em>Then decide.</em></h2><p className={ui.finalLead}>Start with the look. Verify the exact model. Check governed availability only when you are ready.</p><div><a href="#shieldlab">Build your ShieldTag</a><a href="/compatibility">Verify exact fit</a></div></section>
     </main>
 
     <footer className={ui.footer}><div><Logo/><b>RADVORA</b></div><p>Device names and imagery explain styling context only. No manufacturer affiliation or endorsement is implied.</p><nav><a href="/products">Products</a><a href="/compatibility">Compatibility</a><a href="/support">Support</a><a href="/privacy">Privacy</a></nav></footer>
