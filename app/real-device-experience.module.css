@@ -195,3 +195,9 @@
 .statement:hover h2 em:after,.scanStory:hover h2 em:after,.privacyStory:hover h2 em:after,.lifeStory:hover h2 em:after,.finalCta:hover h2 em:after{transform:scaleX(1)}
 @media(max-width:760px){.eyebrow:before{width:12px}.statement h2,.scanCopy h2,.privacyHead h2,.lifeHead h2,.finalCta h2{letter-spacing:-.055em}}
 @media(prefers-reduced-motion:reduce){.eyebrow:before,.statement h2 em:after,.scanCopy h2 em:after,.privacyHead h2 em:after,.lifeHead h2 em:after,.finalCta h2 em:after{transition:none!important}}
+
+/* GSAP/Flip ShieldLab motion surface */
+.motionVisual{position:absolute;inset:0;will-change:transform,opacity;transform:translateZ(0);backface-visibility:hidden}
+.motionVisual>.deviceVisual{position:absolute;inset:0}
+.labStage{will-change:filter}
+@media(prefers-reduced-motion:reduce){.motionVisual,.labStage{will-change:auto}}

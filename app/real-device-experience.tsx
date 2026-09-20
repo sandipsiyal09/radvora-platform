@@ -1,6 +1,10 @@
 'use client'
 
-import { CSSProperties, useEffect, useMemo, useState } from 'react'
+import { CSSProperties, useEffect, useMemo, useRef, useState } from 'react'
+import { gsap } from 'gsap'
+import { Flip } from 'gsap/Flip'
+
+gsap.registerPlugin(Flip)
 import ui from './real-device-experience.module.css'
 import ProductInterestForm from './product-interest-form'
 import { buildShieldTagSharePayload } from '../lib/shieldtag-share'
@@ -63,6 +67,9 @@ function ShieldLab({onSaved}:{onSaved:(label:string)=>void}){
   const [deviceId,setDeviceId]=useState('iphone')
   const [finishId,setFinishId]=useState('titanium')
   const [message,setMessage]=useState('')
+  const stageRef=useRef<HTMLDivElement>(null)
+  const visualRef=useRef<HTMLDivElement>(null)
+  const previousSelection=useRef(`${deviceId}:${finishId}`)
 
   const selected=useMemo(()=>devices.find(item=>item.id===deviceId)??devices[0],[deviceId])
   const finish=useMemo(()=>finishes.find(item=>item.id===finishId)??finishes[1],[finishId])
@@ -87,6 +94,21 @@ function ShieldLab({onSaved}:{onSaved:(label:string)=>void}){
       }catch{}
     }
   },[])
+
+  useEffect(()=>{
+    const key=`${deviceId}:${finishId}`
+    if(previousSelection.current===key){previousSelection.current=key;return}
+    previousSelection.current=key
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return
+    const visual=visualRef.current
+    const stage=stageRef.current
+    if(!visual||!stage)return
+    const state=Flip.getState(visual)
+    gsap.killTweensOf([visual,stage])
+    Flip.from(state,{duration:.62,ease:'power3.inOut',absolute:false,scale:true})
+    gsap.fromTo(visual,{opacity:.58,scale:.965,y:12},{opacity:1,scale:1,y:0,duration:.58,ease:'power3.out',clearProps:'opacity,scale,y'})
+    gsap.fromTo(stage,{filter:'brightness(.9)'},{filter:'brightness(1)',duration:.7,ease:'power2.out',clearProps:'filter'})
+  },[deviceId,finishId])
 
   useEffect(()=>{
     const url=new URL(window.location.href)
@@ -139,9 +161,9 @@ function ShieldLab({onSaved}:{onSaved:(label:string)=>void}){
   }
 
   return <section className={ui.lab} id="shieldlab">
-    <div className={ui.labStage} aria-live="polite" onPointerMove={handleStagePointerMove} onPointerLeave={resetStageDepth}>
+    <div ref={stageRef} className={ui.labStage} aria-live="polite" onPointerMove={handleStagePointerMove} onPointerLeave={resetStageDepth}>
       <div className={ui.stageMeta}><span>SHIELDLAB / LIVE PREVIEW</span><b>{selected.brand} {selected.name}</b><small>{selected.deviceColor} · {finish.name}</small></div>
-      <DeviceVisual device={selected} finish={finish}/>
+      <div ref={visualRef} className={ui.motionVisual}><DeviceVisual device={selected} finish={finish}/></div>
       <div className={ui.stageFooter}><span>{labelFor(selected.category)}</span><b>{finish.name}</b></div>
     </div>
     <div className={ui.labControls}>
