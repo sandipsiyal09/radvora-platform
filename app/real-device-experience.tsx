@@ -245,9 +245,9 @@ export default function RealDeviceExperience(){
 
   return <div className={ui.page}>
     <header className={ui.nav}>
-      <a className={ui.brand} href="/" aria-label="RADVORA home"><Logo/><span><b>RADVORA</b><small>SHIELDTAG</small></span></a>
+      <a className={ui.brand} href="/" aria-label="RADVORA home" style={{viewTransitionName:'radvora-brand'}}><Logo/><span><b>RADVORA</b><small>SHIELDTAG</small></span></a>
       <nav aria-label="Primary"><a href="#shieldlab">ShieldLab</a><a href="/compatibility" onClick={transitionRoute}>Verify fit</a><a href="/products" onClick={transitionRoute}>Shop</a><a href="/account" onClick={transitionRoute}>My RADVORA</a></nav>
-      <a className={ui.navCta} href="#shieldlab">{savedBuildLabel?'Resume build':'Build yours'}</a>
+      <a className={ui.navCta} href="#shieldlab" style={{viewTransitionName:'radvora-primary-cta'}}>{savedBuildLabel?'Resume build':'Build yours'}</a>
     </header>
 
     <main>

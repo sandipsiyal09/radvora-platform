@@ -219,3 +219,8 @@
 @keyframes radvoraRouteOut{to{opacity:0;transform:scale(.992) translateY(-6px)}}
 @keyframes radvoraRouteIn{from{opacity:0;transform:scale(1.008) translateY(10px)}}
 @media(prefers-reduced-motion:reduce){:global(::view-transition-old(root)),:global(::view-transition-new(root)){animation:none}}
+
+@supports (view-transition-name: none){
+  :global(::view-transition-group(radvora-brand)),:global(::view-transition-group(radvora-primary-cta)){animation-duration:.5s;animation-timing-function:cubic-bezier(.16,1,.3,1)}
+  :global(::view-transition-old(radvora-brand)),:global(::view-transition-new(radvora-brand)),:global(::view-transition-old(radvora-primary-cta)),:global(::view-transition-new(radvora-primary-cta)){mix-blend-mode:normal}
+}
