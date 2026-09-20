@@ -9,11 +9,19 @@ function blockedIp(ip:string){
   const v=isIP(ip)
   if(v===4){
     const p=ip.split('.').map(Number),[a,b]=p
-    return a===0||a===10||a===127||a>=224||(a===169&&b===254)||(a===172&&b>=16&&b<=31)||(a===192&&b===168)||(a===100&&b>=64&&b<=127)
+    return a===0||a===10||a===127||a>=224||
+      (a===169&&b===254)||(a===172&&b>=16&&b<=31)||(a===192&&b===168)||
+      (a===100&&b>=64&&b<=127)||(a===192&&b===0)||(a===192&&b===2)||
+      (a===198&&(b===18||b===19))||(a===198&&b===51)||(a===203&&b===0)
   }
   if(v===6){
     const x=ip.toLowerCase()
-    return x==='::'||x==='::1'||x.startsWith('fe80:')||x.startsWith('fc')||x.startsWith('fd')||x.startsWith('ff')||x.startsWith('::ffff:127.')||x.startsWith('::ffff:10.')||x.startsWith('::ffff:192.168.')
+    if(x==='::'||x==='::1'||x.startsWith('fe80:')||x.startsWith('fc')||x.startsWith('fd')||x.startsWith('ff'))return true
+    if(x.startsWith('::ffff:')){
+      const mapped=x.slice(7)
+      return isIP(mapped)===4?blockedIp(mapped):true
+    }
+    return x.startsWith('2001:db8:')
   }
   return true
 }
