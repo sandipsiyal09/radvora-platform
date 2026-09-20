@@ -1,6 +1,7 @@
 'use client'
 
-import { CSSProperties, useEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, MouseEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { gsap } from 'gsap'
 import { Flip } from 'gsap/Flip'
 
@@ -216,6 +217,7 @@ function LinkResolver(){
 }
 
 export default function RealDeviceExperience(){
+  const router=useRouter()
   const heroDevice=devices[0]
   const heroFinish=finishes[0]
   const [savedBuildLabel,setSavedBuildLabel]=useState<string|null>(null)
@@ -231,10 +233,20 @@ export default function RealDeviceExperience(){
     }catch{}
   },[])
 
+  function transitionRoute(event:MouseEvent<HTMLAnchorElement>){
+    const href=event.currentTarget.getAttribute('href')
+    if(!href||href.startsWith('#')||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return
+    event.preventDefault()
+    const navigate=()=>router.push(href)
+    const doc=document as Document&{startViewTransition?:(callback:()=>void)=>void}
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches||!doc.startViewTransition){navigate();return}
+    doc.startViewTransition(navigate)
+  }
+
   return <div className={ui.page}>
     <header className={ui.nav}>
       <a className={ui.brand} href="/" aria-label="RADVORA home"><Logo/><span><b>RADVORA</b><small>SHIELDTAG</small></span></a>
-      <nav aria-label="Primary"><a href="#shieldlab">ShieldLab</a><a href="/compatibility">Verify fit</a><a href="/products">Shop</a><a href="/account">My RADVORA</a></nav>
+      <nav aria-label="Primary"><a href="#shieldlab">ShieldLab</a><a href="/compatibility" onClick={transitionRoute}>Verify fit</a><a href="/products" onClick={transitionRoute}>Shop</a><a href="/account" onClick={transitionRoute}>My RADVORA</a></nav>
       <a className={ui.navCta} href="#shieldlab">{savedBuildLabel?'Resume build':'Build yours'}</a>
     </header>
 

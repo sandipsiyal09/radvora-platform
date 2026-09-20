@@ -211,3 +211,11 @@
 @keyframes resolverPulse{to{background-position:-220% 0}}
 @media(max-width:760px){.linkResolver{grid-template-columns:1fr}.resolverCard form>div{flex-direction:column}.resolverCard button{width:100%}}
 @media(prefers-reduced-motion:reduce){.resolverCard{will-change:auto}.resolverSkeleton i{animation:none}}
+
+@supports (view-transition-name: none){
+  :global(::view-transition-old(root)){animation:radvoraRouteOut .24s cubic-bezier(.4,0,1,1) both}
+  :global(::view-transition-new(root)){animation:radvoraRouteIn .46s cubic-bezier(.16,1,.3,1) both}
+}
+@keyframes radvoraRouteOut{to{opacity:0;transform:scale(.992) translateY(-6px)}}
+@keyframes radvoraRouteIn{from{opacity:0;transform:scale(1.008) translateY(10px)}}
+@media(prefers-reduced-motion:reduce){:global(::view-transition-old(root)),:global(::view-transition-new(root)){animation:none}}
