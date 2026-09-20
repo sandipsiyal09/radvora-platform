@@ -1,0 +1,8 @@
+/* Keep the closing ShieldTag story visually continuous without changing evidence or commerce behavior. */
+main>section[class*="privacyStory"] [class*="chapterNumber"],
+main>section[class*="lifeStory"] [class*="chapterNumber"]{font-size:0}
+main>section[class*="privacyStory"] [class*="chapterNumber"]::before,
+main>section[class*="lifeStory"] [class*="chapterNumber"]::before{font-size:clamp(100px,18vw,300px);line-height:.8;font-weight:900;letter-spacing:-.09em}
+main>section[class*="privacyStory"] [class*="chapterNumber"]::before{content:"08"}
+main>section[class*="lifeStory"] [class*="chapterNumber"]::before{content:"09"}
+@media(max-width:760px){main>section[class*="privacyStory"] [class*="chapterNumber"]::before,main>section[class*="lifeStory"] [class*="chapterNumber"]::before{font-size:34vw}}
