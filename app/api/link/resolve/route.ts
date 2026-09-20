@@ -44,8 +44,10 @@ async function request(url:URL,method:'HEAD'|'GET'){
 export async function POST(req:NextRequest){
   try{
     const body=await req.json().catch(()=>null) as {url?:unknown}|null
-    if(typeof body?.url!=='string'||body.url.length>2048)return NextResponse.json({ok:false,error:{code:'INVALID_URL',message:'Enter a valid URL.'}},{status:400,headers:{'cache-control':'no-store'}})
-    let current=new URL(body.url)
+    if(typeof body?.url!=='string')return NextResponse.json({ok:false,error:{code:'INVALID_URL',message:'Enter a valid URL.'}},{status:400})
+    const input=body.url.trim()
+    if(!input||input.length>2048||/[\\u0000-\\u001f\\u007f]/.test(input))return NextResponse.json({ok:false,error:{code:'INVALID_URL',message:'Enter a valid URL.'}},{status:400})
+    let current=new URL(input)
     const seen=new Set<string>()
     const redirects:string[]=[]
     for(let i=0;i<=MAX_REDIRECTS;i++){
