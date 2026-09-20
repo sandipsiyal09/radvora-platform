@@ -1,5 +1,6 @@
 import './globals.css'
 import type { Metadata, Viewport } from 'next'
+import GlobalMotion from './global-motion'
 
 const siteUrl=process.env.NEXT_PUBLIC_APP_URL||'https://radvora-platform.vercel.app'
 
@@ -9,12 +10,7 @@ export const metadata: Metadata = {
   description:'RADVORA ShieldTag is a premium device identity badge system designed for smartphones, tablets, laptops and selected technology accessories.',
   applicationName:'RADVORA',
   appleWebApp:{capable:true,title:'RADVORA',statusBarStyle:'black-translucent'},
-  openGraph:{
-    type:'website',
-    siteName:'RADVORA',
-    title:'RADVORA ShieldTag — One Shield. Every Device.',
-    description:'Premium device identity designed to look native to the technology you already own.'
-  },
+  openGraph:{type:'website',siteName:'RADVORA',title:'RADVORA ShieldTag — One Shield. Every Device.',description:'Premium device identity designed to look native to the technology you already own.'},
   twitter:{card:'summary_large_image',title:'RADVORA ShieldTag',description:'One Shield. Every Device.'},
   robots:{index:true,follow:true}
 }
@@ -22,24 +18,15 @@ export const metadata: Metadata = {
 export const viewport:Viewport={themeColor:'#050607',colorScheme:'dark'}
 
 const organizationSchema={
-  '@context':'https://schema.org',
-  '@type':'Organization',
-  name:'RADVORA',
-  url:siteUrl,
-  slogan:'One Shield. Every Device.',
+  '@context':'https://schema.org','@type':'Organization',name:'RADVORA',url:siteUrl,slogan:'One Shield. Every Device.',
   description:'Consumer technology brand developing premium device identity products with compatibility and product claims kept explicit and evidence-controlled.'
 }
-
 const websiteSchema={
-  '@context':'https://schema.org',
-  '@type':'WebSite',
-  name:'RADVORA',
-  url:siteUrl,
+  '@context':'https://schema.org','@type':'WebSite',name:'RADVORA',url:siteUrl,
   description:'RADVORA ShieldTag is a premium device identity system for smartphones, tablets, laptops and selected technology accessories.'
 }
-
 function safeJson(value:unknown){return JSON.stringify(value).replace(/</g,'\\u003c')}
 
 export default function RootLayout({children}:{children:React.ReactNode}){
-  return <html lang="en"><body><script type="application/ld+json" dangerouslySetInnerHTML={{__html:safeJson(organizationSchema)}}/><script type="application/ld+json" dangerouslySetInnerHTML={{__html:safeJson(websiteSchema)}}/>{children}</body></html>
+  return <html lang="en"><body><script type="application/ld+json" dangerouslySetInnerHTML={{__html:safeJson(organizationSchema)}}/><script type="application/ld+json" dangerouslySetInnerHTML={{__html:safeJson(websiteSchema)}}/><GlobalMotion/>{children}</body></html>
 }
