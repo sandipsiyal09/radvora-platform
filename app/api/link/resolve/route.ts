@@ -44,7 +44,7 @@ async function request(url:URL,method:'HEAD'|'GET'){
 export async function POST(req:NextRequest){
   try{
     const body=await req.json().catch(()=>null) as {url?:unknown}|null
-    if(typeof body?.url!=='string'||body.url.length>2048)return NextResponse.json({ok:false,error:{code:'INVALID_URL',message:'Enter a valid URL.'}},{status:400})
+    if(typeof body?.url!=='string'||body.url.length>2048)return NextResponse.json({ok:false,error:{code:'INVALID_URL',message:'Enter a valid URL.'}},{status:400,headers:{'cache-control':'no-store'}})
     let current=new URL(body.url)
     const seen=new Set<string>()
     const redirects:string[]=[]
@@ -63,7 +63,7 @@ export async function POST(req:NextRequest){
         redirects.push(next.href); current=next; continue
       }
       if(!res.ok)throw new Error('UPSTREAM_ERROR')
-      return NextResponse.json({ok:true,url:current.href,redirects,status:res.status,contentType:res.headers.get('content-type')})
+      return NextResponse.json({ok:true,url:current.href,redirects,status:res.status,contentType:res.headers.get('content-type')},{headers:{'cache-control':'no-store','x-content-type-options':'nosniff'}})
     }
     throw new Error('TOO_MANY_REDIRECTS')
   }catch(error){
