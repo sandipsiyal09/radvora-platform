@@ -5,7 +5,7 @@ import { isIP } from 'node:net'
 const MAX_REDIRECTS=5
 const TIMEOUT_MS=6500
 
-function blockedIp(ip:string){
+function blockedIp(ip:string):boolean{
   const v=isIP(ip)
   if(v===4){
     const p=ip.split('.').map(Number),[a,b]=p
