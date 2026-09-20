@@ -318,7 +318,7 @@ export default function RealDeviceExperience(){
         <p>Quiet enough to belong. Distinct enough to make the device unmistakably yours.</p>
       </section>
 
-      <section className={ui.scanStory} aria-labelledby="scan-story-title">
+      <section className={`${ui.scanStory} ${ui.cinematicChapter}`} aria-labelledby="scan-story-title"><span className={ui.chapterLine} aria-hidden="true"/><span className={ui.chapterNumber} aria-hidden="true">02</span>
         <div className={ui.scanCopy}>
           <span className={ui.eyebrow}>THE MOMENT / 02</span>
           <h2 id="scan-story-title">Tap the tag.<br/><em>Meet the owner.</em></h2>
@@ -332,19 +332,19 @@ export default function RealDeviceExperience(){
         </div>
       </section>
 
-      <section className={ui.formats} id="formats">
+      <section className={`${ui.formats} ${ui.cinematicChapter}`} id="formats"><span className={ui.chapterLine} aria-hidden="true"/><span className={ui.chapterNumber} aria-hidden="true">03</span>
         <div className={ui.sectionHead}><span className={ui.eyebrow}>FORM FACTOR / 03</span><h2>Built to belong<br/>on the object.</h2><p>Four ShieldTag expressions keep the visual language consistent while respecting the scale of different device classes.</p></div>
         <div className={ui.formatRail}>{formats.map((item,i)=><article key={item.name}><span>{item.n}</span><div className={ui.formatTag} style={{'--scale':`${1-i*.11}`} as CSSProperties}><Tag finish={finishes[i]} label={item.name.toUpperCase()}/></div><small>{item.device}</small><h3>{item.name}</h3><p>{item.copy}</p></article>)}</div>
       </section>
 
-      <ShieldLab onSaved={setSavedBuildLabel}/>
+      <div className={ui.labChapter}><span className={ui.chapterLine} aria-hidden="true"/><span className={ui.chapterNumber} aria-hidden="true">04</span><ShieldLab onSaved={setSavedBuildLabel}/></div>
 
-      <section className={ui.finishStory} id="finishes">
+      <section className={`${ui.finishStory} ${ui.cinematicChapter}`} id="finishes"><span className={ui.chapterLine} aria-hidden="true"/><span className={ui.chapterNumber} aria-hidden="true">05</span>
         <div className={ui.sectionHead}><span className={ui.eyebrow}>MATERIAL / 04</span><h2>Finish is part<br/>of the device.</h2><p>Neutral, metallic and expressive directions let the tag disappear into the hardware or become its deliberate signature.</p></div>
         <div className={ui.finishShowcase}>{finishes.slice(0,4).map((finish,i)=><article key={finish.id} style={{'--finish-bg':finish.base,'--finish-edge':finish.edge} as CSSProperties}><span>0{i+1}</span><div><Tag finish={finish} label="SIGNATURE"/></div><h3>{finish.name}</h3></article>)}</div>
       </section>
 
-      <section className={ui.macro}><div className={ui.macroCopy}><span className={ui.eyebrow}>DETAIL / 05</span><h2>Designed at<br/>the edge.</h2><p>The visual system uses a fine perimeter, layered face and restrained identity mark so the tag reads like hardware rather than a sticker.</p></div><div className={ui.macroStage}><div className={ui.macroTag}><Tag finish={finishes[1]} label="SIGNATURE"/></div><span>EDGE / FACE / IDENTITY</span></div></section>
+      <section className={`${ui.macro} ${ui.cinematicChapter}`}><span className={ui.chapterLine} aria-hidden="true"/><span className={ui.chapterNumber} aria-hidden="true">06</span><div className={ui.macroCopy}><span className={ui.eyebrow}>DETAIL / 05</span><h2>Designed at<br/>the edge.</h2><p>The visual system uses a fine perimeter, layered face and restrained identity mark so the tag reads like hardware rather than a sticker.</p></div><div className={ui.macroStage}><div className={ui.macroTag}><Tag finish={finishes[1]} label="SIGNATURE"/></div><span>EDGE / FACE / IDENTITY</span></div></section>
 
       <section className={ui.install}><div><span className={ui.eyebrow}>PLACEMENT / 06</span><h2>A deliberate<br/>final position.</h2><p>Preview the visual language here, then confirm the exact supported device and fit before purchase.</p><a href="/compatibility">Verify your exact model →</a></div><div className={ui.installDiagram} aria-hidden="true"><div className={ui.installPhone}/><div className={ui.installGuide}/><div className={ui.installTag}><Tag finish={finishes[2]} label="SIGNATURE"/></div><span>ALIGN</span></div></section>
 
