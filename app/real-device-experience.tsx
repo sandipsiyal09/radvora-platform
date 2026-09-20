@@ -202,6 +202,13 @@ function LinkResolver(){
   const resultRef=useRef<HTMLDivElement>(null)
   const requestRef=useRef<AbortController|null>(null)
 
+  function resetResolver(){
+    requestRef.current?.abort()
+    requestRef.current=null
+    setValue('');setResult({});setState('idle')
+    requestAnimationFrame(()=>document.getElementById('radvora-link')?.focus())
+  }
+
   async function resolveLink(event:React.FormEvent){
     event.preventDefault()
     if(!value.trim())return
@@ -231,8 +238,8 @@ function LinkResolver(){
     <div ref={cardRef} className={ui.resolverCard} data-state={state} aria-busy={state==='loading'}>
       <form onSubmit={resolveLink}><label htmlFor="radvora-link">LINK</label><div><input id="radvora-link" type="url" inputMode="url" autoComplete="url" placeholder="https://…" value={value} onChange={e=>setValue(e.target.value)} required/><button type="submit" disabled={state==='loading'}>{state==='loading'?'Resolving…':'Resolve link'}</button></div></form>
       {state==='loading'?<div className={ui.resolverSkeleton} aria-live="polite"><i/><i/><i/></div>:null}
-      {state==='success'&&result.url?<div ref={resultRef} tabIndex={-1} className={ui.resolverResult}><span>SAFE DESTINATION</span><strong>{result.url}</strong><small>{result.redirects?.length||0} redirect{result.redirects?.length===1?'':'s'} followed</small><a href={result.url} target="_blank" rel="noreferrer noopener">Open destination →</a></div>:null}
-      {state==='error'?<p className={ui.resolverError} role="alert">{result.error}</p>:null}
+      {state==='success'&&result.url?<div ref={resultRef} tabIndex={-1} className={ui.resolverResult}><span>SAFE DESTINATION</span><strong>{result.url}</strong><small>{result.redirects?.length||0} redirect{result.redirects?.length===1?'':'s'} followed</small><a href={result.url} target="_blank" rel="noreferrer noopener">Open destination →</a><button type="button" onClick={resetResolver}>Resolve another</button></div>:null}
+      {state==='error'?<div className={ui.resolverError} role="alert"><p>{result.error}</p><button type="button" onClick={resetResolver}>Try another link</button></div>:null}
     </div>
   </section>
 }
