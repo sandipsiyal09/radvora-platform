@@ -1,5 +1,6 @@
 import './globals.css'
 import './cinematic-closing.css'
+import './cinematic-sequence-fix.css'
 import type { Metadata, Viewport } from 'next'
 
 const siteUrl=process.env.NEXT_PUBLIC_APP_URL||'https://radvora-platform.vercel.app'
