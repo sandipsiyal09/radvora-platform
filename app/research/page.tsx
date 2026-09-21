@@ -5,7 +5,7 @@ import ui from '../public-brand.module.css'
 export const metadata={title:'Research & Validation',description:'See how RADVORA separates design intent, compatibility review, product testing and evidence-controlled ShieldTag claims.',alternates:{canonical:'/research'}}
 
 export default function ResearchPage(){
-  return <PublicShell><main className={ui.main}>
+  return <PublicShell><main className={ui.main} data-cinematic-page="research">
     <section className={ui.hero}>
       <div className={ui.heroCopy}><span className={ui.kicker}>RESEARCH & VALIDATION</span><h1>Evidence before<br/><em>product claims.</em></h1><p>RADVORA separates design intent, compatibility review, product testing and public claims. A premium visual concept does not become a technical claim until the relevant evidence has been reviewed.</p><div className={ui.actions}><Link className={ui.primary} href="/labs">View RADVORA Labs →</Link><Link className={ui.secondary} href="/products">Products</Link></div></div>
       <aside className={ui.heroAside}><span>WHY THIS EXISTS</span><strong>Keep design and evidence separate.</strong><p>ShieldTag can be visually developed before every durability or compatibility statement is validated. The site should make that distinction clear.</p></aside>
