@@ -5,6 +5,7 @@ import './cinematic-hero-focus.css'
 import './cinematic-shieldlab-focus.css'
 import './cinematic-shieldlab-continuity.css'
 import './cinematic-compatibility-handoff.css'
+import './cinematic-products-handoff.css'
 import type { Metadata, Viewport } from 'next'
 
 const siteUrl=process.env.NEXT_PUBLIC_APP_URL||'https://radvora-platform.vercel.app'
