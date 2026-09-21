@@ -12,6 +12,7 @@ import './cinematic-business-handoff.css'
 import './cinematic-about-handoff.css'
 import './cinematic-verification-handoff.css'
 import './cinematic-contact-handoff.css'
+import './cinematic-support-handoff.css'
 import type { Metadata, Viewport } from 'next'
 
 const siteUrl=process.env.NEXT_PUBLIC_APP_URL||'https://radvora-platform.vercel.app'
