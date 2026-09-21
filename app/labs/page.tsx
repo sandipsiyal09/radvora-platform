@@ -12,7 +12,7 @@ const cards=[
 ]
 
 export default function LabsPage(){
-  return <PublicShell><main className={ui.main}>
+  return <PublicShell><main className={ui.main} data-cinematic-page="labs">
     <section className={ui.hero}>
       <div className={ui.heroCopy}><span className={ui.kicker}>RADVORA LABS</span><h1>Validation made<br/><em>inspectable.</em></h1><p>RADVORA Labs is the evidence layer behind compatibility, product-care guidance and any future validated performance statements. The public site should show what has been reviewed—and leave everything else explicitly pending.</p><div className={ui.actions}><Link className={ui.primary} href="/compatibility">Check compatibility →</Link><Link className={ui.secondary} href="/verify">Verify product</Link></div></div>
       <aside className={ui.heroAside}><span>CURRENT PUBLIC STATUS</span><strong>No unsupported performance rating published.</strong><p>This is intentional. Product presentation can move forward while evidence-gated claims remain unavailable until reviewed.</p></aside>
