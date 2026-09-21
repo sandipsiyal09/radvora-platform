@@ -1,10 +1,10 @@
 /* Continuous ShieldLab scene — connects the configurator to the surrounding cinematic chapter without changing product semantics. */
-main [class*="lab"]{overflow:clip}
-main [class*="lab"]::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(118,230,255,0),rgba(118,230,255,.025) 44%,rgba(118,230,255,0));opacity:.8}
-main [class*="labStage"]{isolation:isolate;transition:box-shadow .55s ease,border-color .55s ease}
-main [class*="labStage"]::after{content:"";position:absolute;inset:auto 10% -1px;height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(118,230,255,.36),transparent);opacity:.65}
-main [class*="labStage"]>[class*="deviceVisual"]{transform-origin:50% 58%;will-change:transform}
-main [class*="labControls"]{backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-@media(hover:hover) and (pointer:fine){main [class*="labStage"]:hover{border-color:rgba(118,230,255,.18);box-shadow:0 38px 90px rgba(0,0,0,.24),0 0 80px rgba(118,230,255,.025)}main [class*="labStage"]:hover>[class*="deviceVisual"]{transform:translateY(-3px) scale(1.004)}}
-@media(max-width:760px){main [class*="lab"]::before{opacity:.48}main [class*="labControls"]{backdrop-filter:none;-webkit-backdrop-filter:none}}
-@media(prefers-reduced-motion:reduce){main [class*="labStage"]{transition:none}main [class*="labStage"]:hover>[class*="deviceVisual"]{transform:none}}
+main[data-cinematic-page="home"] [class*="lab"]{overflow:clip}
+main[data-cinematic-page="home"] [class*="lab"]::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(118,230,255,0),rgba(118,230,255,.025) 44%,rgba(118,230,255,0));opacity:.8}
+main[data-cinematic-page="home"] [class*="labStage"]{isolation:isolate;transition:box-shadow .55s ease,border-color .55s ease}
+main[data-cinematic-page="home"] [class*="labStage"]::after{content:"";position:absolute;inset:auto 10% -1px;height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(118,230,255,.36),transparent);opacity:.65}
+main[data-cinematic-page="home"] [class*="labStage"]>[class*="deviceVisual"]{transform-origin:50% 58%;will-change:transform}
+main[data-cinematic-page="home"] [class*="labControls"]{backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+@media(hover:hover) and (pointer:fine){main[data-cinematic-page="home"] [class*="labStage"]:hover{border-color:rgba(118,230,255,.18);box-shadow:0 38px 90px rgba(0,0,0,.24),0 0 80px rgba(118,230,255,.025)}main[data-cinematic-page="home"] [class*="labStage"]:hover>[class*="deviceVisual"]{transform:translateY(-3px) scale(1.004)}}
+@media(max-width:760px){main[data-cinematic-page="home"] [class*="lab"]::before{opacity:.48}main[data-cinematic-page="home"] [class*="labControls"]{backdrop-filter:none;-webkit-backdrop-filter:none}}
+@media(prefers-reduced-motion:reduce){main[data-cinematic-page="home"] [class*="labStage"]{transition:none}main[data-cinematic-page="home"] [class*="labStage"]:hover>[class*="deviceVisual"]{transform:none}}
