@@ -1,0 +1,61 @@
+/* RADVORA live-home cinematic polish.
+   Scope is intentionally limited to the canonical homepage markers installed on RealDeviceExperience. */
+[data-cinematic-page="home"]{
+  --home-cinematic-line:rgba(118,230,255,.18);
+  --home-cinematic-glow:rgba(118,230,255,.075);
+}
+
+[data-cinematic-page="home"] :is(#story,#formats,#finishes,#shieldlab) h2{
+  text-wrap:balance;
+}
+
+[data-cinematic-page="home"] :is(#story,#formats,#finishes,#shieldlab) p{
+  text-wrap:pretty;
+}
+
+[data-cinematic-page="home"] :is(#story,#formats,#finishes){
+  scroll-margin-top:88px;
+}
+
+[data-cinematic-page="home"] :is(#story,#formats,#finishes)::selection{
+  background:rgba(118,230,255,.22);
+  color:#f7fcfd;
+}
+
+[data-cinematic-page="home"] #shieldlab{
+  scroll-margin-top:72px;
+}
+
+[data-cinematic-page="home"] #shieldlab :is(button,select,a){
+  -webkit-tap-highlight-color:transparent;
+}
+
+[data-cinematic-page="home"] #shieldlab button:focus-visible,
+[data-cinematic-page="home"] #shieldlab select:focus-visible,
+[data-cinematic-page="home"] #shieldlab a:focus-visible{
+  outline:2px solid #76e6ff;
+  outline-offset:4px;
+}
+
+@media (hover:hover){
+  [data-cinematic-page="home"] :is(#formats,#finishes) article{
+    transition:transform .34s cubic-bezier(.2,.8,.2,1),box-shadow .34s ease,border-color .34s ease;
+  }
+  [data-cinematic-page="home"] :is(#formats,#finishes) article:hover{
+    transform:translateY(-4px);
+    box-shadow:0 24px 70px rgba(0,0,0,.18),0 0 42px var(--home-cinematic-glow);
+    border-color:var(--home-cinematic-line);
+  }
+}
+
+@media (max-width:760px){
+  [data-cinematic-page="home"] :is(#story,#formats,#finishes){scroll-margin-top:70px}
+  [data-cinematic-page="home"] #shieldlab{scroll-margin-top:64px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  [data-cinematic-page="home"] :is(#formats,#finishes) article{
+    transition:none!important;
+    transform:none!important;
+  }
+}
