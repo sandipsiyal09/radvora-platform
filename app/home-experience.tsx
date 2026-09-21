@@ -106,7 +106,7 @@ export default function HomeExperience(){
       <button className={ui.menu} onClick={()=>setMenu(v=>!v)} aria-label="Toggle navigation">☰</button>
     </div></header>
 
-    <main>
+    <main data-editorial-product-rails="home">
       <section className={`${ui.shell} ${ui.hero}`}>
         <div className={ui.heroCopy}>
           <div className={ui.eyebrow}><span/>RADVORA · FUTURE PRODUCT SYSTEM</div>
