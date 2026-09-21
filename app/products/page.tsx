@@ -13,7 +13,7 @@ const families=[
 ]
 
 export default function ProductsPage(){
-  return <PublicShell><main className={ui.main}>
+  return <PublicShell><main className={ui.main} data-cinematic-page="products">
     <section className={ui.hero}>
       <div className={ui.heroCopy}><span className={ui.kicker}>THE SHIELDTAG SYSTEM</span><h1>One identity.<br/><em>Four device formats.</em></h1><p>Start with the hardware—not with a generic sticker size. ShieldTag changes visual proportion across smartphones, tablets, laptops and compact accessories.</p><div className={ui.actions}><Link className={ui.primary} href="/#shieldlab">Build in ShieldLab</Link><Link className={ui.secondary} href="/compatibility">Verify a device</Link></div></div>
       <aside className={ui.heroAside}><span>PRODUCT PRINCIPLE</span><strong>Designed around the device.</strong><p>Choose the format, tune the finish and verify the exact model before relying on fit guidance.</p><ul><li><span>Formats</span><b>4</b></li><li><span>Finish directions</span><b>8</b></li><li><span>Compatibility</span><b>Model-specific</b></li></ul></aside>
