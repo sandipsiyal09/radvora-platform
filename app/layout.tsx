@@ -8,6 +8,7 @@ import './cinematic-compatibility-handoff.css'
 import './cinematic-products-handoff.css'
 import './cinematic-research-handoff.css'
 import './cinematic-labs-handoff.css'
+import './cinematic-business-handoff.css'
 import type { Metadata, Viewport } from 'next'
 
 const siteUrl=process.env.NEXT_PUBLIC_APP_URL||'https://radvora-platform.vercel.app'
