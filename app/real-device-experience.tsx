@@ -294,7 +294,7 @@ export default function RealDeviceExperience(){
       <a className={ui.navCta} href="#shieldlab" style={{viewTransitionName:'radvora-primary-cta'}}>{savedBuildLabel?'Resume build':'Build yours'}</a>
     </header>
 
-    <main>
+    <main data-cinematic-page="home" data-cinematic-compatibility="home" data-editorial-product-rails="home">
       <section ref={cinematicRef} className={ui.cinematicOpening} aria-label="RADVORA ShieldTag introduction">
         <div className={ui.cinematicSticky}>
           <div className={ui.cinematicAtmosphere}/><span className={ui.cinematicIndex}>RADVORA / 01</span>
