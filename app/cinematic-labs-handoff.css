@@ -1,0 +1,8 @@
+/* Cinematic Labs handoff — presentation only; validation status and claims governance remain unchanged. */
+main [class*="reportState"]{position:relative;overflow:hidden;isolation:isolate;transition:border-color .45s ease,box-shadow .55s ease}
+main [class*="reportState"]::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,rgba(124,235,221,.035),transparent 38%,rgba(105,124,255,.035));z-index:-1}
+main [class*="reportState"]::after{content:"";position:absolute;left:8%;right:8%;bottom:0;height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(124,235,221,.32),transparent)}
+main [class*="researchGrid"]+[class*="reportState"]{margin-top:clamp(24px,4vw,48px)}
+@media(hover:hover) and (pointer:fine){main [class*="reportState"]:hover{border-color:rgba(132,216,255,.2);box-shadow:0 34px 90px rgba(0,0,0,.24),0 0 62px rgba(124,235,221,.02)}}
+@media(max-width:720px){main [class*="reportState"]::before{opacity:.7}}
+@media(prefers-reduced-motion:reduce){main [class*="reportState"]{transition:none}}
