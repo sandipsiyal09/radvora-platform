@@ -16,6 +16,7 @@ import './cinematic-support-handoff.css'
 import './cinematic-home-polish.css'
 import './cinematic-home-chapter-flow.css'
 import './cinematic-home-surface-depth.css'
+import './cinematic-home-chapter-depth.css'
 import type { Metadata, Viewport } from 'next'
 
 const siteUrl=process.env.NEXT_PUBLIC_APP_URL||'https://radvora-platform.vercel.app'
@@ -58,5 +59,5 @@ const websiteSchema={
 function safeJson(value:unknown){return JSON.stringify(value).replace(/</g,'\\u003c')}
 
 export default function RootLayout({children}:{children:React.ReactNode}){
-  return <html lang="en"><body><script type="application/ld+json" dangerouslySetInnerHTML={{__html:safeJson(organizationSchema)}}/><script type="application/ld+json" dangerouslySetInnerHTML={{__html:safeJson(websiteSchema)}}/>{children}</body></html>
+  return <html lang="en"><body>{children}<script type="application/ld+json" dangerouslySetInnerHTML={{__html:safeJson(organizationSchema)}}/><script type="application/ld+json" dangerouslySetInnerHTML={{__html:safeJson(websiteSchema)}}/></body></html>
 }
