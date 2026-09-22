@@ -1,0 +1,54 @@
+/* Canonical-home-only chapter seam continuity.
+   Presentation only: no compatibility, evidence, commerce, auth or payment state is changed. */
+
+main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes) {
+  position: relative;
+  isolation: isolate;
+}
+
+/* Feather adjacent chapters together so the ShieldTag journey reads as one continuous film rather than stacked panels. */
+main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes)::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: 4vw;
+  right: 4vw;
+  top: -1px;
+  height: clamp(44px, 7vw, 96px);
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(118,230,255,.055), transparent 62%),
+    linear-gradient(90deg, transparent, rgba(255,255,255,.055) 22%, rgba(118,230,255,.09) 50%, rgba(255,255,255,.055) 78%, transparent);
+  background-size: 100% 100%, 100% 1px;
+  background-repeat: no-repeat;
+  opacity: .72;
+}
+
+main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes) > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 760px) {
+  main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes)::before {
+    left: 7vw;
+    right: 7vw;
+    height: 48px;
+    opacity: .48;
+  }
+}
+
+/* The treatment is static, but reduced-motion also removes the atmospheric bloom for maximum visual calm. */
+@media (prefers-reduced-motion: reduce) {
+  main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes)::before {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+    opacity: .65;
+  }
+}
+
+@media (forced-colors: active) {
+  main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes)::before {
+    content: none;
+  }
+}
