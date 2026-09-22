@@ -41,10 +41,10 @@ const devices:DeviceExample[]=[
 ]
 
 const formats=[
-  {n:'01',name:'Signature',device:'Smartphones',copy:'Compact proportions for the device you reach for all day.'},
-  {n:'02',name:'Pro',device:'Tablets',copy:'A broader badge proportioned for larger rear surfaces.'},
-  {n:'03',name:'Executive',device:'Laptops',copy:'A restrained plaque expression for premium computers.'},
-  {n:'04',name:'Mini',device:'Accessories',copy:'A smaller-format identity mark for compact technology.'}
+  {n:'01',name:'Signature',device:'Smartphones',category:'Smartphone' as DeviceCategory,copy:'Compact proportions for the device you reach for all day.'},
+  {n:'02',name:'Pro',device:'Tablets',category:'Tablet' as DeviceCategory,copy:'A broader badge proportioned for larger rear surfaces.'},
+  {n:'03',name:'Executive',device:'Laptops',category:'Laptop' as DeviceCategory,copy:'A restrained plaque expression for premium computers.'},
+  {n:'04',name:'Mini',device:'Accessories',category:'Accessory' as DeviceCategory,copy:'A smaller-format identity mark for compact technology.'}
 ]
 
 function Logo(){return <svg viewBox="0 0 72 48" aria-hidden="true"><path d="M4 6h58L43 22H24l-6 6h32L28 44l-8-9 9-10H10L2 17 25 6Z" fill="currentColor"/><path d="M33 22h20L39 35l-10-9 4-4Z" fill="currentColor" opacity=".45"/></svg>}
@@ -336,7 +336,7 @@ export default function RealDeviceExperience(){
 
       <section className={`${ui.formats} ${ui.cinematicChapter}`} id="formats"><span className={ui.chapterLine} aria-hidden="true"/><span className={ui.chapterNumber} aria-hidden="true">03</span>
         <div className={ui.sectionHead}><span className={ui.eyebrow}>FORM FACTOR / 03</span><h2>Built to belong<br/>on the object.</h2><p>Four ShieldTag expressions keep the visual language consistent while respecting the scale of different device classes.</p></div>
-        <div className={ui.formatRail}>{formats.map((item,i)=><article key={item.name}><span>{item.n}</span><div className={ui.formatTag} style={{'--scale':`${1-i*.11}`} as CSSProperties}><Tag finish={finishes[i]} label={item.name.toUpperCase()}/></div><small>{item.device}</small><h3>{item.name}</h3><p>{item.copy}</p></article>)}</div>
+        <div className={ui.formatRail}>{formats.map((item,i)=><article key={item.name}><span>{item.n}</span><div className={ui.formatTag} style={{'--scale':`${1-i*.11}`} as CSSProperties}><Tag finish={finishes[i]} label={item.name.toUpperCase()}/></div><small>{item.device}</small><h3>{item.name}</h3><p>{item.copy}</p><a href={`/?device=${devices.find(device=>device.category===item.category)?.id||'iphone'}&finish=${finishes[i].id}#shieldlab`}>Build this format →</a></article>)}</div>
       </section>
 
       <div className={ui.labChapter}><span className={ui.chapterLine} aria-hidden="true"/><span className={ui.chapterNumber} aria-hidden="true">04</span><ShieldLab onSaved={setSavedBuildLabel}/></div>
