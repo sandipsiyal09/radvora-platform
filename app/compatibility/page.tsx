@@ -81,6 +81,7 @@ export default function CompatibilityPage(){
       const supabase=createClient()
       let query=supabase.from('device_compatibility')
         .select('manufacturer,device_family,device_model,region_variant,compatibility_status,installation_note,evidence_note')
+        .eq('device_family',suggestedFamily)
         .ilike('manufacturer',manufacturerPattern)
         .ilike('device_model',modelPattern)
         .limit(2)
