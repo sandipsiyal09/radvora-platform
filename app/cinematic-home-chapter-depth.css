@@ -1,0 +1,43 @@
+/* Presentation-only chapter depth for the canonical ShieldTag homepage. */
+[data-cinematic-page="home"] {
+  --chapter-depth-edge: rgba(255,255,255,.045);
+  --chapter-depth-haze: rgba(111,225,255,.04);
+}
+
+/* Keep chapters visually related without altering layout, copy or interactive semantics. */
+[data-cinematic-page="home"] > :is(section, div) {
+  isolation: isolate;
+}
+
+[data-cinematic-page="home"] > :is(section, div)::before {
+  filter: drop-shadow(0 -18px 42px var(--chapter-depth-haze));
+}
+
+@supports (animation-timeline: view()) {
+  [data-cinematic-page="home"] > :is(section, div) {
+    animation-name: radvora-chapter-depth;
+    animation-duration: 1ms;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    animation-timeline: view();
+    animation-range: entry 4% cover 30%;
+  }
+}
+
+@keyframes radvora-chapter-depth {
+  from { filter: brightness(.96) saturate(.94); }
+  to { filter: brightness(1) saturate(1); }
+}
+
+@media (max-width: 720px) {
+  [data-cinematic-page="home"] > :is(section, div)::before {
+    filter: drop-shadow(0 -10px 24px rgba(111,225,255,.025));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-cinematic-page="home"] > :is(section, div) {
+    animation: none !important;
+    filter: none !important;
+  }
+}
