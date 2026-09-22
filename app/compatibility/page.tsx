@@ -59,9 +59,11 @@ export default function CompatibilityPage(){
     const fromManufacturer=params.get('manufacturer')?.trim()
     const fromModel=params.get('model')?.trim()
     const fromCategory=params.get('category')?.trim()
+    const fromVariant=params.get('variant')?.trim()
     if(fromCategory&&familyByCategory[fromCategory])setCategory(fromCategory)
     if(fromManufacturer)setManufacturer(fromManufacturer.slice(0,80))
     if(fromModel)setModel(fromModel.slice(0,120))
+    if(fromVariant)setVariant(fromVariant.slice(0,120))
   },[])
 
   async function check(e:FormEvent){
