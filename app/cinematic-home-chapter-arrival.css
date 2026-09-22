@@ -1,0 +1,57 @@
+/* Canonical-home-only deep-link arrival treatment.
+   Presentation only: compatibility, evidence, commerce, auth and payment state remain untouched. */
+
+main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes):target {
+  position: relative;
+}
+
+/* A deep-linked chapter gets a restrained optical landing cue so navigation feels continuous. */
+main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes):target::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.07),
+    0 0 0 1px rgba(118,230,255,.08),
+    0 0 72px rgba(118,230,255,.07);
+  opacity: .72;
+}
+
+/* Keep chapter content above the decorative arrival layer. */
+main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes):target > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 760px) {
+  main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes):target::after {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.05),
+      0 0 0 1px rgba(118,230,255,.055),
+      0 0 38px rgba(118,230,255,.045);
+    opacity: .58;
+  }
+}
+
+/* Reduced-motion users keep a static location cue; no animated attention capture is introduced. */
+@media (prefers-reduced-motion: reduce) {
+  main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes):target::after {
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 0 0 1px rgba(118,230,255,.07);
+    opacity: .55;
+  }
+}
+
+/* High-contrast users receive a native semantic outline rather than relying on atmospheric light. */
+@media (forced-colors: active) {
+  main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes):target {
+    outline: 2px solid Highlight;
+    outline-offset: 4px;
+  }
+
+  main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes):target::after {
+    content: none;
+  }
+}
