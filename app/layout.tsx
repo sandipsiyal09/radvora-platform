@@ -17,6 +17,7 @@ import './cinematic-home-polish.css'
 import './cinematic-home-chapter-flow.css'
 import './cinematic-home-surface-depth.css'
 import './cinematic-home-chapter-depth.css'
+import './cinematic-home-navigation-continuity.css'
 import type { Metadata, Viewport } from 'next'
 
 const siteUrl=process.env.NEXT_PUBLIC_APP_URL||'https://radvora-platform.vercel.app'

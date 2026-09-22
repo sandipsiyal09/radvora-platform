@@ -1,0 +1,50 @@
+/* Canonical-home-only cinematic journey cue.
+   Presentation only: does not alter compatibility, evidence, commerce, auth, or payment state. */
+
+@supports (animation-timeline: scroll()) {
+  main[data-cinematic-page="home"]::before {
+    content: "";
+    position: fixed;
+    inset: 70px 0 auto;
+    z-index: 79;
+    height: 1px;
+    pointer-events: none;
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    background: linear-gradient(90deg, rgba(118,230,255,.24), rgba(118,230,255,.95) 72%, rgba(244,247,249,.9));
+    box-shadow: 0 0 18px rgba(118,230,255,.3);
+    animation: radvora-home-journey linear both;
+    animation-timeline: scroll(root block);
+  }
+
+  @keyframes radvora-home-journey {
+    to { transform: scaleX(1); }
+  }
+}
+
+/* Give in-page chapter jumps a deliberate landing position below the sticky navigation. */
+main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes) {
+  scroll-margin-top: 88px;
+}
+
+/* Preserve the cinematic cue on touch layouts without letting it compete with content. */
+@media (max-width: 760px) {
+  @supports (animation-timeline: scroll()) {
+    main[data-cinematic-page="home"]::before {
+      inset-block-start: 62px;
+      opacity: .72;
+    }
+  }
+
+  main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes) {
+    scroll-margin-top: 74px;
+  }
+}
+
+/* Motion preference wins: no scroll-driven animation and no decorative progress cue. */
+@media (prefers-reduced-motion: reduce) {
+  main[data-cinematic-page="home"]::before {
+    content: none !important;
+    animation: none !important;
+  }
+}
