@@ -2,6 +2,7 @@
    Presentation only: no compatibility, evidence, commerce, auth or payment state is changed. */
 
 main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes) {
+  position: relative;
   isolation: isolate;
 }
 
