@@ -122,3 +122,5 @@ Vercel quota/rate limits are deployment blockers only; they must not be worked a
 After the exact merged application commit is verified live, apply `supabase/postdeploy/lock_down_legacy_client_writes.sql` and re-test checkout, seller profile, product registration, support/warranty submission, fulfillment/support/warranty staff transitions, admin catalog/inventory updates, scientific review/publish, human approvals and AI configuration. This revokes obsolete direct authenticated writes and legacy privileged RPCs only after the replacement server-route workflows are live.
 
 Do not move this post-deploy SQL into the automatic migration chain: the currently deployed legacy application still needs some of those grants until the new application version is running in production.
+
+<!-- deployment-trigger: 2026-09-22-pr238 -->
