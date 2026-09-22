@@ -149,6 +149,8 @@ function ShieldLab({onSaved}:{onSaved:(label:string)=>void}){
   function chooseDevice(id:string){captureFlip();setDeviceId(id)}
   function chooseFinish(id:string){captureFlip();setFinishId(id)}
 
+  const compatibilityHref=`/compatibility?category=${encodeURIComponent(selected.category)}&manufacturer=${encodeURIComponent(selected.brand)}&model=${encodeURIComponent(selected.name)}`
+
   function chooseCategory(category:DeviceCategory){
     const first=devices.find(item=>item.category===category)
     if(first)chooseDevice(first.id)
@@ -186,7 +188,7 @@ function ShieldLab({onSaved}:{onSaved:(label:string)=>void}){
       </div>
       <label className={ui.deviceSelect}><span>DEVICE</span><select value={selected.id} onChange={e=>chooseDevice(e.target.value)}>{categoryDevices.map(device=><option key={device.id} value={device.id}>{device.brand} · {device.name}</option>)}</select></label>
       <div className={ui.finishGrid} aria-label="Finish selector">{finishes.map(item=><button type="button" key={item.id} aria-pressed={finishId===item.id} onClick={()=>chooseFinish(item.id)}><i style={{'--swatch':item.base,'--edge':item.edge} as CSSProperties}/><span>{item.name}</span></button>)}</div>
-      <div className={ui.labActions}><button type="button" onClick={saveBuild}>Save build</button><button type="button" onClick={shareBuild}>Share build</button><a href="/compatibility">Verify fit →</a></div>
+      <div className={ui.labActions}><button type="button" onClick={saveBuild}>Save build</button><button type="button" onClick={shareBuild}>Share build</button><a href={compatibilityHref}>Verify fit →</a></div>
       <p className={ui.labStatus} role="status" aria-live="polite">{message||'Your device and finish are encoded in the page link.'}</p>
       <ProductInterestForm source="shieldlab-interest" context={`${selected.brand} ${selected.name} · ${finish.name}`} compact/>
     </div>
