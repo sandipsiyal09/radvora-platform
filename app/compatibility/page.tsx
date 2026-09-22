@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { FormEvent, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { createClient } from '../../lib/supabase/client'
 import { PublicShell } from '../public-shell'
 import ui from '../public-brand.module.css'
@@ -38,6 +38,16 @@ export default function CompatibilityPage(){
   const [lookupError,setLookupError]=useState(false)
   const [variantRequired,setVariantRequired]=useState(false)
   const suggestedFamily=useMemo(()=>familyByCategory[category]||'ShieldTag',[category])
+
+  useEffect(()=>{
+    const params=new URLSearchParams(window.location.search)
+    const fromManufacturer=params.get('manufacturer')?.trim()
+    const fromModel=params.get('model')?.trim()
+    const fromCategory=params.get('category')?.trim()
+    if(fromCategory&&familyByCategory[fromCategory])setCategory(fromCategory)
+    if(fromManufacturer)setManufacturer(fromManufacturer.slice(0,80))
+    if(fromModel)setModel(fromModel.slice(0,120))
+  },[])
 
   async function check(e:FormEvent){
     e.preventDefault()
