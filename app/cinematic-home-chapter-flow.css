@@ -1,0 +1,83 @@
+/* Progressive, presentation-only continuity for the canonical ShieldTag homepage. */
+[data-cinematic-page="home"] {
+  --chapter-flow-line: rgba(118, 230, 255, .16);
+  --chapter-flow-glow: rgba(118, 230, 255, .055);
+}
+
+[data-cinematic-page="home"] > section,
+[data-cinematic-page="home"] > div {
+  position: relative;
+}
+
+/* A quiet light handoff keeps adjacent chapters visually connected without
+   changing layout, copy, compatibility, evidence, or commerce semantics. */
+[data-cinematic-page="home"] > section:not(:first-child)::before,
+[data-cinematic-page="home"] > div:not(:first-child)::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: -1px;
+  left: 50%;
+  width: min(78vw, 1120px);
+  height: 1px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--chapter-flow-line) 28%, rgba(255,255,255,.12) 50%, var(--chapter-flow-line) 72%, transparent);
+}
+
+@supports (animation-timeline: view()) {
+  [data-cinematic-page="home"] > section:not(:first-child),
+  [data-cinematic-page="home"] > div:not(:first-child) {
+    animation: radvora-chapter-arrival linear both;
+    animation-timeline: view();
+    animation-range: entry 6% cover 26%;
+  }
+
+  [data-cinematic-page="home"] > section:not(:first-child)::after,
+  [data-cinematic-page="home"] > div:not(:first-child)::after {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(ellipse at 50% 0%, var(--chapter-flow-glow), transparent 42%);
+    animation: radvora-chapter-atmosphere linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 38%;
+  }
+}
+
+@keyframes radvora-chapter-arrival {
+  from { opacity: .72; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes radvora-chapter-atmosphere {
+  0% { opacity: 0; }
+  48% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (max-width: 720px) {
+  [data-cinematic-page="home"] > section:not(:first-child)::before,
+  [data-cinematic-page="home"] > div:not(:first-child)::before { width: 88vw; }
+
+  @supports (animation-timeline: view()) {
+    [data-cinematic-page="home"] > section:not(:first-child),
+    [data-cinematic-page="home"] > div:not(:first-child) {
+      animation-range: entry 4% cover 18%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-cinematic-page="home"] > section,
+  [data-cinematic-page="home"] > div,
+  [data-cinematic-page="home"] > section::after,
+  [data-cinematic-page="home"] > div::after {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+}
