@@ -1,0 +1,38 @@
+/* Canonical-home-only keyboard focus continuity.
+   Presentation only: no compatibility, evidence, commerce, auth or payment state is changed. */
+
+main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes) :is(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid rgba(133, 234, 255, .92);
+  outline-offset: 4px;
+  box-shadow:
+    0 0 0 1px rgba(5, 6, 7, .88),
+    0 0 0 7px rgba(118, 230, 255, .09),
+    0 10px 34px rgba(0, 0, 0, .24);
+}
+
+/* Keep focus readable on clipped/rounded cinematic controls without changing their geometry. */
+main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes) :is(a, button):focus-visible {
+  position: relative;
+  z-index: 3;
+}
+
+@media (max-width: 760px) {
+  main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes) :is(a, button, input, select, textarea):focus-visible {
+    outline-offset: 3px;
+    box-shadow: 0 0 0 1px rgba(5, 6, 7, .9), 0 0 0 5px rgba(118, 230, 255, .08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes) :is(a, button, input, select, textarea):focus-visible {
+    transition: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes) :is(a, button, input, select, textarea):focus-visible {
+    outline: 2px solid CanvasText;
+    outline-offset: 4px;
+    box-shadow: none;
+  }
+}
