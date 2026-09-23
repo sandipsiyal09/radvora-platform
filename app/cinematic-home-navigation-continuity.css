@@ -48,3 +48,11 @@ main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes) {
     animation: none !important;
   }
 }
+
+/* Native high-contrast rendering should not compete with the decorative scroll-progress light. */
+@media (forced-colors: active) {
+  main[data-cinematic-page="home"]::before {
+    content: none !important;
+    animation: none !important;
+  }
+}
