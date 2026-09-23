@@ -49,3 +49,16 @@
     animation: none !important;
   }
 }
+
+/* Native high-contrast surfaces remain authoritative; decorative optical glint
+   and 3D rendering affordances must not obscure system colors or boundaries. */
+@media (forced-colors: active) {
+  [data-cinematic-page="home"] :is(figure, [data-cinematic-media], [data-shield-surface]) {
+    transform-style: flat;
+    backface-visibility: visible;
+  }
+
+  [data-cinematic-page="home"] :is(figure, [data-cinematic-media], [data-shield-surface])::after {
+    content: none;
+  }
+}
