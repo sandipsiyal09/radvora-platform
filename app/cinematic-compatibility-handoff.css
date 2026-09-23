@@ -10,3 +10,12 @@ main [class*="compatPanel"] :is(input,select,textarea):focus-visible{border-colo
 @media(max-width:720px){main [class*="compatPanel"]::before{width:34%;opacity:.5}main [class*="compatPanel"]:focus-within::before{opacity:.68}main [class*="compatPanel"] :is(a,button,input,select,textarea):focus-visible{outline-offset:3px;box-shadow:0 0 0 4px rgba(124,235,221,.07)}}
 @media(prefers-reduced-motion:reduce){main [class*="compatPanel"],main [class*="compatPanel"]::before{transition:none}main [class*="compatPanel"]:hover{transform:none}main [class*="compatPanel"]:focus-within::before{transform:none}}
 @media(forced-colors:active){main [class*="compatPanel"]::before,main [class*="compatPanel"]::after{display:none}main [class*="compatPanel"]:focus-within{border-color:CanvasText;box-shadow:none}main [class*="compatPanel"] :is(a,button,input,select,textarea):focus-visible{outline:2px solid CanvasText;box-shadow:none}}
+
+/* Context handoff: visually bind the selected category/family summary to the checker without implying verification. */
+main [class*="heroAside"]{position:relative;isolation:isolate}
+main [class*="heroAside"]::after{content:"";position:absolute;inset:auto 8% 0;height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(124,235,221,.24),rgba(105,124,255,.18),transparent);opacity:.68}
+main [class*="heroAside"] li{transition:background-color .35s ease,border-color .35s ease}
+@media(hover:hover) and (pointer:fine){main [class*="heroAside"] li:hover{background:rgba(124,235,221,.025);border-color:rgba(132,216,255,.12)}}
+@media(max-width:720px){main [class*="heroAside"]::after{inset-inline:14%;opacity:.46}}
+@media(prefers-reduced-motion:reduce){main [class*="heroAside"] li{transition:none}}
+@media(forced-colors:active){main [class*="heroAside"]::after{display:none}}
