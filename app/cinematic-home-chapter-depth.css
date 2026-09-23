@@ -41,3 +41,12 @@
     filter: none !important;
   }
 }
+
+/* High-contrast rendering must not depend on cinematic haze or color filtering. */
+@media (forced-colors: active) {
+  [data-cinematic-page="home"] > :is(section, div),
+  [data-cinematic-page="home"] > :is(section, div)::before {
+    animation: none !important;
+    filter: none !important;
+  }
+}
