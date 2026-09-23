@@ -49,3 +49,15 @@
     animation: none !important;
   }
 }
+
+/* Native high-contrast rendering wins over optical glint and presentation-only depth. */
+@media (forced-colors: active) {
+  [data-cinematic-page="home"] :is(figure, [data-cinematic-media], [data-shield-surface]) {
+    transform-style: flat;
+    backface-visibility: visible;
+  }
+
+  [data-cinematic-page="home"] :is(figure, [data-cinematic-media], [data-shield-surface])::after {
+    content: none;
+  }
+}
