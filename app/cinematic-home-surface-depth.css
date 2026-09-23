@@ -49,3 +49,16 @@
     animation: none !important;
   }
 }
+
+/* High-contrast users keep the semantic media surface without decorative optical material. */
+@media (forced-colors: active) {
+  [data-cinematic-page="home"] :is(figure, [data-cinematic-media], [data-shield-surface]) {
+    transform-style: flat;
+    backface-visibility: visible;
+    forced-color-adjust: auto;
+  }
+
+  [data-cinematic-page="home"] :is(figure, [data-cinematic-media], [data-shield-surface])::after {
+    content: none;
+  }
+}
