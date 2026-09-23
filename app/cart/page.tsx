@@ -15,7 +15,7 @@ function round2(value:number){return Math.round((value+Number.EPSILON)*100)/100}
 export default async function CartPage(){
   const supabase=await createClient()
   const {data:{user}}=await supabase.auth.getUser()
-  if(!user){return <PublicShell><main className="page-wrap"><div className="shell"><section className="panel"><p className="kicker">RADVORA CART</p><h1>Sign in to continue.</h1><Link className="pill light" href="/login">Sign in</Link></section></div></main></PublicShell>}
+  if(!user){return <PublicShell><main className="page-wrap" data-cinematic-page="cart"><div className="shell"><section className="panel"><p className="kicker">RADVORA CART</p><h1>Sign in to continue.</h1><Link className="pill light" href="/login">Sign in</Link></section></div></main></PublicShell>}
 
   const {data:cart}=await supabase.from('carts').select('id,status').eq('user_id',user.id).eq('status','active').order('created_at',{ascending:false}).limit(1).maybeSingle()
   let items:CartItem[]=[]
@@ -44,7 +44,7 @@ export default async function CartPage(){
   const gatewayReady=Boolean(process.env.RAZORPAY_KEY_ID&&process.env.RAZORPAY_KEY_SECRET&&process.env.RAZORPAY_WEBHOOK_SECRET)
   const money=(value:number)=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR'}).format(value)
 
-  return <PublicShell><main className="page-wrap"><div className="shell">
+  return <PublicShell><main className="page-wrap" data-cinematic-page="cart"><div className="shell">
     <section className="page-head"><span className="kicker">RADVORA INDIA COMMERCE</span><h1>Your cart.</h1><p>RADVORA is currently available to consumers in India only. Pricing, applicable GST and stock availability are resolved from the live governed catalog; browser-supplied totals are ignored.</p></section>
     <div className="cart-layout">
       <section className="panel"><h2>Items</h2>{items.length?items.map((item,index)=>{const product=item.products;const estimate=estimates[index];const available=product?.stock_on_hand===null||product?.stock_on_hand===undefined?null:Math.max(0,Number(product.stock_on_hand)-Number(product.stock_reserved||0));return <div className="cart-row" key={item.id}><div><b>{product?.name||'Product'}</b><span>{product?.sku||item.product_id}</span>{product?.commerce_enabled!==true?<span>Currently unavailable for checkout</span>:null}{product?.gst_rate!==null&&product?.hsn_code?<span>HSN {product.hsn_code} · GST {Number(product.gst_rate)}% · price {product.price_inr_includes_gst?'includes':'excludes'} GST</span>:<span>India tax configuration pending</span>}<span>{available===null?'Stock pending':available>=item.quantity?`${available} available`:`Only ${available} available — reduce quantity`}</span><CartItemControls itemId={item.id} quantity={Number(item.quantity)}/></div><div><span>Qty {item.quantity}</span><b>{estimate.gross>0?money(estimate.gross):'Price pending'}</b></div></div>}):<p className="empty-state">Your cart is empty.</p>}</section>
