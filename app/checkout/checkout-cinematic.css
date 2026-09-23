@@ -1,0 +1,58 @@
+.checkout-cinematic {
+  position: relative;
+  isolation: isolate;
+}
+
+.checkout-cinematic::before {
+  content: '';
+  position: absolute;
+  inset: -2rem -1rem auto;
+  height: 16rem;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 0%, rgb(65 230 220 / 0.11), transparent 68%);
+  filter: blur(18px);
+}
+
+.checkout-cinematic .bento-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.checkout-cinematic .bento-card::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 1px;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgb(104 240 228 / 0.46), transparent);
+}
+
+.checkout-cinematic .account-row {
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+
+.checkout-cinematic .account-row:hover {
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .checkout-cinematic .account-row {
+    transition: none;
+  }
+
+  .checkout-cinematic .account-row:hover {
+    transform: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .checkout-cinematic::before,
+  .checkout-cinematic .bento-card::after {
+    display: none;
+  }
+
+  .checkout-cinematic .account-row {
+    transition: none;
+  }
+}
