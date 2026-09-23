@@ -6,3 +6,4 @@ main[data-cinematic-page="about"] [class*="sectionHead"]::before{content:"";posi
 @media(hover:hover) and (pointer:fine){main[data-cinematic-page="about"] [class*="grid3"]>[class*="panel"]:hover{border-color:rgba(132,216,255,.2);box-shadow:0 38px 100px rgba(0,0,0,.25),0 0 68px rgba(124,235,221,.02);transform:translateY(-2px)}}
 @media(max-width:720px){main[data-cinematic-page="about"] [class*="sectionHead"]::before{opacity:.55}}
 @media(prefers-reduced-motion:reduce){main[data-cinematic-page="about"] [class*="grid3"]>[class*="panel"]{transition:none}main[data-cinematic-page="about"] [class*="grid3"]>[class*="panel"]:hover{transform:none}}
+@media(forced-colors:active){main[data-cinematic-page="about"] [class*="grid3"]>[class*="panel"]::after,main[data-cinematic-page="about"] [class*="sectionHead"]::before{display:none}main[data-cinematic-page="about"] [class*="grid3"]>[class*="panel"]{forced-color-adjust:auto}}
