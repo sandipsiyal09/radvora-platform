@@ -47,3 +47,16 @@ main[data-cinematic-page="home"]>section[class*="cinematicChapter"]>[class*="cha
   main[data-cinematic-page="home"]>section[class*="install"]::after,main[data-cinematic-page="home"]>section[class*="trust"]::after,main[data-cinematic-page="home"]>section[class*="finalCta"]::after{animation:none!important}
   main[data-cinematic-page="home"]>section[class*="cinematicChapter"]>[class*="chapterLine"]{animation:none!important}
 }
+
+/* Native high-contrast mode owns the closing chapters: remove atmospheric light, glow and decorative motion while retaining structure and content. */
+@media(forced-colors:active){
+  main[data-cinematic-page="home"]>section[class*="install"]::before,
+  main[data-cinematic-page="home"]>section[class*="trust"]::before,
+  main[data-cinematic-page="home"]>section[class*="finalCta"]::before,
+  main[data-cinematic-page="home"]>section[class*="install"]::after,
+  main[data-cinematic-page="home"]>section[class*="trust"]::after,
+  main[data-cinematic-page="home"]>section[class*="finalCta"]::after{content:none!important;animation:none!important}
+  main[data-cinematic-page="home"]>section[class*="cinematicChapter"]>[class*="chapterLine"]{background:CanvasText;box-shadow:none;animation:none!important}
+  main[data-cinematic-page="home"]>section[class*="cinematicChapter"]>[class*="chapterNumber"]{text-shadow:none}
+  main[data-cinematic-page="home"]>section[class*="install"]>*,main[data-cinematic-page="home"]>section[class*="trust"]>*,main[data-cinematic-page="home"]>section[class*="finalCta"]>*{animation:none!important}
+}
