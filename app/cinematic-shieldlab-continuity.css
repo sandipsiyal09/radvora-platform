@@ -8,3 +8,5 @@ main[data-cinematic-page="home"] [class*="labControls"]{backdrop-filter:blur(10p
 @media(hover:hover) and (pointer:fine){main[data-cinematic-page="home"] [class*="labStage"]:hover{border-color:rgba(118,230,255,.18);box-shadow:0 38px 90px rgba(0,0,0,.24),0 0 80px rgba(118,230,255,.025)}main[data-cinematic-page="home"] [class*="labStage"]:hover>[class*="deviceVisual"]{transform:translateY(-3px) scale(1.004)}}
 @media(max-width:760px){main[data-cinematic-page="home"] [class*="lab"]::before{opacity:.48}main[data-cinematic-page="home"] [class*="labControls"]{backdrop-filter:none;-webkit-backdrop-filter:none}}
 @media(prefers-reduced-motion:reduce){main[data-cinematic-page="home"] [class*="labStage"]{transition:none}main[data-cinematic-page="home"] [class*="labStage"]:hover>[class*="deviceVisual"]{transform:none}}
+
+@media(forced-colors:active){main[data-cinematic-page="home"] [class*="lab"]::before,main[data-cinematic-page="home"] [class*="labStage"]::after{display:none}main[data-cinematic-page="home"] [class*="labControls"]{backdrop-filter:none;-webkit-backdrop-filter:none;forced-color-adjust:auto}}
