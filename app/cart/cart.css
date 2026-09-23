@@ -16,4 +16,15 @@
 .cart-controls{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:10px}
 .cart-controls .pill{padding:6px 10px;min-width:0}.cart-controls span{margin:0;min-width:20px;text-align:center}
 .cart-controls small{width:100%;color:#8190a4}
-@media(max-width:900px){.cart-layout{grid-template-columns:1fr}.cart-layout>.panel:first-child{border-right:0;border-bottom:1px solid var(--line);padding-right:0}.cart-layout>.panel:last-child{padding-left:0}.cart-summary{position:static}}
+
+/* ShieldTag-to-commerce handoff: presentation only. Server-governed INR/GST/stock and Razorpay readiness remain authoritative. */
+main[data-cinematic-page="cart"] .page-head{position:relative;isolation:isolate}
+main[data-cinematic-page="cart"] .page-head::before{content:"";position:absolute;inset:-22% -8% -28%;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 16% 28%,rgba(124,235,221,.055),transparent 42%),radial-gradient(ellipse at 76% 12%,rgba(105,124,255,.055),transparent 38%);filter:blur(10px)}
+main[data-cinematic-page="cart"] .cart-layout{position:relative;isolation:isolate}
+main[data-cinematic-page="cart"] .cart-layout::before{content:"";position:absolute;inset:0 auto 0 62.5%;width:1px;z-index:-1;pointer-events:none;background:linear-gradient(180deg,transparent,rgba(124,235,221,.18) 22%,rgba(105,124,255,.16) 72%,transparent)}
+main[data-cinematic-page="cart"] .cart-row,main[data-cinematic-page="cart"] .cart-summary{transition:border-color .4s ease,box-shadow .5s ease,transform .45s cubic-bezier(.16,1,.3,1)}
+main[data-cinematic-page="cart"] .cart-summary::after{content:"";display:block;height:1px;margin-top:24px;background:linear-gradient(90deg,transparent,rgba(124,235,221,.28),rgba(105,124,255,.2),transparent);pointer-events:none}
+@media(hover:hover) and (pointer:fine){main[data-cinematic-page="cart"] .cart-row:hover{transform:translateX(3px)}main[data-cinematic-page="cart"] .cart-summary:hover{box-shadow:0 34px 96px rgba(0,0,0,.18),0 0 64px rgba(124,235,221,.025)}}
+@media(max-width:900px){.cart-layout{grid-template-columns:1fr}.cart-layout>.panel:first-child{border-right:0;border-bottom:1px solid var(--line);padding-right:0}.cart-layout>.panel:last-child{padding-left:0}.cart-summary{position:static}main[data-cinematic-page="cart"] .cart-layout::before{display:none}}
+@media(prefers-reduced-motion:reduce){main[data-cinematic-page="cart"] .cart-row,main[data-cinematic-page="cart"] .cart-summary{transition:none}main[data-cinematic-page="cart"] .cart-row:hover{transform:none}}
+@media(forced-colors:active){main[data-cinematic-page="cart"] .page-head::before,main[data-cinematic-page="cart"] .cart-layout::before,main[data-cinematic-page="cart"] .cart-summary::after{display:none}main[data-cinematic-page="cart"] .cart-row:hover{transform:none}main[data-cinematic-page="cart"] .cart-summary:hover{box-shadow:none}}
