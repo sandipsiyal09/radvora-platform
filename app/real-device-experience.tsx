@@ -115,10 +115,8 @@ function ShieldLab({onSaved}:{onSaved:(label:string)=>void}){
 
   useEffect(()=>{
     const url=new URL(window.location.href)
-    const params=new URLSearchParams()
-    params.set('device',deviceId)
-    params.set('finish',finishId)
-    url.search=params.toString()
+    url.searchParams.set('device',deviceId)
+    url.searchParams.set('finish',finishId)
     window.history.replaceState({},'',url)
   },[deviceId,finishId])
 
