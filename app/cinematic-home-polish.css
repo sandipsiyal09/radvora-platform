@@ -59,3 +59,9 @@
     transform:none!important;
   }
 }
+
+@media (forced-colors:active){
+  [data-cinematic-page="home"] :is(#story,#formats,#finishes)::selection{background:Highlight;color:HighlightText}
+  [data-cinematic-page="home"] #shieldlab :is(button,select,a):focus-visible{outline:2px solid CanvasText;outline-offset:4px;box-shadow:none}
+  [data-cinematic-page="home"] :is(#formats,#finishes) article:hover{transform:none;box-shadow:none;border-color:CanvasText}
+}
