@@ -10,3 +10,12 @@ main [class*="compatPanel"] :is(input,select,textarea):focus-visible{border-colo
 @media(max-width:720px){main [class*="compatPanel"]::before{width:34%;opacity:.5}main [class*="compatPanel"]:focus-within::before{opacity:.68}main [class*="compatPanel"] :is(a,button,input,select,textarea):focus-visible{outline-offset:3px;box-shadow:0 0 0 4px rgba(124,235,221,.07)}}
 @media(prefers-reduced-motion:reduce){main [class*="compatPanel"],main [class*="compatPanel"]::before{transition:none}main [class*="compatPanel"]:hover{transform:none}main [class*="compatPanel"]:focus-within::before{transform:none}}
 @media(forced-colors:active){main [class*="compatPanel"]::before,main [class*="compatPanel"]::after{display:none}main [class*="compatPanel"]:focus-within{border-color:CanvasText;box-shadow:none}main [class*="compatPanel"] :is(a,button,input,select,textarea):focus-visible{outline:2px solid CanvasText;box-shadow:none}}
+
+/* Result-state continuity: keep the governed compatibility response visually connected to the interaction without changing its meaning. */
+main [class*="compatPanel"] [class*="status"]{position:relative;display:inline-flex;align-items:center;gap:.55rem}
+main [class*="compatPanel"] [class*="status"]::before{content:"";width:.42rem;height:.42rem;border-radius:50%;background:currentColor;box-shadow:0 0 0 4px rgba(124,235,221,.045),0 0 18px rgba(124,235,221,.16);opacity:.72}
+main [class*="compatPanel"] [class*="resultGrid"]{position:relative}
+main [class*="compatPanel"] [class*="resultGrid"]::before{content:"";position:absolute;inset:-.7rem auto -.7rem -.9rem;width:1px;pointer-events:none;background:linear-gradient(180deg,transparent,rgba(124,235,221,.3),rgba(105,124,255,.22),transparent);opacity:.7}
+@media(max-width:720px){main [class*="compatPanel"] [class*="status"]::before{box-shadow:0 0 0 3px rgba(124,235,221,.035),0 0 12px rgba(124,235,221,.12)}main [class*="compatPanel"] [class*="resultGrid"]::before{opacity:.5}}
+@media(prefers-reduced-motion:reduce){main [class*="compatPanel"] [class*="status"]::before{box-shadow:0 0 0 3px rgba(124,235,221,.04)}}
+@media(forced-colors:active){main [class*="compatPanel"] [class*="status"]::before{background:CanvasText;box-shadow:none}main [class*="compatPanel"] [class*="resultGrid"]::before{display:none}}
