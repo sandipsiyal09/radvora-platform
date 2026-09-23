@@ -41,3 +41,15 @@
     filter: none !important;
   }
 }
+
+/* Native high-contrast rendering must remain authoritative over cinematic depth. */
+@media (forced-colors: active) {
+  [data-cinematic-page="home"] > :is(section, div) {
+    animation: none !important;
+    filter: none !important;
+  }
+
+  [data-cinematic-page="home"] > :is(section, div)::before {
+    filter: none !important;
+  }
+}
