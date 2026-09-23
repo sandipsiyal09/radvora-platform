@@ -1,13 +1,10 @@
 /* Cinematic compatibility handoff — visually carries ShieldTag into reviewed fit context without changing compatibility semantics. */
-main [class*="compatSection"]{position:relative;isolation:isolate}
-main [class*="compatSection"]::before{content:"";position:absolute;left:50%;top:4%;bottom:4%;width:1px;pointer-events:none;background:linear-gradient(180deg,transparent,rgba(124,235,221,.22) 28%,rgba(105,124,255,.2) 72%,transparent);opacity:.72}
-main [class*="compatCopy"],main [class*="compatVisual"]{position:relative;overflow:hidden;transition:border-color .45s ease,box-shadow .55s ease,transform .45s cubic-bezier(.16,1,.3,1)}
-main [class*="compatCopy"]::after{content:"";position:absolute;inset:auto 10% 0;height:1px;background:linear-gradient(90deg,transparent,rgba(124,235,221,.28),transparent);pointer-events:none}
-main [class*="compatVisual"]::after{content:"";position:absolute;width:44%;aspect-ratio:1;border-radius:50%;right:-16%;bottom:-20%;pointer-events:none;background:radial-gradient(circle,rgba(105,124,255,.09),transparent 68%);filter:blur(10px)}
-main [class*="compatSection"] :is(a,button,input,select,textarea):focus-visible{outline:2px solid rgba(151,232,255,.92);outline-offset:4px;box-shadow:0 0 0 6px rgba(124,235,221,.08),0 18px 48px rgba(0,0,0,.2)}
-main [class*="compatSection"] :is(input,select,textarea):focus-visible{border-color:rgba(151,232,255,.5)}
-@media(hover:hover) and (pointer:fine){main [class*="compatCopy"]:hover,main [class*="compatVisual"]:hover{border-color:rgba(132,216,255,.2);box-shadow:0 42px 110px rgba(0,0,0,.28),0 0 72px rgba(124,235,221,.025);transform:translateY(-2px)}}
-@media(max-width:1120px){main [class*="compatSection"]::before{left:50%;top:48%;bottom:auto;height:1px;width:44%;transform:translateX(-50%);background:linear-gradient(90deg,transparent,rgba(124,235,221,.2),transparent)}}
-@media(max-width:720px){main [class*="compatSection"]::before{width:32%}main [class*="compatSection"] :is(a,button,input,select,textarea):focus-visible{outline-offset:3px;box-shadow:0 0 0 4px rgba(124,235,221,.07)}}
-@media(prefers-reduced-motion:reduce){main [class*="compatCopy"],main [class*="compatVisual"]{transition:none}main [class*="compatCopy"]:hover,main [class*="compatVisual"]:hover{transform:none}}
-@media(forced-colors:active){main [class*="compatSection"]::before,main [class*="compatCopy"]::after,main [class*="compatVisual"]::after{display:none}main [class*="compatSection"] :is(a,button,input,select,textarea):focus-visible{outline:2px solid CanvasText;box-shadow:none}}
+main [class*="compatPanel"]{position:relative;overflow:hidden;isolation:isolate;transition:border-color .45s ease,box-shadow .55s ease,transform .45s cubic-bezier(.16,1,.3,1)}
+main [class*="compatPanel"]::after{content:"";position:absolute;inset:auto 10% 0;height:1px;background:linear-gradient(90deg,transparent,rgba(124,235,221,.28),transparent);pointer-events:none}
+main [class*="compatPanel"]::before{content:"";position:absolute;width:44%;aspect-ratio:1;border-radius:50%;right:-16%;bottom:-20%;pointer-events:none;background:radial-gradient(circle,rgba(105,124,255,.09),transparent 68%);filter:blur(10px);opacity:.72}
+main [class*="compatPanel"] :is(a,button,input,select,textarea):focus-visible{outline:2px solid rgba(151,232,255,.92);outline-offset:4px;box-shadow:0 0 0 6px rgba(124,235,221,.08),0 18px 48px rgba(0,0,0,.2)}
+main [class*="compatPanel"] :is(input,select,textarea):focus-visible{border-color:rgba(151,232,255,.5)}
+@media(hover:hover) and (pointer:fine){main [class*="compatPanel"]:hover{border-color:rgba(132,216,255,.2);box-shadow:0 42px 110px rgba(0,0,0,.28),0 0 72px rgba(124,235,221,.025);transform:translateY(-2px)}}
+@media(max-width:720px){main [class*="compatPanel"]::before{width:34%;opacity:.5}main [class*="compatPanel"] :is(a,button,input,select,textarea):focus-visible{outline-offset:3px;box-shadow:0 0 0 4px rgba(124,235,221,.07)}}
+@media(prefers-reduced-motion:reduce){main [class*="compatPanel"]{transition:none}main [class*="compatPanel"]:hover{transform:none}}
+@media(forced-colors:active){main [class*="compatPanel"]::before,main [class*="compatPanel"]::after{display:none}main [class*="compatPanel"] :is(a,button,input,select,textarea):focus-visible{outline:2px solid CanvasText;box-shadow:none}}
