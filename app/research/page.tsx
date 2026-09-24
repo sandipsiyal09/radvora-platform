@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { PublicShell } from '../public-shell'
 import ui from '../public-brand.module.css'
+import './research-cinematic.css'
 
 export const metadata={title:'Research & Validation',description:'See how RADVORA separates design intent, compatibility review, product testing and evidence-controlled ShieldTag claims.',alternates:{canonical:'/research'}}
 
