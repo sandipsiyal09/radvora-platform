@@ -3,6 +3,7 @@
 import { FormEvent, useState } from 'react'
 import { PublicShell } from '../public-shell'
 import ui from '../public-brand.module.css'
+import './verify-cinematic.css'
 
 type Result={
   serial_number:string
