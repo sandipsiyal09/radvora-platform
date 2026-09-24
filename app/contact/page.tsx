@@ -2,6 +2,7 @@ import Link from 'next/link'
 import BusinessLeadForm from '../business/lead-form'
 import { PublicShell } from '../public-shell'
 import ui from '../public-brand.module.css'
+import './contact-cinematic.css'
 
 export const metadata={title:'Contact RADVORA',description:'Contact RADVORA for ShieldTag business, compatibility, installation, verification, warranty and support enquiries.',alternates:{canonical:'/contact'}}
 
