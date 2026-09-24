@@ -5,6 +5,7 @@ import CustomerCare from './customer-care'
 import ProfileForm from './profile-form'
 import SignOutButton from './sign-out-button'
 import './account.css'
+import './account-hub-continuity.css'
 import { PublicShell } from '../public-shell'
 
 export const dynamic = 'force-dynamic'
