@@ -17,3 +17,14 @@
 .cart-controls .pill{padding:6px 10px;min-width:0}.cart-controls span{margin:0;min-width:20px;text-align:center}
 .cart-controls small{width:100%;color:#8190a4}
 @media(max-width:900px){.cart-layout{grid-template-columns:1fr}.cart-layout>.panel:first-child{border-right:0;border-bottom:1px solid var(--line);padding-right:0}.cart-layout>.panel:last-child{padding-left:0}.cart-summary{position:static}}
+
+/* ShieldTag cart-to-checkout continuity */
+.cart-layout{position:relative;isolation:isolate}
+.cart-layout::before{content:"";position:absolute;inset:-28px -18px;z-index:-1;pointer-events:none;background:radial-gradient(64% 40% at 72% 0%,rgba(84,177,255,.07),transparent 72%)}
+.cart-layout>.panel{position:relative;overflow:hidden}
+.cart-layout>.panel::before{content:"";position:absolute;top:0;left:28px;width:40px;height:1px;pointer-events:none;background:rgba(139,211,255,.68);box-shadow:0 0 16px rgba(74,174,255,.2)}
+.cart-row{transition:transform .28s ease,border-color .28s ease}
+.cart-row:hover{transform:translateX(3px);border-color:rgba(151,211,255,.26)}
+.cart-summary:focus-within{background:linear-gradient(180deg,rgba(155,207,255,.028),transparent 58%)}
+@media(prefers-reduced-motion:reduce){.cart-row{transition:none}.cart-row:hover{transform:none}}
+@media(forced-colors:active){.cart-layout::before,.cart-layout>.panel::before{display:none}.cart-row:hover{transform:none;border-color:CanvasText}.cart-summary:focus-within{background:Canvas}}
