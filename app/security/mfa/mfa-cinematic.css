@@ -1,0 +1,9 @@
+.page-wrap .page-head{position:relative;isolation:isolate;overflow:hidden}
+.page-wrap .page-head::before{content:"";position:absolute;inset:-55% 12% auto -14%;height:360px;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at center,rgba(82,174,255,.085),transparent 70%);filter:blur(14px)}
+.page-wrap .page-head::after{content:"";position:absolute;left:0;bottom:0;width:min(220px,32vw);height:1px;pointer-events:none;background:linear-gradient(90deg,rgba(139,211,255,.7),transparent);box-shadow:0 0 18px rgba(74,174,255,.18)}
+.page-wrap>.shell>.panel{position:relative;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.018),transparent 52%);transition:border-color .26s ease,transform .26s ease}
+.page-wrap>.shell>.panel::before{content:"";position:absolute;top:0;left:28px;width:42px;height:1px;pointer-events:none;background:rgba(139,211,255,.68);box-shadow:0 0 16px rgba(74,174,255,.2)}
+.page-wrap>.shell>.panel:focus-within{border-color:rgba(151,211,255,.3);transform:translateY(-2px)}
+.page-wrap>.shell>.panel .panel{background:linear-gradient(180deg,rgba(84,177,255,.035),transparent 62%)}
+@media(prefers-reduced-motion:reduce){.page-wrap>.shell>.panel{transition:none}.page-wrap>.shell>.panel:focus-within{transform:none}}
+@media(forced-colors:active){.page-wrap .page-head::before,.page-wrap .page-head::after,.page-wrap>.shell>.panel::before{display:none}.page-wrap>.shell>.panel,.page-wrap>.shell>.panel .panel{background:Canvas}.page-wrap>.shell>.panel:focus-within{transform:none;border-color:CanvasText}}
