@@ -1,0 +1,10 @@
+.page-wrap .admin-grid{position:relative;isolation:isolate;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.page-wrap .admin-grid::before{content:"";position:absolute;inset:-28px -20px;z-index:-1;pointer-events:none;background:radial-gradient(70% 42% at 50% 0%,rgba(84,177,255,.08),transparent 72%)}
+.page-wrap .admin-grid>.panel{position:relative;overflow:hidden;border-radius:0;background:linear-gradient(180deg,rgba(255,255,255,.018),transparent 46%);box-shadow:none}
+.page-wrap .admin-grid>.panel::before{content:"";position:absolute;top:0;left:0;width:42px;height:1px;background:rgba(139,211,255,.72);box-shadow:0 0 18px rgba(74,174,255,.24);pointer-events:none}
+.page-wrap .admin-grid .account-row{transition:transform .28s ease,border-color .28s ease}
+.page-wrap .admin-grid .account-row:hover{transform:translateX(3px);border-color:rgba(151,211,255,.28)}
+.page-wrap .admin-grid+.actions{position:relative;padding-top:20px}
+.page-wrap .admin-grid+.actions::before{content:"";position:absolute;top:0;left:0;width:min(180px,28vw);height:1px;background:linear-gradient(90deg,rgba(132,204,255,.62),transparent)}
+@media(prefers-reduced-motion:reduce){.page-wrap .admin-grid .account-row{transition:none}.page-wrap .admin-grid .account-row:hover{transform:none}}
+@media(forced-colors:active){.page-wrap .admin-grid::before,.page-wrap .admin-grid>.panel::before,.page-wrap .admin-grid+.actions::before{display:none}.page-wrap .admin-grid>.panel{background:Canvas}.page-wrap .admin-grid .account-row:hover{transform:none;border-color:CanvasText}}
