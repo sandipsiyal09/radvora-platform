@@ -7,6 +7,7 @@ import { PublicShell } from '../../public-shell'
 import ui from '../../public-brand.module.css'
 import ProductInterestForm from '../../product-interest-form'
 import ProductStructuredData from '../../product-structured-data'
+import './shieldtag-pro-cinematic.css'
 
 export const dynamic='force-dynamic'
 export const metadata:Metadata={title:'ShieldTag Pro',description:'RADVORA ShieldTag Pro is the tablet-proportioned member of the ShieldTag device identity system.',alternates:{canonical:'/products/shieldtag-pro'}}
@@ -19,7 +20,7 @@ export default async function ShieldTagProPage(){
   const indiaPurchasable=product.commerce_enabled===true&&Boolean(product.price_inr)&&product.currency==='INR'&&availableStock!==null&&availableStock>0
   const compatibilityHref='/compatibility?category=Tablet'
 
-  return <><ProductStructuredData name="ShieldTag Pro" slug="shieldtag-pro" deviceClass="Tablets" description="RADVORA ShieldTag Pro is the tablet-proportioned member of the ShieldTag device identity system."/><PublicShell><main className={ui.main}>
+  return <><ProductStructuredData name="ShieldTag Pro" slug="shieldtag-pro" deviceClass="Tablets" description="RADVORA ShieldTag Pro is the tablet-proportioned member of the ShieldTag device identity system."/><PublicShell><main className={ui.main} data-cinematic-page="shieldtag-pro">
     <section className={ui.hero}>
       <div className={ui.heroCopy}><span className={ui.kicker}>SHIELDTAG PRO / TABLETS</span><h1>More surface.<br/><em>More presence.</em></h1><p>ShieldTag Pro is the tablet-proportioned format in the RADVORA system—scaled to sit visually balanced beside larger hardware.</p><div className={ui.actions}><Link className={ui.primary} href="/#shieldlab">Preview in ShieldLab</Link><Link className={ui.secondary} href={compatibilityHref}>Check exact compatibility</Link></div></div>
       <aside className={ui.heroAside}><span>PRODUCT FORMAT</span><strong>Pro · tablet proportion</strong><p>See the visual direction in ShieldLab, then confirm the exact tablet before relying on fit guidance.</p><ul><li><span>Format</span><b>Tablet</b></li><li><span>Compatibility</span><b>Model-specific</b></li><li><span>Purchase state</span><b>{indiaPurchasable?'Available':'Not enabled'}</b></li></ul></aside>
