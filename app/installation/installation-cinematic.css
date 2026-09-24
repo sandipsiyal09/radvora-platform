@@ -1,0 +1,9 @@
+[data-cinematic-page="installation"]{position:relative;isolation:isolate}
+[data-cinematic-page="installation"]::before{content:"";position:absolute;inset:24% -4vw auto;z-index:-1;height:560px;pointer-events:none;background:radial-gradient(ellipse at 28% 18%,rgba(84,177,255,.06),transparent 68%)}
+[data-cinematic-page="installation"] .steps{position:relative;isolation:isolate}
+[data-cinematic-page="installation"] .steps::before{content:"";position:absolute;top:-1px;left:0;width:min(220px,34vw);height:1px;pointer-events:none;background:linear-gradient(90deg,rgba(132,204,255,.64),transparent);box-shadow:0 0 18px rgba(74,174,255,.16)}
+[data-cinematic-page="installation"] .stepCard{transition:transform .28s ease,border-color .28s ease,background-color .28s ease}
+[data-cinematic-page="installation"] .stepCard:hover{transform:translateY(-2px);border-color:rgba(151,211,255,.24);background:linear-gradient(180deg,rgba(155,207,255,.026),transparent 64%)}
+[data-cinematic-page="installation"] .safeZones{position:relative;border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08)}
+@media(prefers-reduced-motion:reduce){[data-cinematic-page="installation"] .stepCard{transition:none}[data-cinematic-page="installation"] .stepCard:hover{transform:none}}
+@media(forced-colors:active){[data-cinematic-page="installation"]::before,[data-cinematic-page="installation"] .steps::before{display:none}[data-cinematic-page="installation"] .stepCard:hover{transform:none;border-color:CanvasText;background:Canvas}[data-cinematic-page="installation"] .safeZones{border-color:CanvasText}}
