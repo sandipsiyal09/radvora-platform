@@ -1,0 +1,9 @@
+[data-cinematic-page="contact"]{position:relative;isolation:isolate}
+[data-cinematic-page="contact"]::before{content:"";position:absolute;inset:22% -4vw auto;z-index:-1;height:500px;pointer-events:none;background:radial-gradient(ellipse at 32% 12%,rgba(90,187,255,.055),transparent 68%)}
+[data-cinematic-page="contact"] section:nth-of-type(2){position:relative;isolation:isolate;border-top:1px solid rgba(255,255,255,.075)}
+[data-cinematic-page="contact"] section:nth-of-type(2)::before{content:"";position:absolute;top:0;left:10%;width:min(240px,36vw);height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(128,211,255,.58),transparent);box-shadow:0 0 18px rgba(80,181,255,.12)}
+[data-cinematic-page="contact"] section:nth-of-type(2)>div>article{position:relative;overflow:hidden;transition:transform .3s ease,border-color .3s ease}
+[data-cinematic-page="contact"] section:nth-of-type(2)>div>article::after{content:"";position:absolute;right:-55px;bottom:-55px;width:130px;height:130px;border:1px solid rgba(127,211,255,.09);border-radius:50%;pointer-events:none}
+[data-cinematic-page="contact"] section:nth-of-type(2)>div>article:hover{transform:translateY(-2px)}
+@media(prefers-reduced-motion:reduce){[data-cinematic-page="contact"] section:nth-of-type(2)>div>article{transition:none}[data-cinematic-page="contact"] section:nth-of-type(2)>div>article:hover{transform:none}}
+@media(forced-colors:active){[data-cinematic-page="contact"]::before,[data-cinematic-page="contact"] section:nth-of-type(2)::before,[data-cinematic-page="contact"] section:nth-of-type(2)>div>article::after{display:none}[data-cinematic-page="contact"] section:nth-of-type(2){border-color:CanvasText}}
