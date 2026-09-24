@@ -1,6 +1,7 @@
 import BusinessLeadForm from './lead-form'
 import { PublicShell } from '../public-shell'
 import ui from '../public-brand.module.css'
+import './business-cinematic.css'
 
 export const metadata={title:'Business',description:'Corporate, retail, distribution and OEM enquiries for RADVORA ShieldTag.'}
 
