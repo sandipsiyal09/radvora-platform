@@ -1,0 +1,8 @@
+.page-wrap .hero{position:relative;isolation:isolate;overflow:hidden}
+.page-wrap .hero::before{content:"";position:absolute;inset:-32% -8% auto 28%;height:340px;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at center,rgba(82,174,255,.08),transparent 70%);filter:blur(14px)}
+.page-wrap .hero::after{content:"";position:absolute;left:0;bottom:0;width:min(220px,32vw);height:1px;pointer-events:none;background:linear-gradient(90deg,rgba(139,211,255,.7),transparent);box-shadow:0 0 18px rgba(74,174,255,.18)}
+.page-wrap .section .compatPanel{position:relative;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.016),transparent 50%);transition:border-color .26s ease,transform .26s ease}
+.page-wrap .section .compatPanel::before{content:"";position:absolute;top:0;left:28px;width:40px;height:1px;pointer-events:none;background:rgba(139,211,255,.66);box-shadow:0 0 15px rgba(74,174,255,.18)}
+.page-wrap .section .compatPanel:focus-within{border-color:rgba(151,211,255,.3);transform:translateY(-2px)}
+@media(prefers-reduced-motion:reduce){.page-wrap .section .compatPanel{transition:none}.page-wrap .section .compatPanel:focus-within{transform:none}}
+@media(forced-colors:active){.page-wrap .hero::before,.page-wrap .hero::after,.page-wrap .section .compatPanel::before{display:none}.page-wrap .section .compatPanel{background:Canvas}.page-wrap .section .compatPanel:focus-within{transform:none;border-color:CanvasText}}
