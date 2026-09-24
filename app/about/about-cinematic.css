@@ -1,0 +1,10 @@
+[data-cinematic-page="about"]{position:relative;isolation:isolate}
+[data-cinematic-page="about"]::before{content:"";position:absolute;inset:18% -4vw auto;z-index:-1;height:560px;pointer-events:none;background:radial-gradient(ellipse at 70% 12%,rgba(102,190,255,.06),transparent 66%)}
+[data-cinematic-page="about"] section:nth-of-type(2){position:relative;isolation:isolate}
+[data-cinematic-page="about"] section:nth-of-type(2)::before{content:"";position:absolute;top:0;left:7%;right:7%;height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(128,207,255,.5),transparent)}
+[data-cinematic-page="about"] section:nth-of-type(2) article{position:relative;overflow:hidden;transition:transform .3s ease,border-color .3s ease}
+[data-cinematic-page="about"] section:nth-of-type(2) article::after{content:"";position:absolute;right:-22%;bottom:-44%;width:150px;height:150px;border:1px solid rgba(126,205,255,.09);border-radius:50%;pointer-events:none}
+[data-cinematic-page="about"] section:nth-of-type(2) article:hover{transform:translateY(-2px)}
+[data-cinematic-page="about"] section:nth-of-type(3){border-top:1px solid rgba(255,255,255,.075)}
+@media(prefers-reduced-motion:reduce){[data-cinematic-page="about"] section:nth-of-type(2) article{transition:none}[data-cinematic-page="about"] section:nth-of-type(2) article:hover{transform:none}}
+@media(forced-colors:active){[data-cinematic-page="about"]::before,[data-cinematic-page="about"] section:nth-of-type(2)::before,[data-cinematic-page="about"] section:nth-of-type(2) article::after{display:none}[data-cinematic-page="about"] section:nth-of-type(3){border-color:CanvasText}}

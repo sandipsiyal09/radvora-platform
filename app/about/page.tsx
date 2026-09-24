@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { PublicShell } from '../public-shell'
 import ui from '../public-brand.module.css'
+import './about-cinematic.css'
 
 export const metadata={title:'About RADVORA',description:'Learn how RADVORA is building ShieldTag as a premium, device-aware identity system with compatibility and product claims kept explicit.',alternates:{canonical:'/about'}}
 
