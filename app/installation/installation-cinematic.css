@@ -1,0 +1,10 @@
+[data-cinematic-page="installation"]{position:relative;isolation:isolate}
+[data-cinematic-page="installation"]::before{content:"";position:absolute;inset:26% -3vw auto;z-index:-1;height:520px;pointer-events:none;background:radial-gradient(ellipse at 50% 18%,rgba(94,190,255,.055),transparent 67%)}
+[data-cinematic-page="installation"] section:nth-of-type(2){position:relative;isolation:isolate}
+[data-cinematic-page="installation"] section:nth-of-type(2)::before{content:"";position:absolute;top:0;left:5%;right:5%;height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(126,207,255,.54),transparent);box-shadow:0 0 20px rgba(75,177,255,.12)}
+[data-cinematic-page="installation"] section:nth-of-type(2) article{position:relative;transition:transform .3s ease,border-color .3s ease,background-color .3s ease}
+[data-cinematic-page="installation"] section:nth-of-type(2) article::after{content:"";position:absolute;left:18px;right:18px;bottom:0;height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(125,220,255,.3),transparent);opacity:.45}
+[data-cinematic-page="installation"] section:nth-of-type(2) article:hover{transform:translateY(-2px)}
+[data-cinematic-page="installation"] section:nth-of-type(3){position:relative;border-top:1px solid rgba(255,255,255,.075)}
+@media(prefers-reduced-motion:reduce){[data-cinematic-page="installation"] section:nth-of-type(2) article{transition:none}[data-cinematic-page="installation"] section:nth-of-type(2) article:hover{transform:none}}
+@media(forced-colors:active){[data-cinematic-page="installation"]::before,[data-cinematic-page="installation"] section:nth-of-type(2)::before,[data-cinematic-page="installation"] section:nth-of-type(2) article::after{display:none}[data-cinematic-page="installation"] section:nth-of-type(3){border-color:CanvasText}}
