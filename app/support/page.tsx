@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { PublicShell } from '../public-shell'
 import ui from '../public-brand.module.css'
+import './support-cinematic.css'
 
 export const metadata={title:'Support',description:'Get RADVORA ShieldTag support for compatibility, installation, verification, warranty and registered-product questions.',alternates:{canonical:'/support'}}
 
