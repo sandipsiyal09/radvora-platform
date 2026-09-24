@@ -1,0 +1,8 @@
+[data-cinematic-page="shieldtag-pro"]{position:relative;isolation:isolate}
+[data-cinematic-page="shieldtag-pro"]::before{content:"";position:absolute;inset:22% -4vw auto;z-index:-1;height:520px;pointer-events:none;background:radial-gradient(ellipse at 72% 18%,rgba(84,177,255,.07),transparent 66%)}
+[data-cinematic-page="shieldtag-pro"] section:last-child>div{position:relative;isolation:isolate;border-top:1px solid rgba(255,255,255,.09);border-bottom:1px solid rgba(255,255,255,.09)}
+[data-cinematic-page="shieldtag-pro"] section:last-child>div::before{content:"";position:absolute;top:0;left:0;width:min(180px,28vw);height:1px;pointer-events:none;background:linear-gradient(90deg,rgba(132,204,255,.62),transparent)}
+[data-cinematic-page="shieldtag-pro"] section:last-child article{position:relative;transition:background-color .28s ease,border-color .28s ease,transform .28s ease}
+[data-cinematic-page="shieldtag-pro"] section:last-child article:focus-within{background:linear-gradient(180deg,rgba(155,207,255,.03),transparent 60%);transform:translateY(-2px)}
+@media(prefers-reduced-motion:reduce){[data-cinematic-page="shieldtag-pro"] section:last-child article{transition:none}[data-cinematic-page="shieldtag-pro"] section:last-child article:focus-within{transform:none}}
+@media(forced-colors:active){[data-cinematic-page="shieldtag-pro"]::before,[data-cinematic-page="shieldtag-pro"] section:last-child>div::before{display:none}[data-cinematic-page="shieldtag-pro"] section:last-child article:focus-within{background:Canvas;transform:none}}
