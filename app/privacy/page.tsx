@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import BusinessLeadForm from '../business/lead-form'
 import { PublicShell } from '../public-shell'
 import ui from '../public-brand.module.css'
+import './privacy-cinematic.css'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
@@ -22,5 +23,5 @@ const sections = [
 ]
 
 export default function PrivacyPage(){
-  return <PublicShell><main className={ui.main}><article className={ui.legal}><header className={ui.legalHeader}><span className={ui.legalMeta}>RADVORA TECHNOLOGIES</span><h1>Privacy Policy</h1><p>Last updated: 11 September 2026</p><p>This policy explains how RADVORA Technologies handles personal information when you use our website, request product-availability updates, create an account, place an order, request support or warranty service, or contact us for business purposes.</p></header>{sections.map(([title, body])=><section className={ui.legalSection} key={title}><h2>{title}</h2><p>{body}</p></section>)}<section className={ui.legalSection}><h2>Submit a privacy request</h2><p>Use this form for privacy questions or requests relating to access, correction, deletion, restriction, or other applicable privacy rights. Do not include passwords, payment-card data, private QR authentication tokens, or other secrets.</p><BusinessLeadForm source="privacy-page" title="Privacy request"/></section></article></main></PublicShell>
+  return <PublicShell><main className={ui.main} data-cinematic-page="privacy"><article className={ui.legal}><header className={ui.legalHeader}><span className={ui.legalMeta}>RADVORA TECHNOLOGIES</span><h1>Privacy Policy</h1><p>Last updated: 11 September 2026</p><p>This policy explains how RADVORA Technologies handles personal information when you use our website, request product-availability updates, create an account, place an order, request support or warranty service, or contact us for business purposes.</p></header>{sections.map(([title, body])=><section className={ui.legalSection} key={title}><h2>{title}</h2><p>{body}</p></section>)}<section className={ui.legalSection}><h2>Submit a privacy request</h2><p>Use this form for privacy questions or requests relating to access, correction, deletion, restriction, or other applicable privacy rights. Do not include passwords, payment-card data, private QR authentication tokens, or other secrets.</p><BusinessLeadForm source="privacy-page" title="Privacy request"/></section></article></main></PublicShell>
 }
