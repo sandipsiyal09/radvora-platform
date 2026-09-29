@@ -1,0 +1,9 @@
+[data-cinematic-page="warranty"]{position:relative;isolation:isolate}
+[data-cinematic-page="warranty"]::before{content:"";position:absolute;inset:20% -4vw auto;z-index:-1;height:500px;pointer-events:none;background:radial-gradient(ellipse at 72% 16%,rgba(88,185,255,.055),transparent 68%)}
+[data-cinematic-page="warranty"] section:last-child>div{position:relative;isolation:isolate;border-top:1px solid rgba(255,255,255,.09);border-bottom:1px solid rgba(255,255,255,.09)}
+[data-cinematic-page="warranty"] section:last-child>div::before{content:"";position:absolute;top:0;left:50%;width:min(220px,34vw);height:1px;transform:translateX(-50%);pointer-events:none;background:linear-gradient(90deg,transparent,rgba(130,211,255,.56),transparent)}
+[data-cinematic-page="warranty"] section:last-child article{position:relative;overflow:hidden;transition:transform .3s ease,border-color .3s ease}
+[data-cinematic-page="warranty"] section:last-child article:focus-within{transform:translateY(-2px)}
+[data-cinematic-page="warranty"] section:last-child article::after{content:"";position:absolute;left:20px;right:20px;bottom:0;height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(126,209,255,.26),transparent)}
+@media(prefers-reduced-motion:reduce){[data-cinematic-page="warranty"] section:last-child article{transition:none}[data-cinematic-page="warranty"] section:last-child article:focus-within{transform:none}}
+@media(forced-colors:active){[data-cinematic-page="warranty"]::before,[data-cinematic-page="warranty"] section:last-child>div::before,[data-cinematic-page="warranty"] section:last-child article::after{display:none}[data-cinematic-page="warranty"] section:last-child article:focus-within{transform:none}}
