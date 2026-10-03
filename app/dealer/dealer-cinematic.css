@@ -1,0 +1,7 @@
+[data-cinematic-page="dealer"]{position:relative;isolation:isolate}
+[data-cinematic-page="dealer"]::before{content:"";position:absolute;inset:4% -5vw auto;z-index:-1;height:640px;pointer-events:none;background:radial-gradient(ellipse at 78% 14%,rgba(88,185,255,.055),transparent 68%)}
+[data-cinematic-page="dealer"] article{position:relative;overflow:hidden}
+[data-cinematic-page="dealer"] article::after{content:"";position:absolute;inset:auto 0 0;height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(126,209,255,.24),transparent)}
+[data-cinematic-page="dealer"] section:last-child{position:relative;isolation:isolate}
+@media(prefers-reduced-motion:reduce){[data-cinematic-page="dealer"] *{scroll-behavior:auto!important}}
+@media(forced-colors:active){[data-cinematic-page="dealer"]::before,[data-cinematic-page="dealer"] article::after{display:none}}
