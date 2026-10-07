@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { PublicShell } from '../public-shell'
 import ui from '../public-brand.module.css'
+import './shipping-cinematic.css'
 
 export const metadata: Metadata = {
   title: 'Shipping Policy',
@@ -18,5 +19,5 @@ const sections = [
 ]
 
 export default function ShippingPage(){
-  return <PublicShell><main className={ui.main}><article className={ui.legal}><header className={ui.legalHeader}><span className={ui.legalMeta}>RADVORA TECHNOLOGIES · INDIA</span><h1>Shipping Policy</h1><p>Last updated: 11 September 2026</p><p>This policy explains the current RADVORA shipping and delivery process for consumer orders within India. Product-specific or commercial-order terms may also apply where disclosed before purchase.</p></header>{sections.map(([sectionTitle, body])=><section className={ui.legalSection} key={sectionTitle}><h2>{sectionTitle}</h2><p>{body}</p></section>)}</article></main></PublicShell>
+  return <PublicShell><main className={ui.main} data-cinematic-page="shipping"><article className={ui.legal}><header className={ui.legalHeader}><span className={ui.legalMeta}>RADVORA TECHNOLOGIES · INDIA</span><h1>Shipping Policy</h1><p>Last updated: 11 September 2026</p><p>This policy explains the current RADVORA shipping and delivery process for consumer orders within India. Product-specific or commercial-order terms may also apply where disclosed before purchase.</p></header>{sections.map(([sectionTitle, body])=><section className={ui.legalSection} key={sectionTitle}><h2>{sectionTitle}</h2><p>{body}</p></section>)}</article></main></PublicShell>
 }
