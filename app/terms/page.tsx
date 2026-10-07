@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { PublicShell } from '../public-shell'
 import ui from '../public-brand.module.css'
+import './terms-cinematic.css'
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
@@ -23,5 +24,5 @@ const sections = [
 ]
 
 export default function TermsPage(){
-  return <PublicShell><main className={ui.main}><article className={ui.legal}><header className={ui.legalHeader}><span className={ui.legalMeta}>RADVORA TECHNOLOGIES · INDIA</span><h1>Terms of Service</h1><p>Last updated: 11 September 2026</p><p>These terms govern access to and use of the RADVORA Technologies website, accounts, ordering systems, products, and related customer services.</p></header>{sections.map(([sectionTitle, body])=><section className={ui.legalSection} key={sectionTitle}><h2>{sectionTitle}</h2><p>{body}</p></section>)}</article></main></PublicShell>
+  return <PublicShell><main className={ui.main} data-cinematic-page="terms"><article className={ui.legal}><header className={ui.legalHeader}><span className={ui.legalMeta}>RADVORA TECHNOLOGIES · INDIA</span><h1>Terms of Service</h1><p>Last updated: 11 September 2026</p><p>These terms govern access to and use of the RADVORA Technologies website, accounts, ordering systems, products, and related customer services.</p></header>{sections.map(([sectionTitle, body])=><section className={ui.legalSection} key={sectionTitle}><h2>{sectionTitle}</h2><p>{body}</p></section>)}</article></main></PublicShell>
 }
