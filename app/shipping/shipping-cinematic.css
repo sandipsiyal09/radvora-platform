@@ -5,3 +5,7 @@
 [data-cinematic-page="shipping"] article>section:last-child{isolation:isolate}
 @media(prefers-reduced-motion:reduce){[data-cinematic-page="shipping"] *{scroll-behavior:auto!important}}
 @media(forced-colors:active){[data-cinematic-page="shipping"]::before,[data-cinematic-page="shipping"] article>section::before{display:none}}
+[data-cinematic-page="shipping"] article>section:focus-within{transform:translateZ(0)}
+[data-cinematic-page="shipping"] article>section:focus-within::before{width:min(180px,36vw);opacity:.72;transition:width 420ms ease,opacity 420ms ease}
+@media(prefers-reduced-motion:reduce){[data-cinematic-page="shipping"] article>section:focus-within::before{transition:none}}
+@media(forced-colors:active){[data-cinematic-page="shipping"] article>section:focus-within::before{opacity:1}}
