@@ -24,9 +24,30 @@ main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes)::b
   opacity: .72;
 }
 
+/* Keyboard focus gives the cinematic seam a brief, restrained handoff cue without changing layout or interaction semantics. */
+main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes):focus-within::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: 4vw;
+  top: -1px;
+  width: clamp(56px, 10vw, 140px);
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(126,209,255,.5), transparent);
+  transform: translateX(-140%);
+  animation: radvora-home-seam-sweep 1100ms ease-out 1;
+}
+
 main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes) > * {
   position: relative;
   z-index: 1;
+}
+
+@keyframes radvora-home-seam-sweep {
+  0% { transform: translateX(-140%); opacity: 0; }
+  18% { opacity: .78; }
+  100% { transform: translateX(calc(80vw + 140px)); opacity: 0; }
 }
 
 @media (max-width: 760px) {
@@ -36,19 +57,29 @@ main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes) > 
     height: 48px;
     opacity: .48;
   }
+
+  main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes):focus-within::after {
+    left: 7vw;
+    width: min(90px, 24vw);
+  }
 }
 
-/* The treatment is static, but reduced-motion also removes the atmospheric bloom for maximum visual calm. */
 @media (prefers-reduced-motion: reduce) {
   main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes)::before {
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
     opacity: .65;
   }
+
+  main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes)::after {
+    animation: none;
+    display: none;
+  }
 }
 
 @media (forced-colors: active) {
-  main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes)::before {
+  main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes)::before,
+  main[data-cinematic-page="home"] :is(#story, #formats, #shieldlab, #finishes)::after {
     content: none;
   }
 }
