@@ -1,7 +1,10 @@
 [data-cinematic-page="dealer"]{position:relative;isolation:isolate}
 [data-cinematic-page="dealer"]::before{content:"";position:absolute;inset:4% -5vw auto;z-index:-1;height:640px;pointer-events:none;background:radial-gradient(ellipse at 78% 14%,rgba(88,185,255,.055),transparent 68%)}
-[data-cinematic-page="dealer"] article{position:relative;overflow:hidden}
+[data-cinematic-page="dealer"] article{position:relative;overflow:hidden;transition:transform .3s ease,border-color .3s ease}
 [data-cinematic-page="dealer"] article::after{content:"";position:absolute;inset:auto 0 0;height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(126,209,255,.24),transparent)}
+[data-cinematic-page="dealer"] article:focus-within{transform:translateY(-2px)}
+[data-cinematic-page="dealer"] article a:focus-visible{outline:2px solid currentColor;outline-offset:4px;border-radius:4px}
 [data-cinematic-page="dealer"] section:last-child{position:relative;isolation:isolate}
-@media(prefers-reduced-motion:reduce){[data-cinematic-page="dealer"] *{scroll-behavior:auto!important}}
+@media(prefers-reduced-motion:no-preference){[data-cinematic-page="dealer"] article::after{animation:dealerSweep 12s ease-in-out infinite}@keyframes dealerSweep{0%,60%,100%{opacity:0;transform:translateX(-70%)}68%{opacity:.8}82%{opacity:0;transform:translateX(70%)}}}
+@media(prefers-reduced-motion:reduce){[data-cinematic-page="dealer"] *{scroll-behavior:auto!important}[data-cinematic-page="dealer"] article{transition:none!important}[data-cinematic-page="dealer"] article:focus-within{transform:none!important}}
 @media(forced-colors:active){[data-cinematic-page="dealer"]::before,[data-cinematic-page="dealer"] article::after{display:none}}
