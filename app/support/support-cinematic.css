@@ -8,5 +8,6 @@
 [data-cinematic-page="support"] section:nth-of-type(2) article:focus-within,[data-cinematic-page="support"] section:nth-of-type(3) article:focus-within{transform:translateY(-2px)}
 [data-cinematic-page="support"] section:nth-of-type(2) article:focus-within a:focus-visible,[data-cinematic-page="support"] section:nth-of-type(3) article a:focus-visible{outline:2px solid currentColor;outline-offset:4px;border-radius:4px}
 [data-cinematic-page="support"] section:nth-of-type(3){border-top:1px solid rgba(255,255,255,.075)}
+@media(prefers-reduced-motion:no-preference){[data-cinematic-page="support"]::after{animation:supportSeamPulse 7s ease-in-out infinite}@keyframes supportSeamPulse{0%,100%{opacity:.55}50%{opacity:1}}}
 @media(prefers-reduced-motion:reduce){[data-cinematic-page="support"] section article{transition:none!important}[data-cinematic-page="support"] section article:hover,[data-cinematic-page="support"] section article:focus-within{transform:none!important}}
 @media(forced-colors:active){[data-cinematic-page="support"]::before,[data-cinematic-page="support"]::after,[data-cinematic-page="support"] section:nth-of-type(2)::before{display:none}[data-cinematic-page="support"] section:nth-of-type(3){border-color:CanvasText}}
